@@ -7,6 +7,7 @@ const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-sp
 
 let _lastDataHash = null;
 
+// Đếm số ngày có nhập sản lượng trong kỳ
 function getWorkedDaysByPeriod(period) {
   const now = new Date();
   const cy = now.getFullYear();
@@ -112,7 +113,7 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  // REVERT fix #2: hard-code 26
+  // Trần 26 ngày — cố định
   const salaryDays = 26;
   const workedDays = getWorkedDaysByPeriod(state.periodFilter);
   const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
@@ -180,6 +181,7 @@ function _updateAllViews() {
   document.getElementById('retTotalPoints').innerText  = formatPts(retPts);
   document.getElementById('retTotalOrders').innerText  = `${_fmt(total.ret)} đơn`;
 
+  // === UI Thu nhập ===
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -234,6 +236,7 @@ function _updateAllViews() {
 
   persistData();
 
+  // Chỉ dispatch khi data đổi
   const currentHash = JSON.stringify(state.appData);
   if (_lastDataHash === null) {
     _lastDataHash = currentHash;
