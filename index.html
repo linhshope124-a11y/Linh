@@ -62,8 +62,6 @@
     <!-- ============ TAB TỔNG QUAN ============ -->
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
-
-        <!-- TỔNG QUAN (gộp hero + rank + ratio) -->
         <section class="card">
           <div class="card-head" style="margin-bottom:14px">
             <div>
@@ -105,19 +103,19 @@
         </section>
 
         <!-- THU NHẬP (collapsible) -->
-        <section class="card income-section">
-          <button class="income-toggle" onclick="toggleIncomeSection()">
-            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+        <details class="card income-section" id="incomeDetails">
+          <summary class="income-summary">
+            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0">
               <span style="font-size:13px;font-weight:700;color:var(--text-1)">💰 Thu nhập <span id="incomePeriodLabel" style="color:var(--text-3);font-weight:500;font-size:11px">(tháng này)</span></span>
               <span style="font-size:11px;color:var(--text-3);font-weight:500" id="incomeDayCount">0/26 ngày</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px">
               <span style="font-size:14px;font-weight:700;color:var(--accent)" id="incomeTotalDisplay">+0 Điểm</span>
-              <span class="income-toggle-icon" id="incomeToggleIcon">▼</span>
+              <span class="income-chevron">▼</span>
             </div>
-          </button>
+          </summary>
 
-          <div class="income-content" id="incomeContent" style="display:none;padding-top:14px;border-top:1px solid var(--border);margin-top:12px">
+          <div style="padding-top:14px;border-top:1px solid var(--border);margin-top:14px">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
               <span style="font-size:12.5px;font-weight:500;color:var(--text-2)">Lương cơ bản</span>
               <div style="display:flex;align-items:center;gap:8px">
@@ -160,7 +158,7 @@
               Lưu cấu hình
             </button>
           </div>
-        </section>
+        </details>
 
         <!-- 3 CARD GIAO / LẤY / HOÀN -->
         <section class="card">
@@ -383,7 +381,6 @@
     </div>
     <div class="modal-body">
 
-      <!-- CLOUD BACKUP -->
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">☁️ Cloud Backup (GitHub Gist)</div>
       <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Tự động lưu lên Cloud — reset máy không mất dữ liệu.</p>
 
@@ -410,7 +407,6 @@
 
       <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
 
-      <!-- LOCAL BACKUP -->
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">📁 Sao lưu cục bộ</div>
       <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Export/Import dữ liệu dạng file JSON.</p>
 
@@ -429,7 +425,6 @@
 
       <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
 
-      <!-- CÔNG CỤ -->
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">🧹 Công cụ</div>
       <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Tìm và xóa các bản ghi trùng lặp (cùng ngày + cùng số liệu).</p>
       <button class="btn" onclick="cleanupDuplicates()" style="width:100%;background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);font-weight:600">
@@ -438,7 +433,6 @@
 
       <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
 
-      <!-- VÙNG NGUY HIỂM -->
       <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--danger)">⚠️ Vùng nguy hiểm</div>
       <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">
         Xóa toàn bộ dữ liệu sản lượng đã nhập. <b style="color:var(--danger)">Không thể khôi phục!</b>
@@ -449,7 +443,6 @@
 
       <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
 
-      <!-- TOKEN GUIDE -->
       <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px">📖 Hướng dẫn lấy Token</div>
       <ol style="font-size:11.5px;color:var(--text-3);padding-left:18px;line-height:1.7;margin:0">
         <li>Vào <b style="color:var(--text-2)">github.com/settings/tokens</b></li>
@@ -529,6 +522,9 @@
   <button class="close-lb" onclick="closeOcrLightbox()">✕</button>
   <img id="ocrLightboxImg" alt="Ảnh phóng to">
 </div>
+
+<!-- ============ TOAST ============ -->
+<div id="appToast" class="app-toast"></div>
 
 <script type="module" src="./js/main.js"></script>
 </body>
