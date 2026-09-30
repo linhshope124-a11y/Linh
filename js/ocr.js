@@ -3,6 +3,7 @@ import { WEIGHT_KEYS } from './config.js';
 import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
+import { pushUndo } from './undo.js';
 
 // ==================== TESSERACT WORKER ====================
 let cachedTesseractWorker = null;
@@ -353,17 +354,17 @@ function extractDate(text) {
 const ocrCache = new Map();
 const OCR_CACHE_MAX = 30;
 
-async function hashDataUrl(dataUrl) {
+// ===== FIX: hash trực tiếp trên Blob.arrayBuffer() =====
+async function hashBlob(file) {
   try {
-    const buf = new TextEncoder().encode(dataUrl);
+    const buf = await file.arrayBuffer();
     const hashBuf = await crypto.subtle.digest('SHA-1', buf);
     return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
   } catch {
-    let h = 0;
-    for (let i = 0; i < dataUrl.length; i++) h = (h * 31 + dataUrl.charCodeAt(i)) | 0;
-    return 'fb_' + h.toString(16);
+    return 'fb_' + Date.now().toString(16) + '_' + file.size + '_' + (file.name || '').length;
   }
 }
+
 function cacheGet(hash) {
   if (!ocrCache.has(hash)) return null;
   const v = ocrCache.get(hash);
@@ -407,7 +408,7 @@ function getTypeLabel(r) {
        : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
 }
 
-// Auto-save 1 record, trả về true nếu thành công
+// ===== FIX: Auto-save có pushUndo + check weights trùng =====
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -418,18 +419,28 @@ function tryAutoSave(r) {
   if (r.totalFound <= 0) return false;
 
   const type = getTypeFromResult(r);
-  const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
+  const weights = buildWeights(r);
+
+  const existing = state.appData[type].find(rec =>
+    rec.date === r.parsedDate &&
+    WEIGHT_KEYS.every(k => (parseInt(rec.weights[k], 10) || 0) === (parseInt(weights[k], 10) || 0))
+  );
   if (existing) return false;
 
-  state.appData[type].unshift({
-    id: generateId(),
-    date: r.parsedDate,
-    weights: buildWeights(r)
-  });
-  updateAllViews();
+  const newRecord = { id: generateId(), date: r.parsedDate, weights };
+  state.appData[type].unshift(newRecord);
 
   const typeLabel = getTypeLabel(r);
   const dateStr = formatDateDisplay(r.parsedDate);
+
+  pushUndo({
+    msg: `Đã tự động lưu ${typeLabel} ${dateStr}`,
+    restore: () => {
+      state.appData[type] = state.appData[type].filter(it => it.id !== newRecord.id);
+    }
+  });
+
+  updateAllViews();
   showToast(`Đã lưu ${typeLabel} ${dateStr}: ${r.totalFound} đơn`, 'success');
   return true;
 }
@@ -460,9 +471,7 @@ export async function handleOcrImage(event) {
     const validCount = newResults.filter(r => !r.error).length;
     if (files.length === 1 && validCount === 1) {
       const item = newResults[0];
-      // AUTO-SAVE khi ảnh đủ điều kiện
       if (tryAutoSave(item.result)) return;
-      // Có vấn đề → mở modal cho user kiểm tra
       fillModalFromResult(item);
       return;
     }
@@ -495,16 +504,19 @@ async function processFiles(files) {
     statusDesc.innerText  = 'Đang đọc file...';
 
     try {
-      const rawDataUrl = await readFileAsDataURL(file);
-      const hash   = await hashDataUrl(rawDataUrl);
+      const hash = await hashBlob(file);
       const cached = cacheGet(hash);
 
       if (cached) {
         statusDesc.innerText = '⚡ Dùng cache...';
+        const rawDataUrl = await readFileAsDataURL(file);
         const cachedResult = { ...cached.result, fullDataUrl: rawDataUrl };
         out.push({ file: file.name, thumbnail: cached.thumbnail, result: cachedResult, error: null, fromCache: true });
         continue;
       }
+
+      statusDesc.innerText = 'Đang đọc file...';
+      const rawDataUrl = await readFileAsDataURL(file);
 
       statusDesc.innerText = 'Xử lý ảnh...';
       const thumbnail = await makeThumbnail(rawDataUrl, 96);
@@ -527,11 +539,7 @@ async function processFiles(files) {
         const text2 = await ocrRecognize(pre2.dataUrl);
         const parsed2 = parseOcrText(text2);
         const diff2 = parsed2.expectedTotal !== null ? Math.abs(parsed2.totalFound - parsed2.expectedTotal) : 9999;
-        if (diff2 < bestDiff) {
-          bestResult = parsed2;
-          bestText = text2;
-          bestDiff = diff2;
-        }
+        if (diff2 < bestDiff) { bestResult = parsed2; bestText = text2; bestDiff = diff2; }
       }
 
       if (bestDiff > 0) {
@@ -540,11 +548,7 @@ async function processFiles(files) {
         const text3 = await ocrRecognize(pre3.dataUrl);
         const parsed3 = parseOcrText(text3);
         const diff3 = parsed3.expectedTotal !== null ? Math.abs(parsed3.totalFound - parsed3.expectedTotal) : 9999;
-        if (diff3 < bestDiff) {
-          bestResult = parsed3;
-          bestText = text3;
-          bestDiff = diff3;
-        }
+        if (diff3 < bestDiff) { bestResult = parsed3; bestText = text3; bestDiff = diff3; }
       }
 
       const result = {
@@ -802,8 +806,20 @@ export function saveBatchAll() {
     return;
   }
 
+  const addedIds = [];
   finalList.forEach(({ item, type, weights }) => {
-    state.appData[type].unshift({ id: generateId(), date: item.result.parsedDate, weights });
+    const id = generateId();
+    state.appData[type].unshift({ id, date: item.result.parsedDate, weights });
+    addedIds.push({ type, id });
+  });
+
+  pushUndo({
+    msg: `Đã lưu ${finalList.length} bản ghi từ batch`,
+    restore: () => {
+      addedIds.forEach(({ type, id }) => {
+        state.appData[type] = state.appData[type].filter(it => it.id !== id);
+      });
+    }
   });
 
   batchResults = [];
