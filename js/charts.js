@@ -44,10 +44,17 @@ function sumRecordsByDate(records, isoDate) {
 
 export async function toggleCharts() {
   const box = document.getElementById('chartsContainer');
+  const btn = document.getElementById('toggleChartsBtn');
   if (!box) return;
+
   const isHidden = box.style.display === 'none' || box.style.display === '';
-  if (!isHidden) { box.style.display = 'none'; return; }
+  if (!isHidden) {
+    box.style.display = 'none';
+    if (btn) btn.innerText = '📊 Hiện';
+    return;
+  }
   box.style.display = 'block';
+  if (btn) btn.innerText = '📊 Ẩn';
 
   const loading = document.getElementById('chartsLoading');
   if (loading) loading.style.display = 'block';
