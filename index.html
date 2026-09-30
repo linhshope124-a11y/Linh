@@ -19,14 +19,13 @@
 
 <header class="top-nav">
   <div class="header-left">
-    <button class="btn btn-coffee" onclick="openCoffeeModal()">💝 Donate</button>
-    <button class="btn" onclick="openSettingsModal()">💾 Backup</button>
+    <button class="btn-icon" onclick="openCoffeeModal()" title="Ủng hộ tác giả">❤️</button>
+    <button class="btn-icon" onclick="openSettingsModal()" title="Cài đặt & Backup">⚙️</button>
   </div>
   <div class="header-actions">
-    <button class="btn btn-ocr" onclick="document.getElementById('ocrFileInput').click()">📷 Quét</button>
     <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleOcrImage(event)">
-    <button class="btn" id="themeToggleBtn" onclick="toggleTheme()"><span id="themeIcon">🌙</span></button>
-    <button class="btn btn-primary" onclick="openAddModal()">＋ Nhập</button>
+    <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme"><span id="themeIcon">🌙</span></button>
+    <button class="btn btn-primary" onclick="openAddModal()" style="padding:8px 14px">＋ Nhập</button>
   </div>
 </header>
 
@@ -102,7 +101,6 @@
           </div>
         </section>
 
-        <!-- THU NHẬP (collapsible) -->
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
             <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0">
@@ -160,7 +158,6 @@
           </div>
         </details>
 
-        <!-- 3 CARD GIAO / LẤY / HOÀN -->
         <section class="card">
           <div class="stat-grid-reorganized" style="margin-top:0">
             <div class="stat-card-item type-del">
@@ -181,7 +178,6 @@
           </div>
         </section>
 
-        <!-- CƠ HỘI TĂNG ĐIỂM -->
         <section class="card">
           <div class="card-head">
             <div>
@@ -280,6 +276,12 @@
 
   </div>
 </div>
+
+<!-- ============ FLOATING ACTION BUTTON — QUÉT ẢNH ============ -->
+<button class="fab-ocr" id="fabOcrBtn" onclick="document.getElementById('ocrFileInput').click()" title="Quét ảnh SPX">
+  <span>📷</span>
+  <span class="fab-label">Quét</span>
+</button>
 
 <!-- ============ ENTRY MODAL ============ -->
 <div class="modal-shade" id="entryModal">
@@ -473,7 +475,7 @@
   </div>
 </div>
 
-<!-- ============ COFFEE MODAL ============ -->
+<!-- ============ COFFEE / DONATE MODAL ============ -->
 <div class="modal-shade" id="coffeeModal" onclick="if(event.target===this)closeCoffeeModal()">
   <div class="modal-box coffee-modal-box">
     <div class="modal-box-head">
@@ -481,26 +483,24 @@
       <button class="modal-close-btn" onclick="closeCoffeeModal()">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:12.5px;color:var(--text-2);margin-bottom:14px">
-        Nếu công cụ này hỗ trợ tốt cho công việc của bạn, hãy ủng hộ tác giả một chút nhé! ❤️
+      <div class="donate-heart">❤️</div>
+      <p class="donate-text">
+        Nếu app này giúp ích cho công việc của bạn,<br>
+        hãy ủng hộ tác giả một chút nhé!
       </p>
-      <div class="coffee-account-box">
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px">MoMo / SĐT</div>
-          <div class="phone-display" id="coffeePhone">0773926148</div>
-        </div>
-        <button class="btn btn-primary" id="copyPhoneBtn" onclick="copyPhoneNumber()">Chép</button>
-      </div>
-      <div class="coffee-account-box" style="margin-top:12px">
-        <div style="flex:1;min-width:0">
-          <div style="font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px">Viettinbank</div>
-          <div class="phone-display" id="bankSTK" style="font-size:16px">106879606835</div>
-          <div style="font-size:10.5px;color:var(--text-3);margin-top:3px">Chủ TK: LINH</div>
-        </div>
-        <button class="btn btn-primary" id="copyBankBtn" onclick="copyBankNumber()">Chép</button>
+
+      <div class="bank-card">
+        <div class="bank-label">VIETTINBANK</div>
+        <div class="bank-stk" id="bankSTK">106879606835</div>
+        <div class="bank-name">Chủ TK: LINH</div>
+        <button class="btn btn-primary" id="copyBankBtn" onclick="copyBankNumber()" style="width:100%;margin-top:16px;font-weight:600;padding:12px">
+          📋 Sao chép số tài khoản
+        </button>
       </div>
     </div>
-    <div class="modal-box-foot"><button class="btn" onclick="closeCoffeeModal()">Đóng</button></div>
+    <div class="modal-box-foot">
+      <button class="btn" onclick="closeCoffeeModal()" style="width:100%">Đóng</button>
+    </div>
   </div>
 </div>
 
