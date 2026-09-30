@@ -1,9 +1,10 @@
 /* =============================================================
-   SPX Tracker v2.1 — Redesign theo Progressive Disclosure
-   - Header đơn giản (menu + brand + 2 action)
-   - Bottom nav 5 slot (4 tab + FAB Quét giữa)
-   - Hero card làm nổi bật số điểm
-   - Ẩn số liệu phụ vào menu/accordion
+   SPX Tracker v2.2 — Redesign + Polish
+   - Header gọn, nút Nhập nổi bật (cam)
+   - Bottom nav 5 slot, nút Quét cam 48px (nhô ít)
+   - Hero card gọn, rank grid 3x2
+   - Period bar 4 nút vừa khít màn hình
+   - Ratio bar xám khi chưa có data
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -53,7 +54,7 @@
   --sh-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
   --sh-md: 0 4px 12px rgba(15, 23, 42, 0.08);
   --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
-  --sh-fab: 0 8px 24px rgba(59, 130, 246, 0.4), 0 2px 6px rgba(0, 0, 0, 0.12);
+  --sh-fab: 0 4px 14px rgba(255, 87, 34, 0.35), 0 2px 4px rgba(0, 0, 0, 0.08);
   --nav-h: 68px;
 
   /* Alias tương thích ngược */
@@ -123,7 +124,7 @@
   --hoan: #d29922;
   --hoan-soft: rgba(210, 153, 34, 0.12);
   --hoan-border: rgba(210, 153, 34, 0.3);
-  --sh-fab: 0 8px 24px rgba(88, 166, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --sh-fab: 0 4px 14px rgba(255, 110, 64, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
 
   --spx-orange: #ff6e40;
   --text-primary: #e6edf3;
@@ -199,6 +200,18 @@ body {
 }
 .header-right { display: flex; align-items: center; gap: 8px; }
 
+/* Patch 1: nút ➕ đầu tiên trong header-right nổi bật màu cam */
+.header-right .btn-icon:first-child {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
+}
+.header-right .btn-icon:first-child:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 .btn-icon {
   width: 38px;
   height: 38px;
@@ -242,7 +255,7 @@ body {
 .btn-ocr { background: var(--info); border-color: var(--info); color: #fff; }
 .btn-ocr:hover { filter: brightness(0.95); }
 
-/* =============== PERIOD BAR =============== */
+/* =============== PERIOD BAR (Patch 6: fit 4 nút) =============== */
 .period-bar {
   max-width: 600px;
   margin: 10px auto 4px;
@@ -250,15 +263,16 @@ body {
 }
 .period-buttons {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   overflow-x: auto;
   scrollbar-width: none;
   padding: 2px 0;
+  justify-content: flex-start;
 }
 .period-buttons::-webkit-scrollbar { display: none; }
 .period-btn {
-  padding: 6px 14px;
-  font-size: 12px;
+  padding: 6px 10px;
+  font-size: 11.5px;
   font-weight: 500;
   font-family: inherit;
   border-radius: 20px;
@@ -268,6 +282,7 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 .period-btn.active {
   background: var(--text-1);
@@ -291,7 +306,7 @@ body {
   border-top: 1px solid var(--border);
   padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
   display: grid;
-  grid-template-columns: 1fr 1fr 72px 1fr 1fr;
+  grid-template-columns: 1fr 1fr 68px 1fr 1fr;
   align-items: end;
   gap: 2px;
   z-index: 50;
@@ -329,6 +344,7 @@ body {
   font-weight: 600;
 }
 
+/* Patch 5: Nút Quét nhỏ hơn, cam, nhô ít */
 .tab-btn-quet {
   display: flex;
   flex-direction: column;
@@ -339,32 +355,33 @@ body {
   border: none;
   background: transparent;
   padding: 0;
-  transform: translateY(-14px);
+  transform: translateY(-8px);
   font-family: inherit;
 }
 .quet-icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: var(--info);
+  background: var(--accent);
   color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   line-height: 1;
   box-shadow: var(--sh-fab);
   transition: transform 0.15s, box-shadow 0.15s;
+  border: 3px solid var(--surface);
 }
 .quet-label {
   font-size: 10.5px;
   font-weight: 700;
-  color: var(--info);
-  margin-top: 2px;
+  color: var(--accent);
+  margin-top: 0;
 }
 .tab-btn-quet:active .quet-icon {
   transform: scale(0.92);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
 }
 
 /* =============== CARDS =============== */
@@ -379,11 +396,11 @@ body {
 .card-head h2 { font-size: 14px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-1); }
 .card-head p { font-size: 12px; color: var(--text-3); margin-top: 2px; }
 
-/* =============== HERO CARD =============== */
+/* =============== HERO CARD (Patch 2: gọn hơn) =============== */
 .hero-card {
   background: linear-gradient(135deg, var(--accent-soft) 0%, var(--surface) 55%);
   border: 1px solid var(--accent-soft-border);
-  padding: 18px 16px;
+  padding: 16px;
 }
 [data-theme="dark"] .hero-card {
   background: linear-gradient(135deg, rgba(255, 110, 64, 0.10) 0%, var(--surface) 60%);
@@ -394,14 +411,14 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 .hero-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--accent);
+  letter-spacing: 0.8px;
+  color: var(--text-3);
 }
 .hero-pill {
   background: var(--surface);
@@ -414,15 +431,15 @@ body {
   white-space: nowrap;
 }
 .hero-value {
-  font-size: 36px;
+  font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-1);
-  line-height: 1.05;
-  margin: 4px 0 2px;
+  line-height: 1;
+  margin: 6px 0 4px;
 }
 .hero-sub {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-3);
   font-weight: 500;
   margin-bottom: 16px;
@@ -444,18 +461,15 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+
+/* Patch 3: Rank pills grid 3x2 — không bị cắt */
 .rank-pill-group {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 2px;
 }
-.rank-pill-group::-webkit-scrollbar { display: none; }
 .rank-pill {
-  flex: 0 0 auto;
-  min-width: 68px;
-  padding: 6px 10px;
+  padding: 7px 6px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--surface);
@@ -467,16 +481,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   transition: all 0.15s;
+  min-width: 0;
 }
-.rank-pill span:last-child { font-size: 10px; opacity: 0.8; }
+.rank-pill span:last-child { font-size: 10px; opacity: 0.75; }
 .rank-pill.active {
   background: var(--text-1);
   border-color: var(--text-1);
   color: var(--bg);
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
 }
+.rank-pill.active span:last-child { opacity: 0.85; }
 
 .ratio-head {
   display: flex;
@@ -486,8 +503,10 @@ body {
   color: var(--text-3);
   margin-bottom: 6px;
 }
+
+/* Patch 4: ratio bar xám khi chưa có data */
 .overview-bar-ratio {
-  height: 7px;
+  height: 8px;
   background: var(--surface-3);
   border-radius: 8px;
   display: flex;
@@ -497,6 +516,12 @@ body {
 .overview-bar-ratio .ratio-del { background: var(--giao); transition: width 0.3s; }
 .overview-bar-ratio .ratio-pick { background: var(--lay); transition: width 0.3s; }
 .overview-bar-ratio .ratio-ret { background: var(--hoan); transition: width 0.3s; }
+
+.overview-bar-ratio.is-empty .ratio-del,
+.overview-bar-ratio.is-empty .ratio-pick,
+.overview-bar-ratio.is-empty .ratio-ret {
+  background: var(--surface-3);
+}
 
 /* =============== INCOME SECTION =============== */
 details.income-section {
@@ -1264,7 +1289,8 @@ tr:last-child td { border-bottom: none; }
   .vertical-sidebar { border-radius: 20px 20px 0 0; }
 }
 @media (max-width: 360px) {
-  .hero-value { font-size: 30px; }
+  .hero-value { font-size: 28px; }
   .stat-card-val { font-size: 16px; }
-  .quet-icon { width: 50px; height: 50px; font-size: 22px; }
+  .quet-icon { width: 44px; height: 44px; font-size: 20px; }
+  .period-btn { padding: 6px 9px; font-size: 11px; }
 }
