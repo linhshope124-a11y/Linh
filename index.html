@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
+<!-- ============ HEADER (bỏ nút +) ============ -->
 <header class="top-nav">
   <button class="btn-icon" onclick="openMenuModal()" title="Menu" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -28,17 +28,9 @@
 
   <div class="brand">SPX Tracker</div>
 
-  <div class="header-right">
-    <button class="btn-icon btn-icon-add" onclick="openAddModal()" title="Nhập sản lượng" aria-label="Nhập">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-    </button>
-    <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme" aria-label="Theme">
-      <span id="themeIcon">🌙</span>
-    </button>
-  </div>
+  <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme" aria-label="Theme">
+    <span id="themeIcon">🌙</span>
+  </button>
 </header>
 
 <!-- ============ PERIOD BAR ============ -->
@@ -75,12 +67,12 @@
               <span id="currentBonusPctLabel" style="color:var(--accent);font-weight:700">+0%</span>
             </div>
             <div class="rank-pill-group">
-              <div class="rank-pill active" data-rank="none"      onclick="setRankTier('none', 0, this)"><span>Chuẩn</span><span>+0%</span></div>
-              <div class="rank-pill"        data-rank="dong"      onclick="setRankTier('dong', 0.10, this)"><span>Đồng</span><span>+10%</span></div>
-              <div class="rank-pill"        data-rank="bac"       onclick="setRankTier('bac', 0.15, this)"><span>Bạc</span><span>+15%</span></div>
-              <div class="rank-pill"        data-rank="vang"      onclick="setRankTier('vang', 0.20, this)"><span>Vàng</span><span>+20%</span></div>
-              <div class="rank-pill"        data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)"><span>B.Kim</span><span>+22%</span></div>
-              <div class="rank-pill"        data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)"><span>K.Cương</span><span>+26%</span></div>
+              <div class="rank-pill active" data-rank="none"      onclick="setRankTier('none', 0, this)">Chuẩn</div>
+              <div class="rank-pill"        data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</div>
+              <div class="rank-pill"        data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</div>
+              <div class="rank-pill"        data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</div>
+              <div class="rank-pill"        data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</div>
+              <div class="rank-pill"        data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</div>
             </div>
           </div>
 
@@ -243,7 +235,7 @@
       </main>
     </div>
 
-    <!-- ===== TAB NHẬT KÝ (ẩn, truy cập từ menu) ===== -->
+    <!-- ===== TAB NHẬT KÝ ===== -->
     <div class="tab-panel" id="tab-history">
       <main class="app-container">
         <section class="card">
@@ -281,7 +273,7 @@
 
   <button class="tab-btn-quet" onclick="document.getElementById('ocrFileInput').click()" title="Quét ảnh SPX" aria-label="Quét ảnh">
     <span class="quet-icon">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
         <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
