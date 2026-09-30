@@ -3,7 +3,6 @@ import { WEIGHT_KEYS } from './config.js';
 import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
-// REVERT fix #3: bỏ import pushUndo
 
 // ==================== TESSERACT WORKER ====================
 let cachedTesseractWorker = null;
@@ -407,7 +406,7 @@ function getTypeLabel(r) {
        : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
 }
 
-// ===== REVERT fix #3: Auto-save không pushUndo =====
+// Auto-save không có undo (theo yêu cầu)
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -796,7 +795,6 @@ export function saveBatchAll() {
     return;
   }
 
-  // REVERT fix #3: batch save cũng không pushUndo
   finalList.forEach(({ item, type, weights }) => {
     state.appData[type].unshift({ id: generateId(), date: item.result.parsedDate, weights });
   });
