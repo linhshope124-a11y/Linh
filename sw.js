@@ -1,4 +1,4 @@
-const CACHE = 'spx-tracker-v4';
+const CACHE = 'spx-tracker-v6';
 const STATIC_ASSETS = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
