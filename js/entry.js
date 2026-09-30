@@ -32,7 +32,7 @@ export function saveRecord() {
   const wasFromBatch = hasBatchPending();
 
   if (editId && editType) {
-    // === SỬA BẢN GHI ===
+    // === SỬA ===
     const numId  = parseInt(editId, 10);
     const prefix = editType === 'delivery' ? 'del_inp'
                  : editType === 'pickup'   ? 'pick_inp'
@@ -44,7 +44,6 @@ export function saveRecord() {
       closeModal(true); updateAllViews(); return;
     }
 
-    // Check trùng (trừ chính nó)
     const dup = state.appData[editType].find(r =>
       r.id !== numId && r.date === date && weightsEqual(r.weights, weights)
     );
@@ -75,7 +74,6 @@ export function saveRecord() {
     const retT  = Object.values(retW).reduce((a, b) => a + b, 0);
     if (delT + pickT + retT === 0) { alert('Chưa nhập số liệu nào!'); return; }
 
-    // CHẶN LUÔN nếu trùng
     const dups = [];
     if (delT  > 0 && findDuplicate('delivery', date, delW))  dups.push('Giao');
     if (pickT > 0 && findDuplicate('pickup',   date, pickW)) dups.push('Lấy');
@@ -87,18 +85,19 @@ export function saveRecord() {
     }
 
     const addedIds = [];
+    // ===== FIX: dùng generateId() độc lập, không +1/+2 =====
     if (delT  > 0) {
       const id = generateId();
       state.appData.delivery.unshift({ id, date, weights: delW });
       addedIds.push({ type: 'delivery', id });
     }
     if (pickT > 0) {
-      const id = generateId() + 1;
+      const id = generateId();
       state.appData.pickup.unshift({ id, date, weights: pickW });
       addedIds.push({ type: 'pickup', id });
     }
     if (retT  > 0) {
-      const id = generateId() + 2;
+      const id = generateId();
       state.appData.return.unshift({ id, date, weights: retW });
       addedIds.push({ type: 'return', id });
     }
