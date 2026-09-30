@@ -16,7 +16,7 @@ export const state = {
   isOcrScan: false
 };
 
-// Giữ fix #1: sanitize records, bỏ rác
+// Lọc bỏ bản ghi rác khi load
 function sanitizeRecords(arr) {
   if (!Array.isArray(arr)) return [];
   return arr
@@ -52,7 +52,7 @@ export function loadState() {
 
   state.manualSalary = parseFloat(localStorage.getItem('spx_manual_salary')) || 0;
 
-  // REVERT fix #2: hard-code 26, không đọc localStorage
+  // Trần 26 ngày công — cố định
   state.salaryDays = 26;
 }
 
