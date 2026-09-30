@@ -159,36 +159,18 @@ export function closeSettingsModal() {
 export function openCoffeeModal()  { document.getElementById('coffeeModal').classList.add('active'); }
 export function closeCoffeeModal() { document.getElementById('coffeeModal').classList.remove('active'); }
 
-export function copyPhoneNumber() {
-  const phone = document.getElementById('coffeePhone').innerText.trim();
-  const btn = document.getElementById('copyPhoneBtn');
-  const ok = () => {
-    btn.innerHTML = '✓ Đã chép!';
-    btn.style.background = 'var(--success)';
-    btn.style.borderColor = 'var(--success)';
-    setTimeout(() => { btn.innerHTML = 'Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
-  };
-  const fb = () => {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = phone; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      ok();
-    } catch { showToast('Số: ' + phone, 'warning'); }
-  };
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(phone).then(ok).catch(fb);
-  else fb();
-}
-
 export function copyBankNumber() {
   const stk = document.getElementById('bankSTK').innerText.trim();
   const btn = document.getElementById('copyBankBtn');
   const ok = () => {
-    btn.innerHTML = '✓ Đã chép!';
+    btn.innerHTML = '✓ Đã sao chép!';
     btn.style.background = 'var(--success)';
     btn.style.borderColor = 'var(--success)';
-    setTimeout(() => { btn.innerHTML = 'Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
+    setTimeout(() => {
+      btn.innerHTML = '📋 Sao chép số tài khoản';
+      btn.style.background = '';
+      btn.style.borderColor = '';
+    }, 2000);
   };
   const fb = () => {
     try {
@@ -209,7 +191,6 @@ export function showToast(message, type = 'success', duration = 2200) {
   if (!toast) return;
   toast.className = 'app-toast ' + type;
   toast.innerText = message;
-  // Trigger reflow để animation chạy lại nếu toast đang active
   void toast.offsetWidth;
   toast.classList.add('active');
   clearTimeout(window.__spxToastTimer);
