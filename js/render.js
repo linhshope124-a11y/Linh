@@ -5,7 +5,6 @@ import { formatPts, formatDateDisplay, _fmt } from './utils.js';
 
 const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-spacing:0.5px;';
 
-// ===== FIX: dispatch 'spx:datachanged' chỉ khi data thực sự thay đổi =====
 let _lastDataHash = null;
 
 function getWorkedDaysByPeriod(period) {
@@ -113,7 +112,6 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  // ===== FIX: dùng state.salaryDays =====
   const salaryDays = state.salaryDays || 26;
   const workedDays = getWorkedDaysByPeriod(state.periodFilter);
   const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
@@ -133,7 +131,11 @@ function _updateAllViews() {
   document.getElementById('rankBonusDetailText').innerText = `Gốc: ${formatPts(rawBase)} · Thưởng: +${formatPts(rankBonus)} · Thu nhập: +${formatPts(incomeAccumulated)}`;
   document.getElementById('overallTotalOrders').innerText  = `${_fmt(totalOrders)} đơn`;
 
+  // ===== Ratio bar + toggle is-empty =====
+  const ratioBar = document.querySelector('.overview-bar-ratio');
   if (totalOrders > 0) {
+    if (ratioBar) ratioBar.classList.remove('is-empty');
+
     const rawDel  = (total.del  / totalOrders) * 100;
     const rawPick = (total.pick / totalOrders) * 100;
     const rawRet  = (total.ret  / totalOrders) * 100;
@@ -156,18 +158,20 @@ function _updateAllViews() {
     document.getElementById('ratioBarRet').style.width  = pRet  + '%';
     document.getElementById('ratioText').innerText = `${pDel}% G · ${pPick}% L · ${pRet}% H`;
   } else {
+    if (ratioBar) ratioBar.classList.add('is-empty');
     document.getElementById('ratioBarDel').style.width  = '33.3%';
     document.getElementById('ratioBarPick').style.width = '33.3%';
     document.getElementById('ratioBarRet').style.width  = '33.4%';
     document.getElementById('ratioText').innerText = '0% G · 0% L · 0% H';
   }
 
+  // ===== 3 mini card — FIX bỏ chữ "đơn" (HTML đã có sẵn) =====
   document.getElementById('miniDelPoints').innerText  = formatPts(delPts);
-  document.getElementById('miniDelOrders').innerText  = `${_fmt(total.del)} đơn`;
+  document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
   document.getElementById('miniPickPoints').innerText = formatPts(pickPts);
-  document.getElementById('miniPickOrders').innerText = `${_fmt(total.pick)} đơn`;
+  document.getElementById('miniPickOrders').innerText = _fmt(total.pick);
   document.getElementById('miniRetPoints').innerText  = formatPts(retPts);
-  document.getElementById('miniRetOrders').innerText  = `${_fmt(total.ret)} đơn`;
+  document.getElementById('miniRetOrders').innerText  = _fmt(total.ret);
 
   document.getElementById('delTotalPoints').innerText  = formatPts(delPts);
   document.getElementById('delTotalOrders').innerText  = `${_fmt(total.del)} đơn`;
@@ -176,7 +180,7 @@ function _updateAllViews() {
   document.getElementById('retTotalPoints').innerText  = formatPts(retPts);
   document.getElementById('retTotalOrders').innerText  = `${_fmt(total.ret)} đơn`;
 
-  // === Update UI Thu nhập ===
+  // ===== Update UI Thu nhập =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -231,7 +235,6 @@ function _updateAllViews() {
 
   persistData();
 
-  // ===== FIX: chỉ dispatch khi data đổi =====
   const currentHash = JSON.stringify(state.appData);
   if (_lastDataHash === null) {
     _lastDataHash = currentHash;
