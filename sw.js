@@ -1,10 +1,10 @@
-const CACHE = 'spx-tracker-v9';
+const CACHE = 'spx-tracker-v13';
 const CORE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
   './js/calc.js', './js/theme.js', './js/ocr.js', './js/ui.js',
   './js/render.js', './js/entry.js', './js/backup.js',
-  './js/cloud.js', './js/undo.js', './js/charts.js'
+  './js/cloud.js', './js/undo.js'
 ];
 
 self.addEventListener('install', e => {
@@ -21,6 +21,7 @@ self.addEventListener('activate', e => {
   );
 });
 
+// NETWORK-FIRST — luôn update khi có mạng, fallback cache khi offline
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
