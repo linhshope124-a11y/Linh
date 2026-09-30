@@ -1,6 +1,7 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
 
+// ================ TABS ================
 export function switchMainTab(tabId, el) {
   state.activeTab = tabId;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -25,6 +26,7 @@ export function switchModalSubTab(tabKey) {
   document.getElementById('pane-' + tabKey).style.display = 'block';
 }
 
+// ================ FILTERS ================
 export function setOverviewFilter(filter, el) {
   state.overviewFilter = filter;
   const bar = el.closest('.history-filter-bar');
@@ -53,6 +55,7 @@ export function setHistFilter(filter, btn) {
   renderHistory();
 }
 
+// ================ RANK ================
 export function setRankTier(rankKey, bonusPct, el) {
   state.rankBonus = bonusPct;
   state.rankName  = rankKey;
@@ -70,8 +73,9 @@ export function initRankUI() {
   document.getElementById('currentBonusPctLabel').innerText = `+${Math.round(state.rankBonus * 100)}%`;
 }
 
+// ================ MODALS ================
 export function openAddModal() {
-  document.getElementById('modalTitle').innerText = 'Nhập Sản Lượng Ngày';
+  document.getElementById('modalTitle').innerText = 'Nhập sản lượng ngày';
   document.getElementById('editEntryId').value = '';
   document.getElementById('editEntryType').value = '';
   document.getElementById('modalSubTabGroup').style.display = 'flex';
@@ -97,7 +101,7 @@ export function openAddModal() {
 
 export function openEditModal(type, id) {
   const item = (state.appData[type] || []).find(r => r.id === id);
-  if (!item) { alert('Không tìm thấy bản ghi!'); return; }
+  if (!item) { showToast('Không tìm thấy bản ghi', 'error'); return; }
 
   document.getElementById('modalTitle').innerText =
     `Sửa (${type === 'delivery' ? 'Giao' : type === 'pickup' ? 'Lấy' : 'Hoàn'})`;
@@ -160,8 +164,9 @@ export function copyPhoneNumber() {
   const btn = document.getElementById('copyPhoneBtn');
   const ok = () => {
     btn.innerHTML = '✓ Đã chép!';
-    btn.style.background = '#10b981'; btn.style.borderColor = '#10b981';
-    setTimeout(() => { btn.innerHTML = '📋 Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
+    btn.style.background = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(() => { btn.innerHTML = 'Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
   };
   const fb = () => {
     try {
@@ -170,7 +175,7 @@ export function copyPhoneNumber() {
       document.body.appendChild(ta); ta.select();
       document.execCommand('copy'); document.body.removeChild(ta);
       ok();
-    } catch { alert('Số: ' + phone); }
+    } catch { showToast('Số: ' + phone, 'warning'); }
   };
   if (navigator.clipboard?.writeText) navigator.clipboard.writeText(phone).then(ok).catch(fb);
   else fb();
@@ -181,8 +186,9 @@ export function copyBankNumber() {
   const btn = document.getElementById('copyBankBtn');
   const ok = () => {
     btn.innerHTML = '✓ Đã chép!';
-    btn.style.background = '#10b981'; btn.style.borderColor = '#10b981';
-    setTimeout(() => { btn.innerHTML = '📋 Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
+    btn.style.background = 'var(--success)';
+    btn.style.borderColor = 'var(--success)';
+    setTimeout(() => { btn.innerHTML = 'Chép'; btn.style.background = ''; btn.style.borderColor = ''; }, 2000);
   };
   const fb = () => {
     try {
@@ -191,12 +197,28 @@ export function copyBankNumber() {
       document.body.appendChild(ta); ta.select();
       document.execCommand('copy'); document.body.removeChild(ta);
       ok();
-    } catch { alert('STK: ' + stk); }
+    } catch { showToast('STK: ' + stk, 'warning'); }
   };
   if (navigator.clipboard?.writeText) navigator.clipboard.writeText(stk).then(ok).catch(fb);
   else fb();
 }
 
+// ================ TOAST ================
+export function showToast(message, type = 'success', duration = 2200) {
+  const toast = document.getElementById('appToast');
+  if (!toast) return;
+  toast.className = 'app-toast ' + type;
+  toast.innerText = message;
+  // Trigger reflow để animation chạy lại nếu toast đang active
+  void toast.offsetWidth;
+  toast.classList.add('active');
+  clearTimeout(window.__spxToastTimer);
+  window.__spxToastTimer = setTimeout(() => {
+    toast.classList.remove('active');
+  }, duration);
+}
+
+// ================ HELPERS ================
 function getTodayIsoLocal() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
