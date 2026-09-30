@@ -1,7 +1,6 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
 import { getTodayIso } from './utils.js';
-import { toggleTheme } from './theme.js';
 
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
@@ -77,6 +76,12 @@ export function setHistFilter(filter, btn) {
 
 // ================ RANK ================
 export function setRankTier(rankKey, bonusPct, el) {
+  // Nếu vừa long-press xong → bỏ qua click này
+  if (window.__spxLongPressFired) {
+    window.__spxLongPressFired = false;
+    return;
+  }
+
   state.rankBonus = bonusPct;
   state.rankName  = rankKey;
   persistSettings();
@@ -87,35 +92,78 @@ export function setRankTier(rankKey, bonusPct, el) {
   updateAllViews();
 }
 
+// Bỏ chọn hạng thưởng — về +0%
+function resetRankToNone() {
+  state.rankBonus = 0;
+  state.rankName  = 'none';
+  persistSettings();
+
+  document.querySelectorAll('.rank-pill').forEach(p => {
+    p.classList.remove('active');
+    p.classList.remove('long-pressing');
+  });
+  const label = document.getElementById('currentBonusPctLabel');
+  if (label) label.innerText = '+0%';
+
+  updateAllViews();
+  showToast('Đã bỏ chọn hạng thưởng', 'success', 1800);
+}
+
+// Long-press để bỏ chọn — chỉ gắn 1 lần
+let _rankLongPressAttached = false;
+function attachRankLongPress() {
+  if (_rankLongPressAttached) return;
+  _rankLongPressAttached = true;
+
+  document.querySelectorAll('.rank-pill').forEach(pill => {
+    let timer = null;
+
+    const start = () => {
+      window.__spxLongPressFired = false;
+      pill.classList.add('long-pressing');
+
+      timer = setTimeout(() => {
+        window.__spxLongPressFired = true;
+
+        // Chỉ xử lý khi pill đang active
+        if (pill.classList.contains('active')) {
+          if (navigator.vibrate) {
+            try { navigator.vibrate(30); } catch {}
+          }
+          resetRankToNone();
+        } else {
+          pill.classList.remove('long-pressing');
+        }
+      }, 550);
+    };
+
+    const cancel = () => {
+      clearTimeout(timer);
+      timer = null;
+      pill.classList.remove('long-pressing');
+    };
+
+    // Touch events
+    pill.addEventListener('touchstart',  start,  { passive: true });
+    pill.addEventListener('touchend',    cancel);
+    pill.addEventListener('touchcancel', cancel);
+    pill.addEventListener('touchmove',   cancel, { passive: true });
+
+    // Mouse events (test desktop)
+    pill.addEventListener('mousedown', start);
+    pill.addEventListener('mouseup',   cancel);
+    pill.addEventListener('mouseleave',cancel);
+  });
+}
+
 export function initRankUI() {
   document.querySelectorAll('.rank-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.rank === state.rankName);
   });
   const label = document.getElementById('currentBonusPctLabel');
   if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
-}
 
-// ================ THEME (từ menu) ================
-export function toggleThemeFromMenu() {
-  toggleTheme();
-  updateMenuThemeUI();
-}
-
-export function updateMenuThemeUI() {
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const icon  = document.getElementById('menuThemeIcon');
-  const title = document.getElementById('menuThemeTitle');
-  const sub   = document.getElementById('menuThemeSub');
-
-  if (current === 'dark') {
-    if (icon)  icon.innerText  = '☀️';
-    if (title) title.innerText = 'Chế độ sáng';
-    if (sub)   sub.innerText   = 'Chuyển về giao diện sáng';
-  } else {
-    if (icon)  icon.innerText  = '🌙';
-    if (title) title.innerText = 'Chế độ tối';
-    if (sub)   sub.innerText   = 'Chuyển sang giao diện tối';
-  }
+  attachRankLongPress();
 }
 
 // ================ MODALS ================
@@ -196,13 +244,8 @@ export function closeModal(force) {
 }
 
 // ================ MENU MODAL ================
-export function openMenuModal() {
-  updateMenuThemeUI();
-  document.getElementById('menuModal').classList.add('active');
-}
-export function closeMenuModal() {
-  document.getElementById('menuModal').classList.remove('active');
-}
+export function openMenuModal()  { document.getElementById('menuModal').classList.add('active'); }
+export function closeMenuModal() { document.getElementById('menuModal').classList.remove('active'); }
 
 // ================ STATS MODAL ================
 function _readBusuanzi() {
