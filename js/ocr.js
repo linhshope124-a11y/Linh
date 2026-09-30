@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { WEIGHT_KEYS } from './config.js';
 import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
-import { openAddModal, openEditModal, switchModalSubTab } from './ui.js';
+import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
 
 // ==================== TESSERACT WORKER ====================
@@ -211,7 +211,6 @@ function parseOcrText(cleanText) {
   const confidences = {};
   const text = cleanText.replace(/[–—]/g, '-').replace(/,/g, '.');
 
-  // 1. Tổng đơn kỳ vọng
   const totalRegex = /T[oổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
   let expectedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
@@ -219,7 +218,6 @@ function parseOcrText(cleanText) {
   const totalPos = totalMatch ? totalMatch.index : -1;
   const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
-  // 2. Ranges
   const rangeRegex = /(\d{1,2})(?:\.\d{1,3})?\s*-\s*(\d{1,2})(?:\.\d{1,3})?/g;
   const ranges = [];
   let m;
@@ -233,7 +231,6 @@ function parseOcrText(cleanText) {
   }
   ranges.sort((a, b) => a.pos - b.pos);
 
-  // 3. Numbers
   const numRegex = /\d{1,6}/g;
   const nums = [];
   while ((m = numRegex.exec(text)) !== null) {
@@ -248,13 +245,11 @@ function parseOcrText(cleanText) {
   }
   nums.sort((a, b) => a.pos - b.pos);
 
-  // 4. Ordered match
   const orderedResult = {};
   for (let i = 0; i < ranges.length && i < nums.length; i++) {
     orderedResult[ranges[i].key] = nums[i].value;
   }
 
-  // 5. Distance match
   function distanceMatch(mode) {
     const result = {};
     const used = new Set();
@@ -318,11 +313,10 @@ function parseOcrText(cleanText) {
   return { weights, confidences, expectedTotal, totalFound, mode: bestMode };
 }
 
-// ==================== EXTRACT DATE — FIXED ====================
+// ==================== EXTRACT DATE ====================
 function extractDate(text) {
   const cleanText = text.replace(/,/g, '.');
 
-  // === Ưu tiên 1: DD/MM/YYYY (có năm rõ ràng) ===
   const fullMatch = cleanText.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4}|\d{2})/);
   if (fullMatch) {
     const day = parseInt(fullMatch[1], 10);
@@ -334,7 +328,6 @@ function extractDate(text) {
     }
   }
 
-  // === Ưu tiên 2: "Ngày DD/MM" (có keyword "ngày") ===
   const dayMatch = cleanText.match(/(?:ngày|ngay)\s*[-–:]?\s*(\d{1,2})[\/\-\.](\d{1,2})/i);
   if (dayMatch) {
     const day = parseInt(dayMatch[1], 10);
@@ -344,18 +337,15 @@ function extractDate(text) {
     }
   }
 
-  // === Ưu tiên 3: DD/MM hợp lệ bất kỳ (validate day 1-31, month 1-12) ===
   const allMatches = [...cleanText.matchAll(/(\d{1,2})[\/\-\.](\d{1,2})/g)];
   for (const m of allMatches) {
     const day = parseInt(m[1], 10);
     const month = parseInt(m[2], 10);
-    // Loại số vô lý: ngày 1-31, tháng 1-12
     if (day >= 1 && day <= 31 && month >= 1 && month <= 12) {
       return new Date().getFullYear() + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     }
   }
 
-  // === Fallback: hôm nay ===
   return getTodayIso();
 }
 
@@ -393,6 +383,57 @@ function cacheSet(hash, value) {
 let batchResults = [];
 let pendingAppend = false;
 
+// ==================== HELPERS ====================
+function buildWeights(r) {
+  const suffixMap = {
+    '0_2':'w0_2','2_4':'w2_4','4_6':'w4_6','6_8':'w6_8',
+    '8_10':'w8_10','10_12':'w10_12','12_15':'w12_15','over_15':'wover_15'
+  };
+  const w = {};
+  WEIGHT_KEYS.forEach(wk => {
+    const suffix = Object.keys(suffixMap).find(k => suffixMap[k] === wk);
+    w[wk] = r.weights[suffix] || 0;
+  });
+  return w;
+}
+
+function getTypeFromResult(r) {
+  return r.detectedColorType === 'del' ? 'delivery'
+       : r.detectedColorType === 'pick' ? 'pickup' : 'return';
+}
+
+function getTypeLabel(r) {
+  return r.detectedColorType === 'del' ? 'Giao'
+       : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
+}
+
+// Auto-save 1 record, trả về true nếu thành công
+function tryAutoSave(r) {
+  const confs = Object.values(r.confidences).filter(c => c != null);
+  if (confs.length === 0) return false;
+  const allHigh = confs.every(c => c >= 85);
+  if (!allHigh) return false;
+
+  if (r.expectedTotal !== null && r.expectedTotal !== r.totalFound) return false;
+  if (r.totalFound <= 0) return false;
+
+  const type = getTypeFromResult(r);
+  const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
+  if (existing) return false;
+
+  state.appData[type].unshift({
+    id: generateId(),
+    date: r.parsedDate,
+    weights: buildWeights(r)
+  });
+  updateAllViews();
+
+  const typeLabel = getTypeLabel(r);
+  const dateStr = formatDateDisplay(r.parsedDate);
+  showToast(`Đã lưu ${typeLabel} ${dateStr}: ${r.totalFound} đơn`, 'success');
+  return true;
+}
+
 // ==================== MAIN ====================
 export async function handleOcrImage(event) {
   const files = Array.from(event.target.files || []);
@@ -418,11 +459,15 @@ export async function handleOcrImage(event) {
 
     const validCount = newResults.filter(r => !r.error).length;
     if (files.length === 1 && validCount === 1) {
-      fillModalFromResult(newResults[0]);
+      const item = newResults[0];
+      // AUTO-SAVE khi ảnh đủ điều kiện
+      if (tryAutoSave(item.result)) return;
+      // Có vấn đề → mở modal cho user kiểm tra
+      fillModalFromResult(item);
       return;
     }
     if (files.length === 1 && validCount === 0) {
-      alert('❌ Không đọc được ảnh: ' + newResults[0].error);
+      showToast('Không đọc được ảnh: ' + newResults[0].error, 'error', 3000);
       return;
     }
 
@@ -431,7 +476,7 @@ export async function handleOcrImage(event) {
   } catch (err) {
     console.error(err);
     overlay.style.display = 'none';
-    alert('Lỗi khi quét ảnh: ' + (err && err.message ? err.message : err));
+    showToast('Lỗi khi quét ảnh', 'error', 3000);
   }
 }
 
@@ -467,7 +512,6 @@ async function processFiles(files) {
       statusDesc.innerText = 'Xác định tab...';
       const detectedType = await detectActiveTabByOrangeLine(rawDataUrl);
 
-      // Pass 1
       statusDesc.innerText = 'Quét lần 1...';
       const pre1 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: true });
       const text1 = await ocrRecognize(pre1.dataUrl);
@@ -477,7 +521,6 @@ async function processFiles(files) {
       let bestText = text1;
       let bestDiff = parsed1.expectedTotal !== null ? Math.abs(parsed1.totalFound - parsed1.expectedTotal) : 9999;
 
-      // Pass 2
       if (bestDiff > 0) {
         statusDesc.innerText = 'Quét lần 2...';
         const pre2 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 130 });
@@ -491,7 +534,6 @@ async function processFiles(files) {
         }
       }
 
-      // Pass 3
       if (bestDiff > 0) {
         statusDesc.innerText = 'Quét lần 3...';
         const pre3 = await preprocessImage(rawDataUrl, { upscale: 2.5, useOtsu: false, threshold: 160 });
@@ -545,32 +587,26 @@ export function fillModalFromResult(batchItem) {
 
   applyConfidenceHighlight(r.confidences, r.detectedColorType);
 
-  const typeText = r.detectedColorType === 'del'  ? 'Đã giao hàng'
-                 : r.detectedColorType === 'pick' ? 'Đã lấy'
-                 : 'Đã trả hàng';
+  const typeText = getTypeLabel(r);
 
-  let warnMsg = '';
+  let msg = `${typeText} ${formatDateDisplay(r.parsedDate)} · ${r.totalFound} đơn`;
+
   if (r.expectedTotal !== null && r.totalFound !== r.expectedTotal) {
-    warnMsg = '\n\n⚠️ Ảnh ghi: ' + r.expectedTotal + ' đơn · Đọc được: ' + r.totalFound
-            + ' (lệch ' + Math.abs(r.expectedTotal - r.totalFound) + ')';
+    msg += ` · lệch ${Math.abs(r.expectedTotal - r.totalFound)}`;
   }
 
-  let lowCount = 0, midCount = 0, highCount = 0;
+  let lowCount = 0, midCount = 0;
   Object.values(r.confidences).forEach(c => {
     if (c == null) return;
-    if (c >= 85) highCount++;
-    else if (c >= 70) midCount++;
-    else lowCount++;
+    if (c < 70) lowCount++;
+    else if (c < 85) midCount++;
   });
-  let confMsg = '';
-  if (lowCount > 0)       confMsg = '\n\n🔴 ' + lowCount + ' dải cần kiểm tra (viền đỏ)';
-  else if (midCount > 0)  confMsg = '\n\n🟡 ' + midCount + ' dải nên xem lại (viền vàng)';
-  else if (highCount > 0) confMsg = '\n\n🟢 ' + highCount + ' dải đọc chắc chắn';
 
-  alert('✅ Quét xong!\n- Tab: ' + typeText
-      + '\n- Ngày: ' + formatDateDisplay(r.parsedDate)
-      + '\n- Tổng: ' + r.totalFound + ' đơn' + warnMsg + confMsg
-      + '\n\n📷 Kéo xuống xem ẢNH GỐC để đối chiếu.');
+  let toastType = 'success';
+  if (lowCount > 0) { msg += ' · có dải đỏ'; toastType = 'error'; }
+  else if (midCount > 0) { msg += ' · có dải vàng'; toastType = 'warning'; }
+
+  showToast(msg + ' — kiểm tra và lưu', toastType, 3500);
 }
 
 // ==================== COMPARE ====================
@@ -600,9 +636,7 @@ function buildCompareText(ocrW, existingW) {
 
 export function openCompareModal(batchItem, existingRecord) {
   const r = batchItem.result;
-  const type = r.detectedColorType === 'del'  ? 'delivery'
-             : r.detectedColorType === 'pick' ? 'pickup'
-             : 'return';
+  const type = getTypeFromResult(r);
 
   openEditModal(type, existingRecord.id);
 
@@ -670,7 +704,7 @@ function renderBatchList() {
       const confIcon  = lowCount > 0 ? ' 🔴' : midCount > 0 ? ' 🟡' : ' 🟢';
       const warnIcon  = (r.expectedTotal !== null && r.totalFound !== r.expectedTotal) ? ' ⚠️' : '';
       const cacheIcon = item.fromCache ? ' ⚡' : '';
-      const type = r.detectedColorType === 'del' ? 'delivery' : r.detectedColorType === 'pick' ? 'pickup' : 'return';
+      const type = getTypeFromResult(r);
       const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
       const actionBtn = existing
         ? `<button class="batch-btn batch-btn-compare" onclick="importBatchItem(${idx})">🔍 So sánh</button>`
@@ -708,9 +742,7 @@ export function importBatchItem(idx) {
   const item = batchResults[idx];
   if (!item || item.error) return;
   const r = item.result;
-  const type = r.detectedColorType === 'del'  ? 'delivery'
-             : r.detectedColorType === 'pick' ? 'pickup'
-             : 'return';
+  const type = getTypeFromResult(r);
   const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
   closeBatchOcrModal();
   if (existing) openCompareModal(item, existing);
@@ -720,7 +752,7 @@ export function importBatchItem(idx) {
 
 export function backToBatch() {
   if (batchResults.length === 0) {
-    alert('Batch đã trống. Hãy quét ảnh mới.');
+    showToast('Batch đã trống', 'warning');
     showBackToBatchBtn(false);
     return;
   }
@@ -738,68 +770,50 @@ export function hasBatchPending() { return batchResults.length > 0; }
 // ==================== SAVE BATCH ====================
 export function saveBatchAll() {
   const valid = batchResults.filter(r => !r.error);
-  if (valid.length === 0) { alert('Không có dữ liệu hợp lệ để lưu!'); return; }
-  const suffixMap = {
-    '0_2':'w0_2','2_4':'w2_4','4_6':'w4_6','6_8':'w6_8',
-    '8_10':'w8_10','10_12':'w10_12','12_15':'w12_15','over_15':'wover_15'
-  };
-  function buildWeights(r) {
-    const w = {};
-    WEIGHT_KEYS.forEach(wk => {
-      const suffix = Object.keys(suffixMap).find(k => suffixMap[k] === wk);
-      w[wk] = r.weights[suffix] || 0;
-    });
-    return w;
-  }
-  function getType(r) {
-    return r.detectedColorType === 'del' ? 'delivery'
-         : r.detectedColorType === 'pick' ? 'pickup' : 'return';
-  }
+  if (valid.length === 0) { showToast('Không có dữ liệu hợp lệ', 'error'); return; }
+
   const seenInBatch = new Set();
   const dedupedBatch = [];
   let dupInBatch = 0;
   valid.forEach(item => {
     const r = item.result;
-    const key = getType(r) + '|' + r.parsedDate;
+    const key = getTypeFromResult(r) + '|' + r.parsedDate;
     if (seenInBatch.has(key)) { dupInBatch++; return; }
     seenInBatch.add(key);
     dedupedBatch.push(item);
   });
+
   const finalList = [];
   let dupExisting = 0;
   dedupedBatch.forEach(item => {
     const r = item.result;
-    const type = getType(r);
+    const type = getTypeFromResult(r);
     const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
     if (existing) { dupExisting++; return; }
     finalList.push({ item, type, weights: buildWeights(r) });
   });
+
   const totalSkipped = dupInBatch + dupExisting;
+
   if (finalList.length === 0) {
-    let msg = '⚠️ Không có gì để lưu!\n';
-    if (dupInBatch > 0)  msg += `\n• ${dupInBatch} ảnh trùng trong batch`;
-    if (dupExisting > 0) msg += `\n• ${dupExisting} ảnh đã có ngày tồn tại trong Nhật ký`;
-    msg += '\n\n💡 Bấm "🔍 So sánh" để đối chiếu.';
-    alert(msg);
+    let msg = 'Không có gì để lưu';
+    if (totalSkipped > 0) msg += ` (bỏ qua ${totalSkipped} ảnh trùng)`;
+    showToast(msg, 'warning', 2500);
     return;
   }
-  let confirmMsg = `Lưu ${finalList.length} bản ghi mới?`;
-  if (totalSkipped > 0) {
-    confirmMsg += `\n\n⚠️ Bỏ qua ${totalSkipped} ảnh:`;
-    if (dupInBatch > 0)  confirmMsg += `\n  • ${dupInBatch} ảnh trùng trong batch`;
-    if (dupExisting > 0) confirmMsg += `\n  • ${dupExisting} ảnh đã có ngày (giữ data cũ)`;
-  }
-  if (!confirm(confirmMsg)) return;
+
   finalList.forEach(({ item, type, weights }) => {
     state.appData[type].unshift({ id: generateId(), date: item.result.parsedDate, weights });
   });
+
   batchResults = [];
   showBackToBatchBtn(false);
   closeBatchOcrModal();
   updateAllViews();
-  let doneMsg = `✅ Đã lưu ${finalList.length} bản ghi!`;
-  if (totalSkipped > 0) doneMsg += `\n(Đã bỏ qua ${totalSkipped} ảnh)`;
-  alert(doneMsg);
+
+  let doneMsg = `Đã lưu ${finalList.length} bản ghi`;
+  if (totalSkipped > 0) doneMsg += ` (bỏ qua ${totalSkipped} trùng)`;
+  showToast(doneMsg, 'success', 2500);
 }
 
 function escapeHtml(s) {
