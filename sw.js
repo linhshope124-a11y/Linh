@@ -1,5 +1,5 @@
-const CACHE = 'spx-tracker-v7';
-const STATIC_ASSETS = [
+const CACHE = 'spx-tracker-v8';
+const CORE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
   './js/calc.js', './js/theme.js', './js/ocr.js', './js/ui.js',
@@ -9,7 +9,7 @@ const STATIC_ASSETS = [
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())
   );
 });
 
@@ -21,28 +21,22 @@ self.addEventListener('activate', e => {
   );
 });
 
+// NETWORK-FIRST cho same-origin → luôn update khi có mạng, fallback cache khi offline
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  if (req.headers.get('accept')?.includes('text/html')) {
-    e.respondWith(
-      fetch(req).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
   e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const copy = res.clone();
-      caches.open(CACHE).then(c => c.put(req, copy));
-      return res;
-    }))
+    fetch(req)
+      .then(res => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
