@@ -1,35 +1,55 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
+import { getTodayIso } from './utils.js';
 
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
   state.activeTab = tabId;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tabId).classList.add('active');
+  const panel = document.getElementById('tab-' + tabId);
+  if (panel) panel.classList.add('active');
 
   if (tabId === 'history') {
     state.histFilter = 'all';
-    document.querySelectorAll('#tab-history .history-filter-bar .filter-btn')
+    document.querySelectorAll('#tab-history .filter-bar .filter-btn')
       .forEach((b, i) => b.classList.toggle('active', i === 0));
     renderHistory();
   }
 }
 
+// Mở tab Nhật ký từ menu (không có nút tab-btn tương ứng)
+export function openHistoryTab() {
+  state.activeTab = 'history';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('tab-history');
+  if (panel) panel.classList.add('active');
+  state.histFilter = 'all';
+  document.querySelectorAll('#tab-history .filter-bar .filter-btn')
+    .forEach((b, i) => b.classList.toggle('active', i === 0));
+  renderHistory();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 export function switchModalSubTab(tabKey) {
   ['del', 'pick', 'ret'].forEach(k => {
-    document.getElementById('subtab-btn-' + k).classList.remove('active');
-    document.getElementById('pane-' + k).style.display = 'none';
+    const btn = document.getElementById('subtab-btn-' + k);
+    const pane = document.getElementById('pane-' + k);
+    if (btn) btn.classList.remove('active');
+    if (pane) pane.style.display = 'none';
   });
-  document.getElementById('subtab-btn-' + tabKey).classList.add('active');
-  document.getElementById('pane-' + tabKey).style.display = 'block';
+  const btn = document.getElementById('subtab-btn-' + tabKey);
+  const pane = document.getElementById('pane-' + tabKey);
+  if (btn) btn.classList.add('active');
+  if (pane) pane.style.display = 'block';
 }
 
 // ================ FILTERS ================
 export function setOverviewFilter(filter, el) {
   state.overviewFilter = filter;
-  const bar = el.closest('.history-filter-bar');
+  const bar = el.closest('.filter-bar');
   if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('#overviewMilestoneList .suggestion-item').forEach(item => {
@@ -49,7 +69,7 @@ export function setPeriodFilter(period, el) {
 
 export function setHistFilter(filter, btn) {
   state.histFilter = filter;
-  const bar = btn.closest('.history-filter-bar');
+  const bar = btn.closest('.filter-bar');
   if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderHistory();
@@ -62,7 +82,8 @@ export function setRankTier(rankKey, bonusPct, el) {
   persistSettings();
   el.parentElement.querySelectorAll('.rank-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('currentBonusPctLabel').innerText = `+${Math.round(bonusPct * 100)}%`;
+  const label = document.getElementById('currentBonusPctLabel');
+  if (label) label.innerText = `+${Math.round(bonusPct * 100)}%`;
   updateAllViews();
 }
 
@@ -70,7 +91,8 @@ export function initRankUI() {
   document.querySelectorAll('.rank-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.rank === state.rankName);
   });
-  document.getElementById('currentBonusPctLabel').innerText = `+${Math.round(state.rankBonus * 100)}%`;
+  const label = document.getElementById('currentBonusPctLabel');
+  if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
 }
 
 // ================ MODALS ================
@@ -79,7 +101,7 @@ export function openAddModal() {
   document.getElementById('editEntryId').value = '';
   document.getElementById('editEntryType').value = '';
   document.getElementById('modalSubTabGroup').style.display = 'flex';
-  document.getElementById('inputDate').value = getTodayIsoLocal();
+  document.getElementById('inputDate').value = getTodayIso();
 
   ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(id => {
     document.getElementById('del_inp_'  + id).value = 0;
@@ -146,8 +168,67 @@ export function closeModal(force) {
     if (hasData && !isEditing && !confirm('Bạn đang có dữ liệu chưa lưu. Đóng và bỏ qua?')) return;
   }
   document.getElementById('entryModal').classList.remove('active');
+  state.isOcrScan = false;
+  state.lastOcrImageDataUrl = '';
 }
 
+// ================ MENU MODAL ================
+export function openMenuModal()  { document.getElementById('menuModal').classList.add('active'); }
+export function closeMenuModal() { document.getElementById('menuModal').classList.remove('active'); }
+
+// ================ STATS MODAL ================
+// ===== FIX: polling busuanzi thay vì setTimeout 300ms =====
+function _readBusuanzi() {
+  const pv    = document.getElementById('busuanzi_value_site_pv');
+  const uv    = document.getElementById('busuanzi_value_site_uv');
+  const today = document.getElementById('busuanzi_value_site_pv_today');
+  return {
+    pv:    pv?.innerText?.trim()    || '',
+    uv:    uv?.innerText?.trim()    || '',
+    today: today?.innerText?.trim() || ''
+  };
+}
+
+function _fillStatsModal() {
+  const { pv, uv, today } = _readBusuanzi();
+  const spv    = document.getElementById('statsPv');
+  const suv    = document.getElementById('statsUv');
+  const stoday = document.getElementById('statsToday');
+  if (spv)    spv.innerText    = pv    || '—';
+  if (suv)    suv.innerText    = uv    || '—';
+  if (stoday) stoday.innerText = today || '—';
+}
+
+export function openStatsModal() {
+  document.getElementById('statsModal').classList.add('active');
+  _fillStatsModal();
+
+  let tries = 0;
+  const interval = setInterval(() => {
+    const { pv, uv, today } = _readBusuanzi();
+    if (pv || uv || today) {
+      _fillStatsModal();
+      clearInterval(interval);
+      window.__spxStatsInterval = null;
+      return;
+    }
+    if (++tries >= 17) {
+      clearInterval(interval);
+      window.__spxStatsInterval = null;
+    }
+  }, 300);
+  window.__spxStatsInterval = interval;
+}
+
+export function closeStatsModal() {
+  document.getElementById('statsModal').classList.remove('active');
+  if (window.__spxStatsInterval) {
+    clearInterval(window.__spxStatsInterval);
+    window.__spxStatsInterval = null;
+  }
+}
+
+// ================ SETTINGS MODAL ================
 export function openSettingsModal() {
   if (typeof window.initCloudUI === 'function') window.initCloudUI();
   document.getElementById('settingsModal').classList.add('active');
@@ -200,10 +281,6 @@ export function showToast(message, type = 'success', duration = 2200) {
 }
 
 // ================ HELPERS ================
-function getTodayIsoLocal() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 function clearAllConfidenceHighlightsLocal() {
   ['del_inp','pick_inp','ret_inp'].forEach(pfx =>
     ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(k => {
