@@ -1,6 +1,7 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
 import { getTodayIso } from './utils.js';
+import { toggleTheme } from './theme.js';
 
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
@@ -19,7 +20,6 @@ export function switchMainTab(tabId, el) {
   }
 }
 
-// Mở tab Nhật ký từ menu (không có nút tab-btn tương ứng)
 export function openHistoryTab() {
   state.activeTab = 'history';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -93,6 +93,29 @@ export function initRankUI() {
   });
   const label = document.getElementById('currentBonusPctLabel');
   if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
+}
+
+// ================ THEME (từ menu) ================
+export function toggleThemeFromMenu() {
+  toggleTheme();
+  updateMenuThemeUI();
+}
+
+export function updateMenuThemeUI() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const icon  = document.getElementById('menuThemeIcon');
+  const title = document.getElementById('menuThemeTitle');
+  const sub   = document.getElementById('menuThemeSub');
+
+  if (current === 'dark') {
+    if (icon)  icon.innerText  = '☀️';
+    if (title) title.innerText = 'Chế độ sáng';
+    if (sub)   sub.innerText   = 'Chuyển về giao diện sáng';
+  } else {
+    if (icon)  icon.innerText  = '🌙';
+    if (title) title.innerText = 'Chế độ tối';
+    if (sub)   sub.innerText   = 'Chuyển sang giao diện tối';
+  }
 }
 
 // ================ MODALS ================
@@ -173,11 +196,15 @@ export function closeModal(force) {
 }
 
 // ================ MENU MODAL ================
-export function openMenuModal()  { document.getElementById('menuModal').classList.add('active'); }
-export function closeMenuModal() { document.getElementById('menuModal').classList.remove('active'); }
+export function openMenuModal() {
+  updateMenuThemeUI();
+  document.getElementById('menuModal').classList.add('active');
+}
+export function closeMenuModal() {
+  document.getElementById('menuModal').classList.remove('active');
+}
 
 // ================ STATS MODAL ================
-// ===== FIX: polling busuanzi thay vì setTimeout 300ms =====
 function _readBusuanzi() {
   const pv    = document.getElementById('busuanzi_value_site_pv');
   const uv    = document.getElementById('busuanzi_value_site_uv');
