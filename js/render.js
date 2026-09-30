@@ -7,7 +7,6 @@ const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-sp
 
 let _lastDataHash = null;
 
-// Đếm số ngày có nhập sản lượng trong kỳ
 function getWorkedDaysByPeriod(period) {
   const now = new Date();
   const cy = now.getFullYear();
@@ -33,25 +32,30 @@ function getWorkedDaysByPeriod(period) {
   return dates.size;
 }
 
+// ===== ROW bảng 5 cột: KG | SL | Mốc | Điểm | Cần =====
 function renderRow(weightLabel, orders, tier, typeClass) {
+  const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
+
   const ptsText = tier.matched.pt === 0
-    ? '<span style="color:var(--text-3);font-weight:400">—</span>'
-    : `<span style="color:var(--accent);font-weight:700">${_fmt(tier.matched.pt)}</span><span style="font-size:9px;color:var(--text-3);margin-left:1px;font-weight:500">đ</span>`;
+    ? '<span class="zero-dash">—</span>'
+    : _fmt(tier.matched.pt);
 
-  return `<td class="weight-name">${weightLabel}</td>
-    <td class="order-num ${typeClass} ${orders === 0 ? 'zero' : ''}">${_fmt(orders)}<div class="bar-container"><div class="bar-fill ${typeClass.replace('-num','')}" style="width:${tier.pct}%"></div></div></td>
-    <td style="color:var(--text-3);font-size:11px">${tier.matched.range}</td>
-    <td class="points-badge ${orders === 0 ? 'zero' : ''}">${ptsText}</td>`;
-}
+  let nextText;
+  if (orders <= 0) {
+    nextText = '<span class="zero-dash">—</span>';
+  } else if (!tier.next || !isFinite(tier.matched.maxA)) {
+    nextText = '<span style="color:var(--success);font-weight:700">MAX</span>';
+  } else {
+    const need = tier.matched.maxA - orders;
+    const gain = tier.next.pt - tier.matched.pt;
+    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)}đ</span>`;
+  }
 
-function buildSuggestion(label, orders, tier) {
-  if (orders <= 0 || !tier.next || !isFinite(tier.matched.maxA)) return null;
-  const need = tier.matched.maxA - orders;
-  return `<div class="suggestion-item">
-    <div class="sugg-left"><h4>${label} · ${_fmt(orders)} đơn (${tier.matched.range})</h4>
-    <p>Cần thêm <b style="${NEED_HIGHLIGHT}">+${_fmt(need)}</b> đơn để đạt mốc ${tier.next.range}</p></div>
-    <div class="sugg-points">+${formatPts(tier.next.pt - tier.matched.pt)}</div>
-  </div>`;
+  return `<td class="weight-name">${shortLabel}</td>
+    <td class="order-num ${typeClass} ${orders === 0 ? 'zero' : ''}">${_fmt(orders)}</td>
+    <td class="range-cell">${tier.matched.range}</td>
+    <td class="points-badge ${orders === 0 ? 'zero' : ''}">${ptsText}</td>
+    <td class="next-cell">${nextText}</td>`;
 }
 
 function buildOverviewSuggestion(type, label, orders, tier) {
@@ -74,7 +78,7 @@ function _updateAllViews() {
   const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
   const retTbody  = document.getElementById('retTableBody');  retTbody.innerHTML = '';
 
-  const delSuggBuf = [], pickSuggBuf = [], retSuggBuf = [], ovSuggBuf = [];
+  const ovSuggBuf = [];
   let delPts = 0, pickPts = 0, retPts = 0;
 
   for (let col = 0; col < 8; col++) {
@@ -90,22 +94,14 @@ function _updateAllViews() {
     pickTbody.insertAdjacentHTML('beforeend', `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
     retTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
 
-    const s1 = buildSuggestion(WEIGHT_LABELS[col], dOrders, dTier); if (s1) delSuggBuf.push(s1);
-    const s2 = buildSuggestion(WEIGHT_LABELS[col], pOrders, pTier); if (s2) pickSuggBuf.push(s2);
-    const s3 = buildSuggestion(WEIGHT_LABELS[col], rOrders, rTier); if (s3) retSuggBuf.push(s3);
     const o1 = buildOverviewSuggestion('del',  WEIGHT_LABELS[col], dOrders, dTier); if (o1) ovSuggBuf.push(o1);
     const o2 = buildOverviewSuggestion('pick', WEIGHT_LABELS[col], pOrders, pTier); if (o2) ovSuggBuf.push(o2);
     const o3 = buildOverviewSuggestion('ret',  WEIGHT_LABELS[col], rOrders, rTier); if (o3) ovSuggBuf.push(o3);
   }
 
-  const emptyMsg = t => `<div style="font-size:11.5px;color:var(--text-muted);text-align:center;padding:14px">Chưa có dữ liệu đơn ${t} kỳ này.</div>`;
-  document.getElementById('delMilestoneList').innerHTML  = delSuggBuf.join('')  || (total.del  === 0 ? emptyMsg('giao') : '');
-  document.getElementById('pickMilestoneList').innerHTML = pickSuggBuf.join('') || (total.pick === 0 ? emptyMsg('lấy')  : '');
-  document.getElementById('retMilestoneList').innerHTML  = retSuggBuf.join('')  || (total.ret  === 0 ? emptyMsg('hoàn') : '');
-
   const ovBox = document.getElementById('overviewMilestoneList');
   if (total.del + total.pick + total.ret === 0) {
-    ovBox.innerHTML = '<div style="font-size:11.5px;color:var(--text-muted);text-align:center;padding:14px">Chưa có dữ liệu kỳ này. Bấm "＋ Nhập" để bắt đầu.</div>';
+    ovBox.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.</div>';
   } else {
     ovBox.innerHTML = ovSuggBuf.join('');
   }
@@ -113,7 +109,7 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  // Trần 26 ngày — cố định
+  // Trần 26 ngày
   const salaryDays = 26;
   const workedDays = getWorkedDaysByPeriod(state.periodFilter);
   const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
@@ -129,11 +125,18 @@ function _updateAllViews() {
   const finalTotal  = rawBase + rankBonus + incomeAccumulated;
   const totalOrders = total.del + total.pick + total.ret;
 
-  document.getElementById('overallTotalPoints').innerText  = formatPts(finalTotal);
-  document.getElementById('rankBonusDetailText').innerText = `Gốc: ${formatPts(rawBase)} · Thưởng: +${formatPts(rankBonus)} · Thu nhập: +${formatPts(incomeAccumulated)}`;
+  document.getElementById('overallTotalPoints').innerHTML =
+    `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('rankBonusDetailText').innerText =
+    `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
   document.getElementById('overallTotalOrders').innerText  = `${_fmt(totalOrders)} đơn`;
 
-  const ratioBar = document.querySelector('.overview-bar-ratio');
+  // Ratio bar
+  const ratioBar = document.getElementById('ratioBar');
+  const pctDelEl  = document.getElementById('ratioPctDel');
+  const pctPickEl = document.getElementById('ratioPctPick');
+  const pctRetEl  = document.getElementById('ratioPctRet');
+
   if (totalOrders > 0) {
     if (ratioBar) ratioBar.classList.remove('is-empty');
 
@@ -157,31 +160,39 @@ function _updateAllViews() {
     document.getElementById('ratioBarDel').style.width  = pDel  + '%';
     document.getElementById('ratioBarPick').style.width = pPick + '%';
     document.getElementById('ratioBarRet').style.width  = pRet  + '%';
-    document.getElementById('ratioText').innerText = `${pDel}% G · ${pPick}% L · ${pRet}% H`;
+    if (pctDelEl)  pctDelEl.innerText  = pDel  + '%';
+    if (pctPickEl) pctPickEl.innerText = pPick + '%';
+    if (pctRetEl)  pctRetEl.innerText  = pRet  + '%';
   } else {
     if (ratioBar) ratioBar.classList.add('is-empty');
     document.getElementById('ratioBarDel').style.width  = '33.3%';
     document.getElementById('ratioBarPick').style.width = '33.3%';
     document.getElementById('ratioBarRet').style.width  = '33.4%';
-    document.getElementById('ratioText').innerText = '0% G · 0% L · 0% H';
+    if (pctDelEl)  pctDelEl.innerText  = '0%';
+    if (pctPickEl) pctPickEl.innerText = '0%';
+    if (pctRetEl)  pctRetEl.innerText  = '0%';
   }
 
-  // 3 mini card — không append "đơn"
-  document.getElementById('miniDelPoints').innerText  = formatPts(delPts);
+  // Mini tiles
+  document.getElementById('miniDelPoints').innerText  = _fmt(delPts);
   document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
-  document.getElementById('miniPickPoints').innerText = formatPts(pickPts);
+  document.getElementById('miniPickPoints').innerText = _fmt(pickPts);
   document.getElementById('miniPickOrders').innerText = _fmt(total.pick);
-  document.getElementById('miniRetPoints').innerText  = formatPts(retPts);
+  document.getElementById('miniRetPoints').innerText  = _fmt(retPts);
   document.getElementById('miniRetOrders').innerText  = _fmt(total.ret);
 
-  document.getElementById('delTotalPoints').innerText  = formatPts(delPts);
-  document.getElementById('delTotalOrders').innerText  = `${_fmt(total.del)} đơn`;
-  document.getElementById('pickTotalPoints').innerText = formatPts(pickPts);
+  // Hero tab chi tiết
+  document.getElementById('delTotalPoints').innerHTML =
+    `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
+  document.getElementById('pickTotalPoints').innerHTML =
+    `${_fmt(pickPts)} <span class="hero-value-unit">Điểm</span>`;
   document.getElementById('pickTotalOrders').innerText = `${_fmt(total.pick)} đơn`;
-  document.getElementById('retTotalPoints').innerText  = formatPts(retPts);
-  document.getElementById('retTotalOrders').innerText  = `${_fmt(total.ret)} đơn`;
+  document.getElementById('retTotalPoints').innerHTML =
+    `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
 
-  // === UI Thu nhập ===
+  // Income UI
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -189,7 +200,6 @@ function _updateAllViews() {
   const incomePerDay   = document.getElementById('incomePerDayText');
   const incomeTotal    = document.getElementById('incomeTotalDisplay');
   const incomeTotalInner = document.getElementById('incomeTotalDisplayInner');
-  const incomeLabelEl  = document.getElementById('incomePeriodLabel');
 
   if (salaryBaseEl && document.activeElement !== salaryBaseEl) salaryBaseEl.value = salaryBase;
   if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
@@ -200,34 +210,7 @@ function _updateAllViews() {
   if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
   if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
 
-  if (incomeLabelEl) {
-    const map = {
-      'all':         '(tháng này)',
-      'this_month':  '(tháng này)',
-      'last_month':  '(tháng trước)',
-      'today':       '(hôm nay)'
-    };
-    incomeLabelEl.innerText = map[state.periodFilter] || '(tháng này)';
-  }
-
-  const incomeBox = document.getElementById('incomeContent') || document.getElementById('incomeDetails');
-  if (incomeBox) {
-    let warnEl = incomeBox.querySelector('.income-warning');
-    if (workedDays === 0 && state.periodFilter === 'this_month') {
-      if (!warnEl) {
-        warnEl = document.createElement('div');
-        warnEl.className = 'income-warning';
-        warnEl.style.cssText = 'font-size:10.5px;color:var(--warning);margin-top:10px;text-align:center;padding:8px;background:var(--warning-soft);border-radius:8px;border:1px solid var(--warning-border);font-weight:500';
-        warnEl.innerText = `Chưa nhập ngày công tháng này — đang tạm tính ${salaryDays}/${salaryDays} ngày`;
-        incomeBox.appendChild(warnEl);
-      } else {
-        warnEl.innerText = `Chưa nhập ngày công tháng này — đang tạm tính ${salaryDays}/${salaryDays} ngày`;
-      }
-    } else if (warnEl) {
-      warnEl.remove();
-    }
-  }
-
+  // Count
   const filteredCount =
     state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
     state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
@@ -236,7 +219,6 @@ function _updateAllViews() {
 
   persistData();
 
-  // Chỉ dispatch khi data đổi
   const currentHash = JSON.stringify(state.appData);
   if (_lastDataHash === null) {
     _lastDataHash = currentHash;
@@ -277,7 +259,7 @@ export function renderHistory() {
   list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
   if (list.length === 0) {
-    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-muted);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
+    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
     return;
   }
 
