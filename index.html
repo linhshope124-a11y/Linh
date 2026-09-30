@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ HEADER — chỉ còn ☰ + brand ============ -->
+<!-- ============ HEADER ============ -->
 <header class="top-nav">
   <button class="btn-icon" onclick="openMenuModal()" title="Menu" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -41,7 +41,7 @@
   </div>
 </div>
 
-<!-- ============ MAIN LAYOUT ============ -->
+<!-- ============ MAIN ============ -->
 <div class="layout-shell">
   <div class="content-area">
 
@@ -49,51 +49,82 @@
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
 
-        <section class="card hero-card">
-          <div class="hero-head">
-            <span class="hero-label">Tổng điểm tích lũy</span>
+        <!-- HERO -->
+        <section class="hero">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Tổng điểm tích lũy</span>
             <span class="hero-pill" id="overallTotalOrders">0 đơn</span>
           </div>
+          <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+          <div class="hero-sub" id="rankBonusDetailText">Gốc 0 · Thưởng +0 · TN +0</div>
+        </section>
 
-          <div class="hero-value" id="overallTotalPoints">0 Điểm</div>
-          <div class="hero-sub" id="rankBonusDetailText">Gốc: 0 · Thưởng: +0</div>
-
-          <div class="rank-box">
-            <div class="rank-head">
-              <span>Hạng thưởng <span class="rank-hint">· giữ để bỏ chọn</span></span>
-              <span id="currentBonusPctLabel" style="color:var(--accent);font-weight:700">+0%</span>
-            </div>
-            <div class="rank-pill-group">
-              <div class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</div>
-              <div class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</div>
-              <div class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</div>
-              <div class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</div>
-              <div class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</div>
-            </div>
+        <!-- 3 TILES -->
+        <section class="tile-grid">
+          <div class="tile tile-giao">
+            <div class="tile-label">Giao</div>
+            <div class="tile-val" id="miniDelPoints">0</div>
+            <div class="tile-foot"><b id="miniDelOrders">0</b> đơn</div>
           </div>
-
-          <div class="ratio-box">
-            <div class="ratio-head">
-              <span>Phân bổ</span>
-              <span id="ratioText">0% G · 0% L · 0% H</span>
-            </div>
-            <div class="overview-bar-ratio">
-              <div class="ratio-del" id="ratioBarDel" style="width:33.3%"></div>
-              <div class="ratio-pick" id="ratioBarPick" style="width:33.3%"></div>
-              <div class="ratio-ret" id="ratioBarRet" style="width:33.4%"></div>
-            </div>
+          <div class="tile tile-lay">
+            <div class="tile-label">Lấy</div>
+            <div class="tile-val" id="miniPickPoints">0</div>
+            <div class="tile-foot"><b id="miniPickOrders">0</b> đơn</div>
+          </div>
+          <div class="tile tile-hoan">
+            <div class="tile-label">Hoàn</div>
+            <div class="tile-val" id="miniRetPoints">0</div>
+            <div class="tile-foot"><b id="miniRetOrders">0</b> đơn</div>
           </div>
         </section>
 
+        <!-- HẠNG THƯỞNG -->
+        <section class="card">
+          <div class="card-head-inline">
+            <span class="card-label">Hạng thưởng</span>
+            <span class="card-value" id="currentBonusPctLabel">+0%</span>
+          </div>
+          <div class="rank-pill-group">
+            <button class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</button>
+            <button class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</button>
+            <button class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</button>
+            <button class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</button>
+            <button class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</button>
+          </div>
+          <div class="card-hint">Nhấn giữ để bỏ chọn</div>
+        </section>
+
+        <!-- PHÂN BỔ -->
+        <section class="card">
+          <div class="card-head-inline">
+            <span class="card-label">Phân bổ theo loại đơn</span>
+          </div>
+          <div class="ratio-bar" id="ratioBar">
+            <div class="ratio-seg ratio-seg-del"  id="ratioBarDel"  style="width:33.3%"></div>
+            <div class="ratio-seg ratio-seg-pick" id="ratioBarPick" style="width:33.3%"></div>
+            <div class="ratio-seg ratio-seg-ret"  id="ratioBarRet"  style="width:33.4%"></div>
+          </div>
+          <div class="ratio-legend">
+            <span class="legend-item"><span class="dot dot-giao"></span>Giao <b id="ratioPctDel">0%</b></span>
+            <span class="legend-item"><span class="dot dot-lay"></span>Lấy <b id="ratioPctPick">0%</b></span>
+            <span class="legend-item"><span class="dot dot-hoan"></span>Hoàn <b id="ratioPctRet">0%</b></span>
+          </div>
+        </section>
+
+        <!-- THU NHẬP (accordion) -->
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
             <div class="income-summary-left">
-              <span class="income-summary-title">Thu nhập <span id="incomePeriodLabel" class="income-summary-period">(tháng này)</span></span>
+              <span class="income-summary-title">Thu nhập</span>
               <span class="income-summary-days" id="incomeDayCount">0/26 ngày</span>
             </div>
             <div class="income-summary-right">
               <span class="income-summary-value" id="incomeTotalDisplay">+0 Điểm</span>
-              <span class="income-chevron">▼</span>
+              <span class="income-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
             </div>
           </summary>
 
@@ -105,7 +136,6 @@
                 <span class="income-unit">đ/tháng</span>
               </div>
             </div>
-
             <div class="income-row">
               <span class="income-row-label">Bưu cục</span>
               <div class="income-row-input">
@@ -113,7 +143,6 @@
                 <span class="income-unit">đ/tháng</span>
               </div>
             </div>
-
             <div class="income-row">
               <span class="income-row-label">Tài xế</span>
               <div class="income-row-input">
@@ -121,7 +150,6 @@
                 <span class="income-unit">đ/tháng</span>
               </div>
             </div>
-
             <div class="income-summary-box">
               <div class="income-summary-line">
                 <span>Lương 1 ngày</span>
@@ -132,34 +160,16 @@
                 <b id="incomeTotalDisplayInner">+0 Điểm</b>
               </div>
             </div>
-
             <button class="btn btn-primary income-save-btn" onclick="forceSaveConfig()">Lưu cấu hình</button>
           </div>
         </details>
 
-        <section class="stat-grid-reorganized">
-          <div class="stat-card-item type-del">
-            <div class="stat-card-title">Giao</div>
-            <div class="stat-card-val" id="miniDelPoints">0</div>
-            <div class="stat-card-foot"><b id="miniDelOrders">0</b> đơn</div>
-          </div>
-          <div class="stat-card-item type-pick">
-            <div class="stat-card-title">Lấy</div>
-            <div class="stat-card-val" id="miniPickPoints">0</div>
-            <div class="stat-card-foot"><b id="miniPickOrders">0</b> đơn</div>
-          </div>
-          <div class="stat-card-item type-ret">
-            <div class="stat-card-title">Hoàn</div>
-            <div class="stat-card-val" id="miniRetPoints">0</div>
-            <div class="stat-card-foot"><b id="miniRetOrders">0</b> đơn</div>
-          </div>
-        </section>
-
+        <!-- CƠ HỘI TĂNG ĐIỂM -->
         <section class="card">
           <div class="card-head">
             <div>
-              <h2>Cơ hội tăng điểm</h2>
-              <p>Số đơn cần thêm để đạt mốc tiếp theo</p>
+              <h2 class="card-title">Cơ hội tăng điểm</h2>
+              <p class="card-sub">Số đơn cần thêm để đạt mốc tiếp theo</p>
             </div>
           </div>
           <div class="filter-bar">
@@ -177,54 +187,96 @@
     <!-- ===== TAB GIAO ===== -->
     <div class="tab-panel" id="tab-delivery">
       <main class="app-container">
-        <section class="card">
-          <div class="overview-box">
-            <div>
-              <div class="overview-label">Tổng điểm Giao</div>
-              <div class="overview-value" id="delTotalPoints">0 Điểm</div>
-            </div>
-            <div class="overview-pill" id="delTotalOrders">0 đơn</div>
+        <section class="hero hero-sm hero-giao">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Giao</span>
+            <span class="hero-pill" id="delTotalOrders">0 đơn</span>
           </div>
-          <div class="card-head"><h2>Phân bổ sản lượng</h2></div>
-          <div class="table-scroll"><table><thead><tr><th>Khối lượng</th><th>Sản lượng</th><th>Mốc đạt</th><th>Tổng điểm</th></tr></thead><tbody id="delTableBody"></tbody></table></div>
+          <div class="hero-value" id="delTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
-        <section class="card"><div class="card-head"><h2>Mục tiêu đơn giao</h2></div><div id="delMilestoneList"></div></section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                </tr>
+              </thead>
+              <tbody id="delTableBody"></tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
 
     <!-- ===== TAB LẤY ===== -->
     <div class="tab-panel" id="tab-pickup">
       <main class="app-container">
-        <section class="card">
-          <div class="overview-box">
-            <div>
-              <div class="overview-label">Tổng điểm Lấy</div>
-              <div class="overview-value" id="pickTotalPoints">0 Điểm</div>
-            </div>
-            <div class="overview-pill" id="pickTotalOrders">0 đơn</div>
+        <section class="hero hero-sm hero-lay">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Lấy</span>
+            <span class="hero-pill" id="pickTotalOrders">0 đơn</span>
           </div>
-          <div class="card-head"><h2>Phân bổ sản lượng</h2></div>
-          <div class="table-scroll"><table><thead><tr><th>Khối lượng</th><th>Sản lượng</th><th>Mốc đạt</th><th>Tổng điểm</th></tr></thead><tbody id="pickTableBody"></tbody></table></div>
+          <div class="hero-value" id="pickTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
-        <section class="card"><div class="card-head"><h2>Mục tiêu đơn lấy</h2></div><div id="pickMilestoneList"></div></section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                </tr>
+              </thead>
+              <tbody id="pickTableBody"></tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
 
     <!-- ===== TAB HOÀN ===== -->
     <div class="tab-panel" id="tab-return">
       <main class="app-container">
-        <section class="card">
-          <div class="overview-box">
-            <div>
-              <div class="overview-label">Tổng điểm Hoàn</div>
-              <div class="overview-value" id="retTotalPoints">0 Điểm</div>
-            </div>
-            <div class="overview-pill" id="retTotalOrders">0 đơn</div>
+        <section class="hero hero-sm hero-hoan">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Hoàn</span>
+            <span class="hero-pill" id="retTotalOrders">0 đơn</span>
           </div>
-          <div class="card-head"><h2>Phân bổ sản lượng</h2></div>
-          <div class="table-scroll"><table><thead><tr><th>Khối lượng</th><th>Sản lượng</th><th>Mốc đạt</th><th>Tổng điểm</th></tr></thead><tbody id="retTableBody"></tbody></table></div>
+          <div class="hero-value" id="retTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
-        <section class="card"><div class="card-head"><h2>Mục tiêu đơn hoàn</h2></div><div id="retMilestoneList"></div></section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                </tr>
+              </thead>
+              <tbody id="retTableBody"></tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -234,11 +286,10 @@
         <section class="card">
           <div class="card-head">
             <div>
-              <h2>Nhật ký</h2>
-              <p id="histCountNote">0 bản ghi</p>
+              <h2 class="card-title">Nhật ký</h2>
+              <p class="card-sub" id="histCountNote">0 bản ghi</p>
             </div>
           </div>
-
           <div class="filter-bar">
             <button class="filter-btn active" onclick="setHistFilter('all', this)">Tất cả</button>
             <button class="filter-btn" onclick="setHistFilter('delivery', this)">Giao</button>
@@ -254,19 +305,30 @@
 </div>
 
 <!-- ============ BOTTOM NAV ============ -->
-<aside class="vertical-sidebar">
-  <button class="tab-btn active" data-tab="overview" onclick="switchMainTab('overview', this)">
-    <span class="tab-icon">📊</span>
-    <span class="tab-label">T.Quan</span>
-  </button>
-  <button class="tab-btn" data-tab="delivery" onclick="switchMainTab('delivery', this)">
-    <span class="tab-icon">🚚</span>
-    <span class="tab-label">Giao</span>
+<aside class="bottom-nav">
+  <button class="nav-btn active" data-tab="overview" onclick="switchMainTab('overview', this)" aria-label="Tổng quan">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+    <span class="nav-label">T.Quan</span>
   </button>
 
-  <button class="tab-btn-quet" onclick="document.getElementById('ocrFileInput').click()" title="Quét ảnh SPX" aria-label="Quét ảnh">
-    <span class="quet-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <button class="nav-btn" data-tab="delivery" onclick="switchMainTab('delivery', this)" aria-label="Giao">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 3h15v13H1z"/>
+      <path d="M16 8h4l3 3v5h-7V8z"/>
+      <circle cx="5.5" cy="18.5" r="2.5"/>
+      <circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+    <span class="nav-label">Giao</span>
+  </button>
+
+  <button class="nav-btn-fab" onclick="document.getElementById('ocrFileInput').click()" aria-label="Quét ảnh">
+    <span class="fab-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
         <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
@@ -274,15 +336,25 @@
         <circle cx="12" cy="12" r="3"/>
       </svg>
     </span>
+    <span class="fab-label">Quét</span>
   </button>
 
-  <button class="tab-btn" data-tab="pickup" onclick="switchMainTab('pickup', this)">
-    <span class="tab-icon">📥</span>
-    <span class="tab-label">Lấy</span>
+  <button class="nav-btn" data-tab="pickup" onclick="switchMainTab('pickup', this)" aria-label="Lấy">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+    </svg>
+    <span class="nav-label">Lấy</span>
   </button>
-  <button class="tab-btn" data-tab="return" onclick="switchMainTab('return', this)">
-    <span class="tab-icon">📦</span>
-    <span class="tab-label">Hoàn</span>
+
+  <button class="nav-btn" data-tab="return" onclick="switchMainTab('return', this)" aria-label="Hoàn">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16.5 9.4 7.5 4.21"/>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+      <line x1="12" y1="22.08" x2="12" y2="12"/>
+    </svg>
+    <span class="nav-label">Hoàn</span>
   </button>
 </aside>
 
@@ -293,49 +365,84 @@
   <div class="modal-box menu-modal-box">
     <div class="modal-box-head">
       <h3>Menu</h3>
-      <button class="modal-close-btn" onclick="closeMenuModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeMenuModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-body menu-body">
 
+      <div class="menu-section-label">Cài đặt</div>
       <button class="menu-item" onclick="toggleThemeFromMenu()">
-        <span class="menu-icon" id="menuThemeIcon">🌙</span>
+        <span class="menu-icon" id="menuThemeIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </span>
         <div class="menu-text">
           <div class="menu-title" id="menuThemeTitle">Chế độ tối</div>
           <div class="menu-sub" id="menuThemeSub">Chuyển sang giao diện tối</div>
         </div>
       </button>
 
+      <button class="menu-item" onclick="closeMenuModal();openSettingsModal()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Backup & Cloud</div>
+          <div class="menu-sub">Đồng bộ Gist · JSON · Dọn trùng</div>
+        </div>
+      </button>
+
+      <div class="menu-section-label">Dữ liệu</div>
       <button class="menu-item" onclick="closeMenuModal();openAddModal()">
-        <span class="menu-icon">📝</span>
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </span>
         <div class="menu-text">
           <div class="menu-title">Nhập sản lượng</div>
-          <div class="menu-sub">Nhập tay số đơn theo dải khối lượng</div>
+          <div class="menu-sub">Nhập tay theo 8 dải khối lượng</div>
         </div>
       </button>
 
       <button class="menu-item" onclick="closeMenuModal();openHistoryTab()">
-        <span class="menu-icon">🗂️</span>
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h7v7H3z"/>
+            <path d="M14 3h7v7h-7z"/>
+            <path d="M14 14h7v7h-7z"/>
+            <path d="M3 14h7v7H3z"/>
+          </svg>
+        </span>
         <div class="menu-text">
           <div class="menu-title">Nhật ký</div>
-          <div class="menu-sub">Xem, sửa, xóa bản ghi đã lưu</div>
+          <div class="menu-sub">Xem, sửa, xoá bản ghi đã lưu</div>
         </div>
       </button>
 
-      <button class="menu-item" onclick="closeMenuModal();openSettingsModal()">
-        <span class="menu-icon">💾</span>
-        <div class="menu-text">
-          <div class="menu-title">Backup & Cài đặt</div>
-          <div class="menu-sub">Cloud, JSON, dọn trùng lặp</div>
-        </div>
-      </button>
-
+      <div class="menu-section-label">Khác</div>
       <button class="menu-item" onclick="closeMenuModal();openCoffeeModal()">
-        <span class="menu-icon">❤️</span>
+        <span class="menu-icon menu-icon-heart">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21s-7.5-4.8-10-10c-1.4-3 0-7 4-7 2 0 3.5 1 4 2.5.5-1.5 2-2.5 4-2.5 4 0 5.4 4 4 7-2.5 5.2-10 10-10 10z"/>
+          </svg>
+        </span>
         <div class="menu-text">
           <div class="menu-title">Ủng hộ tác giả</div>
           <div class="menu-sub">Viettinbank · Cảm ơn bạn!</div>
         </div>
       </button>
+
     </div>
   </div>
 </div>
@@ -344,15 +451,20 @@
 <div class="modal-shade" id="entryModal">
   <div class="modal-box">
     <div class="modal-box-head">
-      <button class="modal-close-btn" id="backToBatchBtn" onclick="backToBatch()" style="display:none;font-size:11.5px;padding:6px 12px;background:var(--info-soft);color:var(--info);border-radius:8px;font-weight:600;margin-right:auto;border:1px solid var(--info-border)">← Quay lại</button>
+      <button class="modal-back-btn" id="backToBatchBtn" onclick="backToBatch()" style="display:none">← Quay lại</button>
       <h3 id="modalTitle" style="flex:1;text-align:center;">Nhập sản lượng ngày</h3>
-      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="editEntryId" value="">
       <input type="hidden" id="editEntryType" value="">
       <div style="margin-bottom:14px;max-width:180px">
-        <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text-2);margin-bottom:4px">Ngày ghi nhận</label>
+        <label class="form-label">Ngày ghi nhận</label>
         <input type="date" id="inputDate" class="input-control">
       </div>
       <div class="modal-tabs" id="modalSubTabGroup">
@@ -399,7 +511,7 @@
       <div class="ocr-preview-box" id="ocrPreviewBox" style="display:none">
         <div class="ocr-preview-label">
           <span>Ảnh gốc — đối chiếu số</span>
-          <span style="cursor:pointer;padding:2px 8px;border-radius:4px;background:var(--surface);font-size:10px;font-weight:600" onclick="document.getElementById('ocrPreviewBox').style.display='none'">Ẩn</span>
+          <span class="ocr-hide-btn" onclick="document.getElementById('ocrPreviewBox').style.display='none'">Ẩn</span>
         </div>
         <img class="ocr-preview-img" id="ocrPreviewImg" alt="Ảnh đã quét" onclick="openOcrLightbox()">
       </div>
@@ -416,7 +528,12 @@
   <div class="modal-box">
     <div class="modal-box-head">
       <h3>Kết quả quét (<span id="batchCount">0</span>)</h3>
-      <button class="modal-close-btn" onclick="closeBatchOcrModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeBatchOcrModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-body">
       <div id="batchList"></div>
@@ -436,7 +553,12 @@
   <div class="modal-box">
     <div class="modal-box-head">
       <h3>Backup & Quản lý</h3>
-      <button class="modal-close-btn" onclick="closeSettingsModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeSettingsModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-body">
 
@@ -518,7 +640,15 @@
 <!-- ============ PASTE JSON MODAL ============ -->
 <div class="modal-shade" id="pasteJsonModal" onclick="if(event.target===this)closePasteJsonModal()">
   <div class="modal-box coffee-modal-box">
-    <div class="modal-box-head"><h3>Dán chuỗi JSON</h3><button class="modal-close-btn" onclick="closePasteJsonModal()">✕</button></div>
+    <div class="modal-box-head">
+      <h3>Dán chuỗi JSON</h3>
+      <button class="modal-close-btn" onclick="closePasteJsonModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
     <div class="modal-body">
       <p style="font-size:12px;color:var(--text-2);margin-bottom:10px">Dán mã JSON đã sao chép:</p>
       <textarea id="jsonPasteInput" rows="8" class="input-control" style="font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical" placeholder='{"delivery":[...], "pickup":[...], "return":[...]}'></textarea>
@@ -535,7 +665,12 @@
   <div class="modal-box coffee-modal-box">
     <div class="modal-box-head">
       <h3>Ủng hộ tác giả</h3>
-      <button class="modal-close-btn" onclick="closeCoffeeModal()">✕</button>
+      <button class="modal-close-btn" onclick="closeCoffeeModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
     <div class="modal-body">
       <div class="donate-heart">❤️</div>
@@ -568,13 +703,13 @@
 <!-- ============ OCR LOADING ============ -->
 <div id="ocrLoadingOverlay">
   <div class="spinner"></div>
-  <div style="font-weight:700;font-size:14px;margin-bottom:6px" id="ocrStatusTitle">Đang quét ảnh...</div>
-  <div style="font-size:12px;opacity:0.8" id="ocrStatusDesc">Vui lòng chờ trong giây lát</div>
+  <div class="ocr-title" id="ocrStatusTitle">Đang quét ảnh...</div>
+  <div class="ocr-desc" id="ocrStatusDesc">Vui lòng chờ trong giây lát</div>
 </div>
 
 <!-- ============ OCR LIGHTBOX ============ -->
 <div id="ocrLightbox" onclick="closeOcrLightbox()">
-  <button class="close-lb" onclick="closeOcrLightbox()">✕</button>
+  <button class="close-lb" onclick="closeOcrLightbox()" aria-label="Đóng">✕</button>
   <img id="ocrLightboxImg" alt="Ảnh phóng to">
 </div>
 
