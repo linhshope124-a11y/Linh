@@ -27,6 +27,7 @@ import { testCloudConnection, pushToCloud, pullFromCloud, initCloudUI } from './
 import { undoLast } from './undo.js';
 import { WEIGHT_KEYS } from './config.js';
 
+// ================ AUTO-CLEAR INPUT ================
 function attachAutoClearInputs() {
   document.querySelectorAll('.auto-clear').forEach(input => {
     input.addEventListener('focus', function () { if (this.value === '0') this.value = ''; });
@@ -34,6 +35,7 @@ function attachAutoClearInputs() {
   });
 }
 
+// ================ SERVICE WORKER ================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js', { scope: './' })
@@ -42,6 +44,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// ================ SAVE CONFIG (Thu nhập) ================
 let manualPointsTimer = null;
 function _saveManualPoints() {
   const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
@@ -61,6 +64,7 @@ function _saveSalaryConfig() {
   salaryTimer = setTimeout(() => updateAllViews(), 300);
 }
 
+// ================ DỌN TRÙNG LẶP ================
 function _findDuplicates() {
   const dups = [];
   ['delivery', 'pickup', 'return'].forEach(type => {
@@ -104,6 +108,7 @@ function _cleanupDuplicates() {
   alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
 }
 
+// ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
@@ -147,6 +152,7 @@ Object.assign(window, {
   cleanupDuplicates: _cleanupDuplicates
 });
 
+// ================ INIT ================
 (function init() {
   loadState();
   initTheme();
