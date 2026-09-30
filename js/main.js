@@ -5,7 +5,7 @@ import {
   setRankTier, initRankUI,
   openAddModal, openEditModal, closeModal,
   openSettingsModal, closeSettingsModal,
-  openCoffeeModal, closeCoffeeModal, copyPhoneNumber, copyBankNumber
+  openCoffeeModal, closeCoffeeModal, copyBankNumber
 } from './ui.js';
 import {
   handleOcrImage, preloadTesseractWorker,
@@ -107,43 +107,13 @@ function _cleanupDuplicates() {
   alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
 }
 
-function _toggleIncomeSection() {
-  const content = document.getElementById('incomeContent');
-  const icon = document.getElementById('incomeToggleIcon');
-  if (!content) return;
-  const isHidden = content.style.display === 'none' || content.style.display === '';
-  if (isHidden) {
-    content.style.display = 'block';
-    if (icon) icon.innerText = '▲';
-    localStorage.setItem('spx_income_open', '1');
-  } else {
-    content.style.display = 'none';
-    if (icon) icon.innerText = '▼';
-    localStorage.setItem('spx_income_open', '0');
-  }
-}
-
-function _initIncomeSection() {
-  const content = document.getElementById('incomeContent');
-  const icon = document.getElementById('incomeToggleIcon');
-  if (!content) return;
-  const isOpen = localStorage.getItem('spx_income_open') === '1';
-  if (isOpen) {
-    content.style.display = 'block';
-    if (icon) icon.innerText = '▲';
-  } else {
-    content.style.display = 'none';
-    if (icon) icon.innerText = '▼';
-  }
-}
-
 Object.assign(window, {
   toggleTheme,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
   openAddModal, openEditModal, closeModal,
   openSettingsModal, closeSettingsModal,
-  openCoffeeModal, closeCoffeeModal, copyPhoneNumber, copyBankNumber,
+  openCoffeeModal, closeCoffeeModal, copyBankNumber,
   handleOcrImage, openOcrLightbox, closeOcrLightbox,
   openBatchOcrModal, closeBatchOcrModal, appendBatchFiles,
   saveBatchAll, importBatchItem, removeBatchItem,
@@ -176,9 +146,7 @@ Object.assign(window, {
   },
 
   findDuplicates: _findDuplicates,
-  cleanupDuplicates: _cleanupDuplicates,
-  toggleIncomeSection: _toggleIncomeSection,
-  initIncomeSection: _initIncomeSection
+  cleanupDuplicates: _cleanupDuplicates
 });
 
 (function init() {
@@ -186,7 +154,6 @@ Object.assign(window, {
   initTheme();
   initRankUI();
   attachAutoClearInputs();
-  _initIncomeSection();
   updateAllViews();
   setTimeout(() => preloadTesseractWorker(), 2000);
 })();
