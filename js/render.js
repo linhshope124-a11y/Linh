@@ -112,7 +112,8 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  const salaryDays = state.salaryDays || 26;
+  // REVERT fix #2: hard-code 26
+  const salaryDays = 26;
   const workedDays = getWorkedDaysByPeriod(state.periodFilter);
   const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
 
@@ -164,7 +165,7 @@ function _updateAllViews() {
     document.getElementById('ratioText').innerText = '0% G · 0% L · 0% H';
   }
 
-  // ===== 3 mini card — KHÔNG append "đơn" (HTML đã có) =====
+  // 3 mini card — không append "đơn"
   document.getElementById('miniDelPoints').innerText  = formatPts(delPts);
   document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
   document.getElementById('miniPickPoints').innerText = formatPts(pickPts);
