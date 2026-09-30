@@ -5,10 +5,10 @@ import {
   setRankTier, initRankUI,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
-  openStatsModal, closeStatsModal,
   openHistoryTab,
   openSettingsModal, closeSettingsModal,
-  openCoffeeModal, closeCoffeeModal, copyBankNumber
+  openCoffeeModal, closeCoffeeModal, copyBankNumber,
+  toggleThemeFromMenu
 } from './ui.js';
 import {
   handleOcrImage, preloadTesseractWorker,
@@ -44,7 +44,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ================ SAVE CONFIG (Thu nhập) ================
+// ================ SAVE CONFIG ================
 let manualPointsTimer = null;
 function _saveManualPoints() {
   const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
@@ -111,11 +111,11 @@ function _cleanupDuplicates() {
 // ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
+  toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
-  openStatsModal, closeStatsModal,
   openHistoryTab,
   openSettingsModal, closeSettingsModal,
   openCoffeeModal, closeCoffeeModal, copyBankNumber,
