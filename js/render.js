@@ -131,7 +131,6 @@ function _updateAllViews() {
   document.getElementById('rankBonusDetailText').innerText = `Gốc: ${formatPts(rawBase)} · Thưởng: +${formatPts(rankBonus)} · Thu nhập: +${formatPts(incomeAccumulated)}`;
   document.getElementById('overallTotalOrders').innerText  = `${_fmt(totalOrders)} đơn`;
 
-  // ===== Ratio bar + toggle is-empty =====
   const ratioBar = document.querySelector('.overview-bar-ratio');
   if (totalOrders > 0) {
     if (ratioBar) ratioBar.classList.remove('is-empty');
@@ -165,7 +164,7 @@ function _updateAllViews() {
     document.getElementById('ratioText').innerText = '0% G · 0% L · 0% H';
   }
 
-  // ===== 3 mini card — FIX bỏ chữ "đơn" (HTML đã có sẵn) =====
+  // ===== 3 mini card — KHÔNG append "đơn" (HTML đã có) =====
   document.getElementById('miniDelPoints').innerText  = formatPts(delPts);
   document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
   document.getElementById('miniPickPoints').innerText = formatPts(pickPts);
@@ -180,7 +179,6 @@ function _updateAllViews() {
   document.getElementById('retTotalPoints').innerText  = formatPts(retPts);
   document.getElementById('retTotalOrders').innerText  = `${_fmt(total.ret)} đơn`;
 
-  // ===== Update UI Thu nhập =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
