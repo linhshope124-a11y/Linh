@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
+<!-- ============ HEADER — chỉ còn ☰ + brand ============ -->
 <header class="top-nav">
   <button class="btn-icon" onclick="openMenuModal()" title="Menu" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -28,9 +28,7 @@
 
   <div class="brand">SPX Tracker</div>
 
-  <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme" aria-label="Theme">
-    <span id="themeIcon">🌙</span>
-  </button>
+  <span aria-hidden="true"></span>
 </header>
 
 <!-- ============ PERIOD BAR ============ -->
@@ -298,6 +296,15 @@
       <button class="modal-close-btn" onclick="closeMenuModal()">✕</button>
     </div>
     <div class="modal-body menu-body">
+
+      <button class="menu-item" onclick="toggleThemeFromMenu()">
+        <span class="menu-icon" id="menuThemeIcon">🌙</span>
+        <div class="menu-text">
+          <div class="menu-title" id="menuThemeTitle">Chế độ tối</div>
+          <div class="menu-sub" id="menuThemeSub">Chuyển sang giao diện tối</div>
+        </div>
+      </button>
+
       <button class="menu-item" onclick="closeMenuModal();openAddModal()">
         <span class="menu-icon">📝</span>
         <div class="menu-text">
@@ -329,60 +336,9 @@
           <div class="menu-sub">Viettinbank · Cảm ơn bạn!</div>
         </div>
       </button>
-
-      <button class="menu-item" onclick="closeMenuModal();openStatsModal()">
-        <span class="menu-icon">📊</span>
-        <div class="menu-text">
-          <div class="menu-title">Thống kê truy cập</div>
-          <div class="menu-sub">Lượt xem · Người dùng</div>
-        </div>
-      </button>
     </div>
   </div>
 </div>
-
-<!-- ============ STATS MODAL ============ -->
-<div class="modal-shade" id="statsModal" onclick="if(event.target===this)closeStatsModal()">
-  <div class="modal-box menu-modal-box">
-    <div class="modal-box-head">
-      <h3>Thống kê truy cập</h3>
-      <button class="modal-close-btn" onclick="closeStatsModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="stats-row">
-        <div class="stats-item">
-          <div class="stats-icon">👁️</div>
-          <div class="stats-label">Tổng lượt</div>
-          <div class="stats-value" id="statsPv">—</div>
-        </div>
-        <div class="stats-item">
-          <div class="stats-icon">👤</div>
-          <div class="stats-label">Người dùng</div>
-          <div class="stats-value" id="statsUv">—</div>
-        </div>
-        <div class="stats-item">
-          <div class="stats-icon">📅</div>
-          <div class="stats-label">Hôm nay</div>
-          <div class="stats-value" id="statsToday">—</div>
-        </div>
-      </div>
-      <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:16px">
-        Dữ liệu từ Busuanzi — cập nhật tự động
-      </p>
-    </div>
-    <div class="modal-box-foot">
-      <button class="btn btn-primary" onclick="closeStatsModal()" style="width:100%">Đóng</button>
-    </div>
-  </div>
-</div>
-
-<!-- Busuanzi ẩn -->
-<div style="position:absolute;left:-9999px;top:-9999px;visibility:hidden">
-  <span id="busuanzi_container_site_pv"><span id="busuanzi_value_site_pv"></span></span>
-  <span id="busuanzi_container_site_uv"><span id="busuanzi_value_site_uv"></span></span>
-  <span id="busuanzi_container_site_pv_today"><span id="busuanzi_value_site_pv_today"></span></span>
-</div>
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <!-- ============ ENTRY MODAL ============ -->
 <div class="modal-shade" id="entryModal">
