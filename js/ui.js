@@ -1,6 +1,7 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
 import { getTodayIso } from './utils.js';
+import { toggleTheme } from './theme.js';
 
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
@@ -76,7 +77,6 @@ export function setHistFilter(filter, btn) {
 
 // ================ RANK ================
 export function setRankTier(rankKey, bonusPct, el) {
-  // Nếu vừa long-press xong → bỏ qua click này
   if (window.__spxLongPressFired) {
     window.__spxLongPressFired = false;
     return;
@@ -92,7 +92,6 @@ export function setRankTier(rankKey, bonusPct, el) {
   updateAllViews();
 }
 
-// Bỏ chọn hạng thưởng — về +0%
 function resetRankToNone() {
   state.rankBonus = 0;
   state.rankName  = 'none';
@@ -109,7 +108,6 @@ function resetRankToNone() {
   showToast('Đã bỏ chọn hạng thưởng', 'success', 1800);
 }
 
-// Long-press để bỏ chọn — chỉ gắn 1 lần
 let _rankLongPressAttached = false;
 function attachRankLongPress() {
   if (_rankLongPressAttached) return;
@@ -125,7 +123,6 @@ function attachRankLongPress() {
       timer = setTimeout(() => {
         window.__spxLongPressFired = true;
 
-        // Chỉ xử lý khi pill đang active
         if (pill.classList.contains('active')) {
           if (navigator.vibrate) {
             try { navigator.vibrate(30); } catch {}
@@ -143,13 +140,11 @@ function attachRankLongPress() {
       pill.classList.remove('long-pressing');
     };
 
-    // Touch events
     pill.addEventListener('touchstart',  start,  { passive: true });
     pill.addEventListener('touchend',    cancel);
     pill.addEventListener('touchcancel', cancel);
     pill.addEventListener('touchmove',   cancel, { passive: true });
 
-    // Mouse events (test desktop)
     pill.addEventListener('mousedown', start);
     pill.addEventListener('mouseup',   cancel);
     pill.addEventListener('mouseleave',cancel);
@@ -164,6 +159,30 @@ export function initRankUI() {
   if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
 
   attachRankLongPress();
+}
+
+// ================ THEME (từ menu) ================
+export function toggleThemeFromMenu() {
+  toggleTheme();
+  updateMenuThemeUI();
+  closeMenuModal();
+}
+
+export function updateMenuThemeUI() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const icon  = document.getElementById('menuThemeIcon');
+  const title = document.getElementById('menuThemeTitle');
+  const sub   = document.getElementById('menuThemeSub');
+
+  if (current === 'dark') {
+    if (icon)  icon.innerText  = '☀️';
+    if (title) title.innerText = 'Chế độ sáng';
+    if (sub)   sub.innerText   = 'Chuyển về giao diện sáng';
+  } else {
+    if (icon)  icon.innerText  = '🌙';
+    if (title) title.innerText = 'Chế độ tối';
+    if (sub)   sub.innerText   = 'Chuyển sang giao diện tối';
+  }
 }
 
 // ================ MODALS ================
@@ -244,58 +263,12 @@ export function closeModal(force) {
 }
 
 // ================ MENU MODAL ================
-export function openMenuModal()  { document.getElementById('menuModal').classList.add('active'); }
-export function closeMenuModal() { document.getElementById('menuModal').classList.remove('active'); }
-
-// ================ STATS MODAL ================
-function _readBusuanzi() {
-  const pv    = document.getElementById('busuanzi_value_site_pv');
-  const uv    = document.getElementById('busuanzi_value_site_uv');
-  const today = document.getElementById('busuanzi_value_site_pv_today');
-  return {
-    pv:    pv?.innerText?.trim()    || '',
-    uv:    uv?.innerText?.trim()    || '',
-    today: today?.innerText?.trim() || ''
-  };
+export function openMenuModal() {
+  updateMenuThemeUI();
+  document.getElementById('menuModal').classList.add('active');
 }
-
-function _fillStatsModal() {
-  const { pv, uv, today } = _readBusuanzi();
-  const spv    = document.getElementById('statsPv');
-  const suv    = document.getElementById('statsUv');
-  const stoday = document.getElementById('statsToday');
-  if (spv)    spv.innerText    = pv    || '—';
-  if (suv)    suv.innerText    = uv    || '—';
-  if (stoday) stoday.innerText = today || '—';
-}
-
-export function openStatsModal() {
-  document.getElementById('statsModal').classList.add('active');
-  _fillStatsModal();
-
-  let tries = 0;
-  const interval = setInterval(() => {
-    const { pv, uv, today } = _readBusuanzi();
-    if (pv || uv || today) {
-      _fillStatsModal();
-      clearInterval(interval);
-      window.__spxStatsInterval = null;
-      return;
-    }
-    if (++tries >= 17) {
-      clearInterval(interval);
-      window.__spxStatsInterval = null;
-    }
-  }, 300);
-  window.__spxStatsInterval = interval;
-}
-
-export function closeStatsModal() {
-  document.getElementById('statsModal').classList.remove('active');
-  if (window.__spxStatsInterval) {
-    clearInterval(window.__spxStatsInterval);
-    window.__spxStatsInterval = null;
-  }
+export function closeMenuModal() {
+  document.getElementById('menuModal').classList.remove('active');
 }
 
 // ================ SETTINGS MODAL ================
