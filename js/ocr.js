@@ -3,7 +3,7 @@ import { WEIGHT_KEYS } from './config.js';
 import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
-import { pushUndo } from './undo.js';
+// REVERT fix #3: bỏ import pushUndo
 
 // ==================== TESSERACT WORKER ====================
 let cachedTesseractWorker = null;
@@ -354,7 +354,6 @@ function extractDate(text) {
 const ocrCache = new Map();
 const OCR_CACHE_MAX = 30;
 
-// ===== FIX: hash trực tiếp trên Blob.arrayBuffer() =====
 async function hashBlob(file) {
   try {
     const buf = await file.arrayBuffer();
@@ -408,7 +407,7 @@ function getTypeLabel(r) {
        : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
 }
 
-// ===== FIX: Auto-save có pushUndo + check weights trùng =====
+// ===== REVERT fix #3: Auto-save không pushUndo =====
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -427,20 +426,11 @@ function tryAutoSave(r) {
   );
   if (existing) return false;
 
-  const newRecord = { id: generateId(), date: r.parsedDate, weights };
-  state.appData[type].unshift(newRecord);
+  state.appData[type].unshift({ id: generateId(), date: r.parsedDate, weights });
+  updateAllViews();
 
   const typeLabel = getTypeLabel(r);
   const dateStr = formatDateDisplay(r.parsedDate);
-
-  pushUndo({
-    msg: `Đã tự động lưu ${typeLabel} ${dateStr}`,
-    restore: () => {
-      state.appData[type] = state.appData[type].filter(it => it.id !== newRecord.id);
-    }
-  });
-
-  updateAllViews();
   showToast(`Đã lưu ${typeLabel} ${dateStr}: ${r.totalFound} đơn`, 'success');
   return true;
 }
@@ -806,20 +796,9 @@ export function saveBatchAll() {
     return;
   }
 
-  const addedIds = [];
+  // REVERT fix #3: batch save cũng không pushUndo
   finalList.forEach(({ item, type, weights }) => {
-    const id = generateId();
-    state.appData[type].unshift({ id, date: item.result.parsedDate, weights });
-    addedIds.push({ type, id });
-  });
-
-  pushUndo({
-    msg: `Đã lưu ${finalList.length} bản ghi từ batch`,
-    restore: () => {
-      addedIds.forEach(({ type, id }) => {
-        state.appData[type] = state.appData[type].filter(it => it.id !== id);
-      });
-    }
+    state.appData[type].unshift({ id: generateId(), date: item.result.parsedDate, weights });
   });
 
   batchResults = [];
