@@ -1,4 +1,5 @@
 import { STORAGE_KEYS } from './config.js';
+import { generateId } from './utils.js';
 
 export const state = {
   appData: { delivery: [], pickup: [], return: [] },
@@ -15,15 +16,34 @@ export const state = {
   isOcrScan: false
 };
 
+// Giữ fix #1: sanitize records, bỏ rác
+function sanitizeRecords(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter(r =>
+      r && typeof r === 'object' &&
+      typeof r.date === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(r.date) &&
+      r.weights && typeof r.weights === 'object'
+    )
+    .map(r => ({
+      id: Number.isFinite(r.id) ? r.id : generateId(),
+      date: r.date,
+      weights: r.weights
+    }));
+}
+
 export function loadState() {
   let d = JSON.parse(localStorage.getItem(STORAGE_KEYS.records));
   if (!d || (!d.delivery && !d.pickup)) {
     d = JSON.parse(localStorage.getItem(STORAGE_KEYS.vault)) || { delivery: [], pickup: [], return: [] };
   }
-  if (!d.delivery) d.delivery = [];
-  if (!d.pickup)   d.pickup   = [];
-  if (!d.return)   d.return   = [];
-  state.appData = d;
+  state.appData = {
+    delivery: sanitizeRecords(d.delivery),
+    pickup:   sanitizeRecords(d.pickup),
+    return:   sanitizeRecords(d.return)
+  };
+
   state.rankBonus = parseFloat(localStorage.getItem(STORAGE_KEYS.rank)) || 0;
   state.rankName  = localStorage.getItem(STORAGE_KEYS.rankName) || 'none';
 
@@ -31,6 +51,8 @@ export function loadState() {
   state.manualPoints = { buuCuc: mp.buuCuc || 0, taiXe: mp.taiXe || 0 };
 
   state.manualSalary = parseFloat(localStorage.getItem('spx_manual_salary')) || 0;
+
+  // REVERT fix #2: hard-code 26, không đọc localStorage
   state.salaryDays = 26;
 }
 
