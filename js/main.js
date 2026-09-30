@@ -4,6 +4,9 @@ import {
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier, initRankUI,
   openAddModal, openEditModal, closeModal,
+  openMenuModal, closeMenuModal,
+  openStatsModal, closeStatsModal,
+  openHistoryTab,
   openSettingsModal, closeSettingsModal,
   openCoffeeModal, closeCoffeeModal, copyBankNumber
 } from './ui.js';
@@ -33,11 +36,7 @@ function attachAutoClearInputs() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    fetch('./sw.js', { method: 'HEAD' })
-      .then(r => {
-        if (!r.ok) throw new Error('sw.js không tồn tại');
-        return navigator.serviceWorker.register('./sw.js', { scope: './' });
-      })
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
       .then(reg => console.log('[PWA] SW đã đăng ký:', reg.scope))
       .catch(err => console.warn('[PWA] Bỏ qua SW:', err.message));
   });
@@ -57,9 +56,7 @@ let salaryTimer = null;
 function _saveSalaryConfig() {
   const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
   state.manualSalary = salary;
-  state.salaryDays = 26;
   localStorage.setItem('spx_manual_salary', salary);
-  localStorage.setItem('spx_salary_days', 26);
   clearTimeout(salaryTimer);
   salaryTimer = setTimeout(() => updateAllViews(), 300);
 }
@@ -112,6 +109,9 @@ Object.assign(window, {
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
   openAddModal, openEditModal, closeModal,
+  openMenuModal, closeMenuModal,
+  openStatsModal, closeStatsModal,
+  openHistoryTab,
   openSettingsModal, closeSettingsModal,
   openCoffeeModal, closeCoffeeModal, copyBankNumber,
   handleOcrImage, openOcrLightbox, closeOcrLightbox,
@@ -133,10 +133,8 @@ Object.assign(window, {
     const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
     state.manualPoints = { buuCuc, taiXe };
     state.manualSalary = salary;
-    state.salaryDays = 26;
     localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
     localStorage.setItem('spx_manual_salary', salary);
-    localStorage.setItem('spx_salary_days', 26);
     clearTimeout(manualPointsTimer);
     clearTimeout(salaryTimer);
     updateAllViews();
