@@ -1,5 +1,8 @@
 /* =============================================================
-   SPX Tracker v2.3 — Final balanced design
+   SPX Tracker v2.4 — Final
+   - Header: ☰ + brand + 🌙 (bỏ nút +)
+   - Rank pills: chỉ tên hạng, bỏ %
+   - Nút Quét: 52px, nhô 10px — cân tỉ lệ với 4 tab
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -166,29 +169,30 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* =============== HEADER =============== */
+/* =============== HEADER (grid 3 cột — brand thực sự căn giữa) =============== */
 .top-nav {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   padding: 8px 12px;
-  display: flex;
-  justify-content: space-between;
+  padding-top: calc(8px + env(safe-area-inset-top, 0px));
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
   align-items: center;
+  gap: 8px;
   position: sticky;
   top: 0;
   z-index: 40;
-  padding-top: calc(8px + env(safe-area-inset-top, 0px));
-  gap: 8px;
 }
 .brand {
   font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--text-1);
-  flex: 1;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.header-right { display: flex; align-items: center; gap: 8px; }
 
 .btn-icon {
   width: 40px;
@@ -208,18 +212,6 @@ body {
 }
 .btn-icon:hover { background: var(--surface-3); border-color: var(--border-strong); }
 .btn-icon:active { transform: scale(0.94); }
-
-/* Nút Nhập — nổi bật cam */
-.btn-icon-add {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.28);
-}
-.btn-icon-add:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
 
 /* =============== BUTTONS =============== */
 .btn {
@@ -286,7 +278,7 @@ body {
 .content-area { min-width: 0; width: 100%; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
-.app-container { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.app-container { display: flex; flex-direction: column; gap: 10px; padding-top: 10px; padding-bottom: 24px; }
 
 /* =============== BOTTOM NAV =============== */
 .vertical-sidebar {
@@ -296,8 +288,8 @@ body {
   border-top: 1px solid var(--border);
   padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
   display: grid;
-  grid-template-columns: 1fr 1fr 72px 1fr 1fr;
-  align-items: end;
+  grid-template-columns: 1fr 1fr 64px 1fr 1fr;
+  align-items: center;
   gap: 2px;
   z-index: 50;
   max-width: 500px;
@@ -334,7 +326,7 @@ body {
   font-weight: 600;
 }
 
-/* ============ NÚT QUÉT — Style QR ============ */
+/* ============ NÚT QUÉT (52px, nhô 10px — cân với 4 tab) ============ */
 .tab-btn-quet {
   display: flex;
   align-items: center;
@@ -343,14 +335,14 @@ body {
   border: none;
   background: transparent;
   padding: 0;
-  transform: translateY(-14px);
+  transform: translateY(-10px);
   font-family: inherit;
   position: relative;
   z-index: 2;
 }
 .quet-icon {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: linear-gradient(135deg, #ff5722 0%, #ff3d71 100%);
   color: #fff;
@@ -360,9 +352,8 @@ body {
   line-height: 1;
   box-shadow:
     0 0 0 4px var(--surface),
-    0 0 0 5px var(--border),
-    0 6px 18px rgba(255, 87, 34, 0.35),
-    0 2px 6px rgba(255, 61, 113, 0.2);
+    0 4px 12px rgba(255, 87, 34, 0.32),
+    0 1px 4px rgba(255, 61, 113, 0.2);
   transition: transform 0.15s, box-shadow 0.2s;
 }
 .quet-icon svg { display: block; }
@@ -370,8 +361,7 @@ body {
   transform: scale(0.9);
   box-shadow:
     0 0 0 4px var(--surface),
-    0 0 0 5px var(--border),
-    0 3px 8px rgba(255, 87, 34, 0.3);
+    0 2px 6px rgba(255, 87, 34, 0.28);
 }
 .quet-label { display: none; }
 
@@ -453,29 +443,28 @@ body {
   justify-content: space-between;
   align-items: center;
 }
+
+/* ===== RANK PILLS — chỉ tên, bỏ % ===== */
 .rank-pill-group {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
 }
 .rank-pill {
-  padding: 7px 6px;
+  padding: 8px 4px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   text-align: center;
   cursor: pointer;
   color: var(--text-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
   transition: all 0.15s;
-  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.rank-pill span:last-child { font-size: 10px; opacity: 0.75; }
 .rank-pill.active {
   background: var(--text-1);
   border-color: var(--text-1);
@@ -483,7 +472,6 @@ body {
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
 }
-.rank-pill.active span:last-child { opacity: 0.85; }
 
 .ratio-head {
   display: flex;
@@ -1249,7 +1237,7 @@ tr:last-child td { border-bottom: none; }
 @media (max-width: 360px) {
   .hero-value { font-size: 28px; }
   .stat-card-val { font-size: 16px; }
-  .quet-icon { width: 54px; height: 54px; }
+  .rank-pill { font-size: 10px; padding: 8px 2px; }
   .period-btn { padding: 6px 9px; font-size: 11px; }
   .tab-label { font-size: 10px; }
 }
