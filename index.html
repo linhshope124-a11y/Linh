@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ HEADER (bỏ nút +) ============ -->
+<!-- ============ HEADER ============ -->
 <header class="top-nav">
   <button class="btn-icon" onclick="openMenuModal()" title="Menu" aria-label="Menu">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -28,8 +28,11 @@
 
   <div class="brand">SPX Tracker</div>
 
-  <span aria-hidden="true"></span>
+  <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme" aria-label="Theme">
+    <span id="themeIcon">🌙</span>
+  </button>
 </header>
+
 <!-- ============ PERIOD BAR ============ -->
 <div class="period-bar">
   <div class="period-buttons">
@@ -48,7 +51,6 @@
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
 
-        <!-- HERO: Tổng điểm + Rank + Ratio -->
         <section class="card hero-card">
           <div class="hero-head">
             <span class="hero-label">Tổng điểm tích lũy</span>
@@ -60,16 +62,15 @@
 
           <div class="rank-box">
             <div class="rank-head">
-              <span>Hạng thưởng</span>
+              <span>Hạng thưởng <span class="rank-hint">· giữ để bỏ chọn</span></span>
               <span id="currentBonusPctLabel" style="color:var(--accent);font-weight:700">+0%</span>
             </div>
             <div class="rank-pill-group">
-              <div class="rank-pill active" data-rank="none"      onclick="setRankTier('none', 0, this)">Chuẩn</div>
-              <div class="rank-pill"        data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</div>
-              <div class="rank-pill"        data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</div>
-              <div class="rank-pill"        data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</div>
-              <div class="rank-pill"        data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</div>
-              <div class="rank-pill"        data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</div>
+              <div class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</div>
+              <div class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</div>
+              <div class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</div>
+              <div class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</div>
+              <div class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</div>
             </div>
           </div>
 
@@ -86,7 +87,6 @@
           </div>
         </section>
 
-        <!-- THU NHẬP (collapsible) -->
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
             <div class="income-summary-left">
@@ -139,7 +139,6 @@
           </div>
         </details>
 
-        <!-- 3 CARD GIAO / LẤY / HOÀN -->
         <section class="stat-grid-reorganized">
           <div class="stat-card-item type-del">
             <div class="stat-card-title">Giao</div>
@@ -158,7 +157,6 @@
           </div>
         </section>
 
-        <!-- CƠ HỘI TĂNG ĐIỂM -->
         <section class="card">
           <div class="card-head">
             <div>
