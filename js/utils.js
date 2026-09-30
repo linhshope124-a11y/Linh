@@ -1,9 +1,20 @@
 const _nf = new Intl.NumberFormat('vi-VN');
 export const _fmt = n => _nf.format(n);
 
-export const generateId  = () => Date.now() * 1000 + Math.floor(Math.random() * 1000);
-export const sanitizeInt = v  => { const n = parseInt(v, 10); return Number.isFinite(n) && n > 0 ? n : 0; };
-export const formatPts   = n  => _fmt(Math.round(n)) + ' Điểm';
+// ===== FIX: generateId không bao giờ trùng, tăng dần đơn điệu =====
+let _lastId = 0;
+export const generateId = () => {
+  const base = Date.now() * 1000;
+  if (base <= _lastId) {
+    _lastId += 1;
+  } else {
+    _lastId = base + Math.floor(Math.random() * 1000);
+  }
+  return _lastId;
+};
+
+export const sanitizeInt = v => { const n = parseInt(v, 10); return Number.isFinite(n) && n > 0 ? n : 0; };
+export const formatPts   = n => _fmt(Math.round(n)) + ' Điểm';
 
 export function getTodayIso() {
   const d = new Date();
