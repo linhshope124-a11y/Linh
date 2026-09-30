@@ -13,32 +13,36 @@
 <meta name="apple-mobile-web-app-title" content="SPX Tracker">
 <link rel="stylesheet" href="./css/style.css">
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </head>
 <body>
 
+<!-- ============ HEADER ============ -->
 <header class="top-nav">
-  <div class="header-left">
-    <button class="btn-icon" onclick="openCoffeeModal()" title="Ủng hộ tác giả">❤️</button>
-    <button class="btn-icon" onclick="openSettingsModal()" title="Cài đặt & Backup">⚙️</button>
-  </div>
-  <div class="header-actions">
-    <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleOcrImage(event)">
-    <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme"><span id="themeIcon">🌙</span></button>
-    <button class="btn btn-primary" onclick="openAddModal()" style="padding:8px 14px">＋ Nhập</button>
+  <button class="btn-icon" onclick="openMenuModal()" title="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <div class="brand">SPX Tracker</div>
+
+  <div class="header-right">
+    <button class="btn-icon" onclick="openAddModal()" title="Nhập sản lượng">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+    </button>
+    <button class="btn-icon" id="themeToggleBtn" onclick="toggleTheme()" title="Đổi theme">
+      <span id="themeIcon">🌙</span>
+    </button>
   </div>
 </header>
 
-<div style="max-width:600px;margin:8px auto 0;padding:0 12px;text-align:center;font-size:10.5px;color:var(--text-muted);font-weight:600">
-  👁️ <span id="busuanzi_container_site_pv">Tổng: <b><span id="busuanzi_value_site_pv"></span></b> lượt</span>
-  &nbsp;·&nbsp;
-  👤 <span id="busuanzi_container_site_uv">Người dùng: <b><span id="busuanzi_value_site_uv"></span></b></span>
-  &nbsp;·&nbsp;
-  📅 Hôm nay: <b><span id="busuanzi_value_site_pv_today"></span></b>
-</div>
-
+<!-- ============ PERIOD BAR ============ -->
 <div class="period-bar">
-  <span class="period-label">Kỳ:</span>
   <div class="period-buttons">
     <button class="period-btn active" onclick="setPeriodFilter('all', this)">Tất cả</button>
     <button class="period-btn" onclick="setPeriodFilter('this_month', this)">Tháng này</button>
@@ -47,35 +51,27 @@
   </div>
 </div>
 
+<!-- ============ MAIN LAYOUT ============ -->
 <div class="layout-shell">
-  <aside class="vertical-sidebar">
-    <button class="tab-btn active" onclick="switchMainTab('overview', this)"><span>📊</span><span>T.Quan</span></button>
-    <button class="tab-btn" onclick="switchMainTab('delivery', this)"><span>🚚</span><span>Giao</span></button>
-    <button class="tab-btn" onclick="switchMainTab('pickup', this)"><span>📥</span><span>Lấy</span></button>
-    <button class="tab-btn" onclick="switchMainTab('return', this)"><span>📦</span><span>Hoàn</span></button>
-    <button class="tab-btn" onclick="switchMainTab('history', this)"><span>🗂️</span><span>N.Ký</span></button>
-  </aside>
-
   <div class="content-area">
 
-    <!-- ============ TAB TỔNG QUAN ============ -->
+    <!-- ===== TAB TỔNG QUAN ===== -->
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
-        <section class="card">
-          <div class="card-head" style="margin-bottom:14px">
-            <div>
-              <h2>Tổng quan</h2>
-              <p>Tích lũy theo kỳ đang chọn</p>
-            </div>
-            <div class="overview-hero-pill" id="overallTotalOrders">0 đơn</div>
+
+        <!-- HERO: Tổng điểm + Rank + Ratio -->
+        <section class="card hero-card">
+          <div class="hero-head">
+            <span class="hero-label">Tổng điểm tích lũy</span>
+            <span class="hero-pill" id="overallTotalOrders">0 đơn</span>
           </div>
 
-          <div class="overview-hero-val" id="overallTotalPoints">0 Điểm</div>
-          <div style="font-size:11.5px;color:var(--text-3);margin-top:6px" id="rankBonusDetailText">Gốc: 0 · Thưởng: +0</div>
+          <div class="hero-value" id="overallTotalPoints">0 Điểm</div>
+          <div class="hero-sub" id="rankBonusDetailText">Gốc: 0 · Thưởng: +0</div>
 
-          <div class="rank-selector-box" style="margin-top:16px">
-            <div class="rank-selector-title">
-              <span>Hạng thưởng SPX</span>
+          <div class="rank-box">
+            <div class="rank-head">
+              <span>Hạng thưởng</span>
               <span id="currentBonusPctLabel" style="color:var(--accent);font-weight:700">+0%</span>
             </div>
             <div class="rank-pill-group">
@@ -88,8 +84,8 @@
             </div>
           </div>
 
-          <div style="margin-top:14px">
-            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:6px">
+          <div class="ratio-box">
+            <div class="ratio-head">
               <span>Phân bổ</span>
               <span id="ratioText">0% G · 0% L · 0% H</span>
             </div>
@@ -101,83 +97,79 @@
           </div>
         </section>
 
+        <!-- THU NHẬP (collapsible) -->
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
-            <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1;min-width:0">
-              <span style="font-size:13px;font-weight:700;color:var(--text-1)">💰 Thu nhập <span id="incomePeriodLabel" style="color:var(--text-3);font-weight:500;font-size:11px">(tháng này)</span></span>
-              <span style="font-size:11px;color:var(--text-3);font-weight:500" id="incomeDayCount">0/26 ngày</span>
+            <div class="income-summary-left">
+              <span class="income-summary-title">Thu nhập <span id="incomePeriodLabel" class="income-summary-period">(tháng này)</span></span>
+              <span class="income-summary-days" id="incomeDayCount">0/26 ngày</span>
             </div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:14px;font-weight:700;color:var(--accent)" id="incomeTotalDisplay">+0 Điểm</span>
+            <div class="income-summary-right">
+              <span class="income-summary-value" id="incomeTotalDisplay">+0 Điểm</span>
               <span class="income-chevron">▼</span>
             </div>
           </summary>
 
-          <div style="padding-top:14px;border-top:1px solid var(--border);margin-top:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-              <span style="font-size:12.5px;font-weight:500;color:var(--text-2)">Lương cơ bản</span>
-              <div style="display:flex;align-items:center;gap:8px">
-                <input type="number" inputmode="numeric" id="salaryBaseInput" value="0" min="0" oninput="saveSalaryConfig()" onchange="saveSalaryConfig()"
-                       style="width:100px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);font-size:14px;font-weight:700;text-align:right;outline:none;font-family:'JetBrains Mono',monospace;">
-                <span style="font-size:10.5px;color:var(--text-3);white-space:nowrap">đ/tháng</span>
+          <div class="income-content">
+            <div class="income-row">
+              <span class="income-row-label">Lương cơ bản</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="salaryBaseInput" value="0" min="0" oninput="saveSalaryConfig()" onchange="saveSalaryConfig()">
+                <span class="income-unit">đ/tháng</span>
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-              <span style="font-size:12.5px;font-weight:500;color:var(--text-2)">Bưu cục</span>
-              <div style="display:flex;align-items:center;gap:8px">
-                <input type="number" inputmode="numeric" id="manualBuuCucInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()"
-                       style="width:100px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);font-size:14px;font-weight:700;text-align:right;outline:none;font-family:'JetBrains Mono',monospace;">
-                <span style="font-size:10.5px;color:var(--text-3);white-space:nowrap">đ/tháng</span>
+            <div class="income-row">
+              <span class="income-row-label">Bưu cục</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="manualBuuCucInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()">
+                <span class="income-unit">đ/tháng</span>
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-              <span style="font-size:12.5px;font-weight:500;color:var(--text-2)">Tài xế</span>
-              <div style="display:flex;align-items:center;gap:8px">
-                <input type="number" inputmode="numeric" id="manualTaiXeInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()"
-                       style="width:100px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--accent);font-size:14px;font-weight:700;text-align:right;outline:none;font-family:'JetBrains Mono',monospace;">
-                <span style="font-size:10.5px;color:var(--text-3);white-space:nowrap">đ/tháng</span>
+            <div class="income-row">
+              <span class="income-row-label">Tài xế</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="manualTaiXeInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()">
+                <span class="income-unit">đ/tháng</span>
               </div>
             </div>
 
-            <div style="margin-top:14px;padding:12px 14px;background:var(--surface-2);border-radius:10px;border:1px solid var(--border)">
-              <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-3);margin-bottom:6px">
+            <div class="income-summary-box">
+              <div class="income-summary-line">
                 <span>Lương 1 ngày</span>
-                <span id="incomePerDayText" style="font-weight:600;color:var(--text-2)">0 Điểm/ngày</span>
+                <span id="incomePerDayText">0 Điểm/ngày</span>
               </div>
-              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border)">
-                <span style="font-size:12px;color:var(--text-2);font-weight:600">Đã tích lũy</span>
-                <b id="incomeTotalDisplayInner" style="color:var(--accent);font-size:16px;font-weight:700">+0 Điểm</b>
+              <div class="income-summary-line total">
+                <span>Đã tích lũy</span>
+                <b id="incomeTotalDisplayInner">+0 Điểm</b>
               </div>
             </div>
 
-            <button class="btn btn-primary" onclick="forceSaveConfig()" style="width:100%;margin-top:12px;font-weight:600;padding:12px">
-              Lưu cấu hình
-            </button>
+            <button class="btn btn-primary income-save-btn" onclick="forceSaveConfig()">Lưu cấu hình</button>
           </div>
         </details>
 
-        <section class="card">
-          <div class="stat-grid-reorganized" style="margin-top:0">
-            <div class="stat-card-item type-del">
-              <div class="stat-card-head"><span class="stat-card-title">Giao</span></div>
-              <div class="stat-card-val" id="miniDelPoints">0 Điểm</div>
-              <div class="stat-card-foot"><b id="miniDelOrders">0 đơn</b></div>
-            </div>
-            <div class="stat-card-item type-pick">
-              <div class="stat-card-head"><span class="stat-card-title">Lấy</span></div>
-              <div class="stat-card-val" id="miniPickPoints">0 Điểm</div>
-              <div class="stat-card-foot"><b id="miniPickOrders">0 đơn</b></div>
-            </div>
-            <div class="stat-card-item type-ret">
-              <div class="stat-card-head"><span class="stat-card-title">Hoàn</span></div>
-              <div class="stat-card-val" id="miniRetPoints">0 Điểm</div>
-              <div class="stat-card-foot"><b id="miniRetOrders">0 đơn</b></div>
-            </div>
+        <!-- 3 CARD GIAO / LẤY / HOÀN -->
+        <section class="stat-grid-reorganized">
+          <div class="stat-card-item type-del">
+            <div class="stat-card-title">Giao</div>
+            <div class="stat-card-val" id="miniDelPoints">0</div>
+            <div class="stat-card-foot"><b id="miniDelOrders">0</b> đơn</div>
+          </div>
+          <div class="stat-card-item type-pick">
+            <div class="stat-card-title">Lấy</div>
+            <div class="stat-card-val" id="miniPickPoints">0</div>
+            <div class="stat-card-foot"><b id="miniPickOrders">0</b> đơn</div>
+          </div>
+          <div class="stat-card-item type-ret">
+            <div class="stat-card-title">Hoàn</div>
+            <div class="stat-card-val" id="miniRetPoints">0</div>
+            <div class="stat-card-foot"><b id="miniRetOrders">0</b> đơn</div>
           </div>
         </section>
 
+        <!-- CƠ HỘI TĂNG ĐIỂM -->
         <section class="card">
           <div class="card-head">
             <div>
@@ -185,7 +177,7 @@
               <p>Số đơn cần thêm để đạt mốc tiếp theo</p>
             </div>
           </div>
-          <div class="history-filter-bar" style="margin-top:0;margin-bottom:10px">
+          <div class="filter-bar">
             <button class="filter-btn active" onclick="setOverviewFilter('all', this)">Tất cả</button>
             <button class="filter-btn" onclick="setOverviewFilter('del', this)">Giao</button>
             <button class="filter-btn" onclick="setOverviewFilter('pick', this)">Lấy</button>
@@ -197,11 +189,11 @@
       </main>
     </div>
 
-    <!-- ============ TAB GIAO ============ -->
+    <!-- ===== TAB GIAO ===== -->
     <div class="tab-panel" id="tab-delivery">
       <main class="app-container">
         <section class="card">
-          <div class="overview-box" style="margin-bottom:14px">
+          <div class="overview-box">
             <div>
               <div class="overview-label">Tổng điểm Giao</div>
               <div class="overview-value" id="delTotalPoints">0 Điểm</div>
@@ -215,11 +207,11 @@
       </main>
     </div>
 
-    <!-- ============ TAB LẤY ============ -->
+    <!-- ===== TAB LẤY ===== -->
     <div class="tab-panel" id="tab-pickup">
       <main class="app-container">
         <section class="card">
-          <div class="overview-box" style="margin-bottom:14px">
+          <div class="overview-box">
             <div>
               <div class="overview-label">Tổng điểm Lấy</div>
               <div class="overview-value" id="pickTotalPoints">0 Điểm</div>
@@ -233,11 +225,11 @@
       </main>
     </div>
 
-    <!-- ============ TAB HOÀN ============ -->
+    <!-- ===== TAB HOÀN ===== -->
     <div class="tab-panel" id="tab-return">
       <main class="app-container">
         <section class="card">
-          <div class="overview-box" style="margin-bottom:14px">
+          <div class="overview-box">
             <div>
               <div class="overview-label">Tổng điểm Hoàn</div>
               <div class="overview-value" id="retTotalPoints">0 Điểm</div>
@@ -251,7 +243,7 @@
       </main>
     </div>
 
-    <!-- ============ TAB NHẬT KÝ ============ -->
+    <!-- ===== TAB NHẬT KÝ (ẩn, truy cập từ menu) ===== -->
     <div class="tab-panel" id="tab-history">
       <main class="app-container">
         <section class="card">
@@ -260,10 +252,9 @@
               <h2>Nhật ký</h2>
               <p id="histCountNote">0 bản ghi</p>
             </div>
-            <button class="btn" onclick="openSettingsModal()" style="font-size:11.5px;padding:6px 10px">⚙️ Quản lý</button>
           </div>
 
-          <div class="history-filter-bar" style="margin-top:0">
+          <div class="filter-bar">
             <button class="filter-btn active" onclick="setHistFilter('all', this)">Tất cả</button>
             <button class="filter-btn" onclick="setHistFilter('delivery', this)">Giao</button>
             <button class="filter-btn" onclick="setHistFilter('pickup', this)">Lấy</button>
@@ -277,11 +268,127 @@
   </div>
 </div>
 
-<!-- ============ FLOATING ACTION BUTTON — QUÉT ẢNH ============ -->
-<button class="fab-ocr" id="fabOcrBtn" onclick="document.getElementById('ocrFileInput').click()" title="Quét ảnh SPX">
-  <span>📷</span>
-  <span class="fab-label">Quét</span>
-</button>
+<!-- ============ BOTTOM NAV + FAB QUÉT ============ -->
+<aside class="vertical-sidebar">
+  <button class="tab-btn active" data-tab="overview" onclick="switchMainTab('overview', this)">
+    <span class="tab-icon">📊</span>
+    <span class="tab-label">T.Quan</span>
+  </button>
+  <button class="tab-btn" data-tab="delivery" onclick="switchMainTab('delivery', this)">
+    <span class="tab-icon">🚚</span>
+    <span class="tab-label">Giao</span>
+  </button>
+
+  <button class="tab-btn-quet" onclick="document.getElementById('ocrFileInput').click()" title="Quét ảnh SPX">
+    <span class="quet-icon">📷</span>
+    <span class="quet-label">Quét</span>
+  </button>
+
+  <button class="tab-btn" data-tab="pickup" onclick="switchMainTab('pickup', this)">
+    <span class="tab-icon">📥</span>
+    <span class="tab-label">Lấy</span>
+  </button>
+  <button class="tab-btn" data-tab="return" onclick="switchMainTab('return', this)">
+    <span class="tab-icon">📦</span>
+    <span class="tab-label">Hoàn</span>
+  </button>
+</aside>
+
+<input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleOcrImage(event)">
+
+<!-- ============ MENU MODAL ============ -->
+<div class="modal-shade" id="menuModal" onclick="if(event.target===this)closeMenuModal()">
+  <div class="modal-box menu-modal-box">
+    <div class="modal-box-head">
+      <h3>Menu</h3>
+      <button class="modal-close-btn" onclick="closeMenuModal()">✕</button>
+    </div>
+    <div class="modal-body menu-body">
+      <button class="menu-item" onclick="closeMenuModal();openAddModal()">
+        <span class="menu-icon">📝</span>
+        <div class="menu-text">
+          <div class="menu-title">Nhập sản lượng</div>
+          <div class="menu-sub">Nhập tay số đơn theo dải khối lượng</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openHistoryTab()">
+        <span class="menu-icon">🗂️</span>
+        <div class="menu-text">
+          <div class="menu-title">Nhật ký</div>
+          <div class="menu-sub">Xem, sửa, xóa bản ghi đã lưu</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openSettingsModal()">
+        <span class="menu-icon">💾</span>
+        <div class="menu-text">
+          <div class="menu-title">Backup & Cài đặt</div>
+          <div class="menu-sub">Cloud, JSON, dọn trùng lặp</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openCoffeeModal()">
+        <span class="menu-icon">❤️</span>
+        <div class="menu-text">
+          <div class="menu-title">Ủng hộ tác giả</div>
+          <div class="menu-sub">Viettinbank · Cảm ơn bạn!</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openStatsModal()">
+        <span class="menu-icon">📊</span>
+        <div class="menu-text">
+          <div class="menu-title">Thống kê truy cập</div>
+          <div class="menu-sub">Lượt xem · Người dùng</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STATS MODAL (busuanzi) ============ -->
+<div class="modal-shade" id="statsModal" onclick="if(event.target===this)closeStatsModal()">
+  <div class="modal-box menu-modal-box">
+    <div class="modal-box-head">
+      <h3>Thống kê truy cập</h3>
+      <button class="modal-close-btn" onclick="closeStatsModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-row">
+        <div class="stats-item">
+          <div class="stats-icon">👁️</div>
+          <div class="stats-label">Tổng lượt</div>
+          <div class="stats-value" id="statsPv">—</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-icon">👤</div>
+          <div class="stats-label">Người dùng</div>
+          <div class="stats-value" id="statsUv">—</div>
+        </div>
+        <div class="stats-item">
+          <div class="stats-icon">📅</div>
+          <div class="stats-label">Hôm nay</div>
+          <div class="stats-value" id="statsToday">—</div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--text-3);text-align:center;margin-top:16px">
+        Dữ liệu từ Busuanzi — cập nhật tự động
+      </p>
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn btn-primary" onclick="closeStatsModal()" style="width:100%">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Busuanzi ẩn — chỉ tải dữ liệu -->
+<div style="position:absolute;left:-9999px;top:-9999px;visibility:hidden">
+  <span id="busuanzi_container_site_pv"><span id="busuanzi_value_site_pv"></span></span>
+  <span id="busuanzi_container_site_uv"><span id="busuanzi_value_site_uv"></span></span>
+  <span id="busuanzi_container_site_pv_today"><span id="busuanzi_value_site_pv_today"></span></span>
+</div>
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 
 <!-- ============ ENTRY MODAL ============ -->
 <div class="modal-shade" id="entryModal">
@@ -383,21 +490,21 @@
     </div>
     <div class="modal-body">
 
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px">☁️ Cloud Backup (GitHub Gist)</div>
-      <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Tự động lưu lên Cloud — reset máy không mất dữ liệu.</p>
+      <div class="settings-section-title">☁️ Cloud Backup (GitHub Gist)</div>
+      <p class="settings-hint">Tự động lưu lên Cloud — reset máy không mất dữ liệu.</p>
 
-      <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text-2);margin-bottom:4px">GitHub Token</label>
+      <label class="settings-label">GitHub Token</label>
       <input type="password" id="ghTokenInput" class="input-control" placeholder="ghp_..." style="font-family:'JetBrains Mono',monospace;font-size:12px">
 
-      <label style="display:block;font-size:11.5px;font-weight:600;color:var(--text-2);margin:12px 0 4px">Gist ID</label>
+      <label class="settings-label" style="margin-top:12px">Gist ID</label>
       <input type="text" id="gistIdInput" class="input-control" placeholder="Tự động sau lần backup đầu" style="font-family:'JetBrains Mono',monospace;font-size:12px">
 
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-top:14px;cursor:pointer;color:var(--text-2)">
+      <label class="settings-checkbox">
         <input type="checkbox" id="autoBackupToggle" style="width:auto;margin:0">
         <span>Tự động backup sau mỗi thay đổi</span>
       </label>
 
-      <div style="display:flex;gap:8px;margin-top:14px">
+      <div class="settings-row">
         <button class="btn" onclick="testCloudConnection()" style="flex:1">🔌 Kiểm tra</button>
         <button class="btn btn-primary" onclick="pushToCloud()" style="flex:1">☁️ Backup</button>
       </div>
@@ -405,18 +512,18 @@
         <button class="btn" onclick="pullFromCloud()" style="width:100%">⬇️ Khôi phục từ Cloud</button>
       </div>
 
-      <div class="cloud-status idle" id="cloudStatus" style="margin-top:12px">Chưa cấu hình</div>
+      <div class="cloud-status idle" id="cloudStatus">Chưa cấu hình</div>
 
-      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <hr class="settings-hr">
 
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📁 Sao lưu cục bộ</div>
-      <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Export/Import dữ liệu dạng file JSON.</p>
+      <div class="settings-section-title">📁 Sao lưu cục bộ</div>
+      <p class="settings-hint">Export/Import dữ liệu dạng file JSON.</p>
 
-      <div style="display:flex;gap:8px">
+      <div class="settings-row">
         <button class="btn" id="copyJsonBtn" onclick="copyDataJson()" style="flex:1">📋 Chép</button>
         <button class="btn" onclick="openPasteJsonModal()" style="flex:1">📝 Dán</button>
       </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
+      <div class="settings-row" style="margin-top:8px">
         <button class="btn" onclick="exportData()" style="flex:1">💾 Lưu file</button>
         <button class="btn" onclick="document.getElementById('importFileInput').click()" style="flex:1">📥 Nạp file</button>
         <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importData(event)">
@@ -425,32 +532,30 @@
         <button class="btn" onclick="restoreFromVault()" style="width:100%">🔄 Phục hồi tự động</button>
       </div>
 
-      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <hr class="settings-hr">
 
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px">🧹 Công cụ</div>
-      <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">Tìm và xóa các bản ghi trùng lặp (cùng ngày + cùng số liệu).</p>
+      <div class="settings-section-title">🧹 Công cụ</div>
+      <p class="settings-hint">Tìm và xóa các bản ghi trùng lặp (cùng ngày + cùng số liệu).</p>
       <button class="btn" onclick="cleanupDuplicates()" style="width:100%;background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);font-weight:600">
         Dọn bản ghi trùng lặp
       </button>
 
-      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <hr class="settings-hr">
 
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px;color:var(--danger)">⚠️ Vùng nguy hiểm</div>
-      <p style="font-size:11.5px;color:var(--text-3);margin-bottom:12px">
-        Xóa toàn bộ dữ liệu sản lượng đã nhập. <b style="color:var(--danger)">Không thể khôi phục!</b>
-      </p>
+      <div class="settings-section-title" style="color:var(--danger)">⚠️ Vùng nguy hiểm</div>
+      <p class="settings-hint">Xóa toàn bộ dữ liệu sản lượng đã nhập. <b style="color:var(--danger)">Không thể khôi phục!</b></p>
       <button class="btn" onclick="clearAllHistory()" style="width:100%;background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger);font-weight:600">
         Xóa toàn bộ nhật ký
       </button>
 
-      <hr style="margin:20px 0;border:none;border-top:1px solid var(--border)">
+      <hr class="settings-hr">
 
-      <div style="font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:8px">📖 Hướng dẫn lấy Token</div>
-      <ol style="font-size:11.5px;color:var(--text-3);padding-left:18px;line-height:1.7;margin:0">
-        <li>Vào <b style="color:var(--text-2)">github.com/settings/tokens</b></li>
-        <li>Bấm <b style="color:var(--text-2)">Generate new token (classic)</b></li>
+      <div class="settings-section-title">📖 Hướng dẫn lấy Token</div>
+      <ol class="settings-guide">
+        <li>Vào <b>github.com/settings/tokens</b></li>
+        <li>Bấm <b>Generate new token (classic)</b></li>
         <li>Note: <code>spx-backup</code> · Expiration: <code>No expiration</code></li>
-        <li>Scope: tích <b style="color:var(--text-2)">gist</b> · Bấm <b style="color:var(--text-2)">Generate</b></li>
+        <li>Scope: tích <b>gist</b> · Bấm <b>Generate</b></li>
         <li>Copy token → paste vào ô trên</li>
       </ol>
     </div>
@@ -475,7 +580,7 @@
   </div>
 </div>
 
-<!-- ============ COFFEE / DONATE MODAL ============ -->
+<!-- ============ DONATE MODAL ============ -->
 <div class="modal-shade" id="coffeeModal" onclick="if(event.target===this)closeCoffeeModal()">
   <div class="modal-box coffee-modal-box">
     <div class="modal-box-head">
