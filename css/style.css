@@ -3,6 +3,7 @@
    • Hero 30px gọn hơn
    • Palette 3 loại đơn tăng contrast
    • Bottom nav shadow đậm hơn
+   • LCB có icon ⓘ
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -35,16 +36,15 @@
   --accent-soft:   #fff1eb;
   --accent-border: #ffd5c2;
 
-  /* ===== Palette tăng contrast ===== */
-  --giao:      #c2410c;   /* orange-700 — đậm hơn */
+  --giao:      #c2410c;
   --giao-soft: #fff7ed;
   --giao-bd:   #fed7aa;
 
-  --lay:       #eab308;   /* yellow-500 — sáng hơn */
+  --lay:       #eab308;
   --lay-soft:  #fefce8;
   --lay-bd:    #fef08a;
 
-  --hoan:      #dc2626;   /* red-600 */
+  --hoan:      #dc2626;
   --hoan-soft: #fef2f2;
   --hoan-bd:   #fecaca;
 
@@ -122,7 +122,6 @@
   --accent-soft:   rgba(255, 110, 64, 0.12);
   --accent-border: rgba(255, 110, 64, 0.3);
 
-  /* Palette dark — vẫn giữ contrast cao */
   --giao:      #fb923c;
   --giao-soft: rgba(251, 146, 60, 0.12);
   --giao-bd:   rgba(251, 146, 60, 0.3);
@@ -323,7 +322,7 @@ body {
   padding-bottom: 24px;
 }
 
-/* ============ BOTTOM NAV — shadow đậm hơn ============ */
+/* ============ BOTTOM NAV ============ */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -470,13 +469,6 @@ body {
   font-weight: 700;
   color: var(--accent);
 }
-.card-hint {
-  font-size: 10.5px;
-  color: var(--text-3);
-  margin-top: 10px;
-  text-align: center;
-  font-weight: 500;
-}
 
 /* ============ INFO ICON ============ */
 .info-icon {
@@ -499,6 +491,7 @@ body {
   transition: all 0.15s;
   text-transform: lowercase;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 .info-icon:hover {
   border-color: var(--accent);
@@ -507,7 +500,7 @@ body {
 }
 .info-icon:active { transform: scale(0.9); }
 
-/* ============ HERO — số 30px gọn hơn ============ */
+/* ============ HERO ============ */
 .hero {
   background: linear-gradient(135deg, var(--accent-soft) 0%, var(--surface) 60%);
   border: 1px solid var(--accent-border);
@@ -543,13 +536,13 @@ body {
   white-space: nowrap;
 }
 .hero-value {
-  font-size: 30px;      /* 34px → 30px */
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-1);
   line-height: 1.05;
 }
-.hero-sm .hero-value { font-size: 24px; }   /* 26px → 24px */
+.hero-sm .hero-value { font-size: 24px; }
 .hero-value-unit {
   font-size: 0.5em;
   font-weight: 700;
@@ -650,7 +643,7 @@ body {
   filter: brightness(0.95);
 }
 
-/* ============ RATIO BAR — contrast cao hơn ============ */
+/* ============ RATIO BAR ============ */
 .ratio-bar {
   height: 8px;
   background: var(--surface-2);
@@ -727,7 +720,14 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   border-bottom: 1px solid var(--border);
 }
 .income-row:last-of-type { border-bottom: none; padding-bottom: 4px; }
-.income-row-label { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
+.income-row-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 .income-row-input { display: flex; align-items: center; gap: 8px; }
 .income-row-input input {
   width: 110px;
