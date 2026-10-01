@@ -1,9 +1,10 @@
 /* =============================================================
-   SPX Tracker v3.0 — C-Lite Design System
+   SPX Tracker v3.1 — C-Lite Design System
    • 8pt grid · SVG icons · Color system có naming
    • Dashboard tiles cho tab Tổng quan
    • Bảng gộp 5 cột cho tab chi tiết
    • Menu sectioned
+   • Nút Quét 40px + viền trắng 3px, không label
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -85,7 +86,7 @@
   /* Layout */
   --nav-h: 68px;
 
-  /* Backward-compat aliases (giữ để không phá vỡ module khác) */
+  /* Backward-compat aliases */
   --spx-orange: var(--accent);
   --text-primary: var(--text-1);
   --text-secondary: var(--text-2);
@@ -164,7 +165,6 @@
   --sh-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --sh-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 
-  /* aliases */
   --text-primary: var(--text-1);
   --text-secondary: var(--text-2);
   --text-muted: var(--text-3);
@@ -385,7 +385,7 @@ body {
 .nav-btn.active .nav-icon { stroke-width: 2.2; }
 .nav-btn:active { transform: scale(0.94); }
 
-/* FAB Quét — Solid cam */
+/* FAB Quét — 40px + viền trắng 3px, không label */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -396,12 +396,12 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  transform: translateY(-6px);
+  transform: translateY(-4px);
   font-family: inherit;
 }
 .fab-icon {
-  width: 54px;
-  height: 54px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
@@ -409,22 +409,20 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 0 4px var(--surface),
-    0 4px 14px rgba(255, 87, 34, 0.28);
+    0 0 0 3px var(--surface),
+    0 2px 8px rgba(255, 87, 34, 0.28);
   transition: transform 0.15s, box-shadow 0.2s;
 }
 .fab-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
-.fab-label {
-  display: none;
-}
+.fab-label { display: none; }
 .nav-btn-fab:active .fab-icon {
   transform: scale(0.9);
   box-shadow:
-    0 0 0 4px var(--surface),
-    0 2px 6px rgba(255, 87, 34, 0.3);
+    0 0 0 3px var(--surface),
+    0 1px 4px rgba(255, 87, 34, 0.3);
 }
 
 /* ============ CARDS ============ */
@@ -1408,8 +1406,8 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .hero-sm .hero-value { font-size: 24px; }
   .tile-val { font-size: 18px; }
   .rank-pill { font-size: 10px; padding: 8px 2px; }
-  .fab-icon { width: 50px; height: 50px; }
-  .fab-icon svg { width: 22px; height: 22px; }
+  .fab-icon { width: 38px; height: 38px; }
+  .fab-icon svg { width: 18px; height: 18px; }
   .nav-label { font-size: 10px; }
   .table-clean th { font-size: 9px; padding: 9px 5px; }
   .table-clean td { font-size: 11px; padding: 10px 5px; }
