@@ -3,6 +3,7 @@ import { initTheme, toggleTheme } from './theme.js';
 import {
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier, initRankUI,
+  setRegion, initRegionUI,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -115,6 +116,7 @@ Object.assign(window, {
   toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
+  setRegion,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -142,12 +144,14 @@ Object.assign(window, {
     state.manualSalary = salary;
     localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
     localStorage.setItem('spx_manual_salary', salary);
+    localStorage.setItem('spx_region', state.region);
     clearTimeout(manualPointsTimer);
     clearTimeout(salaryTimer);
     updateAllViews();
     alert('Đã lưu cấu hình!\n\n• Lương: ' + salary.toLocaleString('vi-VN') +
           '\n• Bưu cục: ' + buuCuc.toLocaleString('vi-VN') +
-          '\n• Tài xế: ' + taiXe.toLocaleString('vi-VN'));
+          '\n• Tài xế: ' + taiXe.toLocaleString('vi-VN') +
+          '\n• Khu vực: ' + (state.region === 'hcm_hn' ? 'TP.HCM & HN' : 'Miền'));
   },
 
   findDuplicates: _findDuplicates,
@@ -159,6 +163,7 @@ Object.assign(window, {
   loadState();
   initTheme();
   initRankUI();
+  initRegionUI();
   attachAutoClearInputs();
   updateAllViews();
   setTimeout(() => preloadTesseractWorker(), 2000);
