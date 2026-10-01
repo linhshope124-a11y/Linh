@@ -1,231 +1,319 @@
-import { state, loadState } from './state.js';
-import { initTheme, toggleTheme } from './theme.js';
-import {
-  switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
-  setRankTier, initRankUI,
-  initRegionUI,
-  openAddModal, openEditModal, closeModal,
-  openMenuModal, closeMenuModal,
-  openHistoryTab,
-  openSettingsModal, closeSettingsModal,
-  openCoffeeModal, closeCoffeeModal, copyBankNumber,
-  openGuideModal, closeGuideModal,
-  toggleThemeFromMenu
-} from './ui.js';
-import {
-  handleOcrImage, preloadTesseractWorker,
-  openOcrLightbox, closeOcrLightbox,
-  openBatchOcrModal, closeBatchOcrModal, appendBatchFiles,
-  saveBatchAll, importBatchItem, removeBatchItem,
-  backToBatch, hasBatchPending, showBackToBatchBtn
-} from './ocr.js';
-import { saveRecord, deleteRecord, clearAllHistory } from './entry.js';
-import {
-  copyDataJson, openPasteJsonModal, closePasteJsonModal,
-  confirmImportJsonString, exportData, importData, restoreFromVault
-} from './backup.js';
-import { updateAllViews } from './render.js';
-import { testCloudConnection, pushToCloud, pullFromCloud, initCloudUI } from './cloud.js';
-import { undoLast } from './undo.js';
-import { WEIGHT_KEYS } from './config.js';
+import { state, persistData } from './state.js';
+import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
+import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
+import { formatPts, formatDateDisplay, _fmt } from './utils.js';
 
-// ================ AUTO-CLEAR INPUT ================
-function attachAutoClearInputs() {
-  document.querySelectorAll('.auto-clear').forEach(input => {
-    input.addEventListener('focus', function () { if (this.value === '0') this.value = ''; });
-    input.addEventListener('blur',  function () { if (this.value.trim() === '') this.value = '0'; });
-  });
+const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-spacing:0.5px;';
+
+let _lastDataHash = null;
+
+// ===== Ngưỡng công theo khu vực =====
+function getRegionThresholds(region) {
+  if (region === 'hcm_hn') return { full: 80, half: 40 };
+  return { full: 60, half: 30 };
 }
 
-// ================ SERVICE WORKER ================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
-      .then(reg => console.log('[PWA] SW đã đăng ký:', reg.scope))
-      .catch(err => console.warn('[PWA] Bỏ qua SW:', err.message));
-  });
+// ===== Số ngày tối đa theo tháng =====
+function getSalaryDaysForPeriod(period) {
+  const now = new Date();
+  let month = now.getMonth() + 1;
+  if (period === 'last_month') {
+    month -= 1;
+    if (month === 0) month = 12;
+  }
+  return month === 2 ? 24 : 26;
 }
 
-// ================ SAVE CONFIG ================
-let manualPointsTimer = null;
-function _saveManualPoints() {
-  const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
-  const taiXe  = parseInt(document.getElementById('manualTaiXeInput').value, 10) || 0;
-  state.manualPoints = { buuCuc, taiXe };
-  localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
-  clearTimeout(manualPointsTimer);
-  manualPointsTimer = setTimeout(() => updateAllViews(), 300);
-}
-
-let salaryTimer = null;
-function _saveSalaryConfig() {
-  const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
-  state.manualSalary = salary;
-  localStorage.setItem('spx_manual_salary', salary);
-  clearTimeout(salaryTimer);
-  salaryTimer = setTimeout(() => updateAllViews(), 300);
-}
-
-// ================ DỌN TRÙNG LẶP ================
-function _findDuplicates() {
-  const dups = [];
+// ===== Tính công (quy đổi 6 lấy = 1 giao = 1 hoàn) =====
+function getWorkDaysByPeriod(period, region) {
+  const dailyByType = {};
   ['delivery', 'pickup', 'return'].forEach(type => {
-    const seen = {};
+    const key = type === 'delivery' ? 'del' : type === 'pickup' ? 'pick' : 'ret';
     state.appData[type].forEach(r => {
-      const key = r.date + '|' + WEIGHT_KEYS.map(k => parseInt(r.weights?.[k], 10) || 0).join('_');
-      if (seen[key]) {
-        dups.push({ type, id: r.id, date: r.date, keptId: seen[key].id });
-      } else {
-        seen[key] = r;
-      }
+      if (!isDateInCurrentPeriod(r.date, period)) return;
+      if (!dailyByType[r.date]) dailyByType[r.date] = { del: 0, pick: 0, ret: 0 };
+      const dayTotal = WEIGHT_KEYS.reduce(
+        (sum, k) => sum + (parseInt(r.weights[k], 10) || 0), 0
+      );
+      dailyByType[r.date][key] += dayTotal;
     });
   });
-  return dups;
+
+  const { full, half } = getRegionThresholds(region);
+  let workDays = 0;
+  Object.values(dailyByType).forEach(({ del, pick, ret }) => {
+    const converted = del + (pick / 6) + ret;
+    if (converted >= full)      workDays += 1;
+    else if (converted >= half) workDays += 0.5;
+  });
+  return workDays;
 }
 
-function _cleanupDuplicates() {
-  const dups = _findDuplicates();
-  if (dups.length === 0) {
-    alert('Không có bản ghi trùng lặp!');
+// ===== ROW bảng 5 cột =====
+function renderRow(weightLabel, orders, tier, typeClass) {
+  const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
+
+  const ptsText = tier.matched.pt === 0
+    ? '<span class="zero-dash">—</span>'
+    : _fmt(tier.matched.pt);
+
+  let nextText;
+  if (orders <= 0) {
+    nextText = '<span class="zero-dash">—</span>';
+  } else if (!tier.next || !isFinite(tier.matched.maxA)) {
+    nextText = '<span style="color:var(--success);font-weight:700">MAX</span>';
+  } else {
+    const need = tier.matched.maxA - orders;
+    const gain = tier.next.pt - tier.matched.pt;
+    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)}đ</span>`;
+  }
+
+  return `<td class="weight-name">${shortLabel}</td>
+    <td class="order-num ${typeClass} ${orders === 0 ? 'zero' : ''}">${_fmt(orders)}</td>
+    <td class="range-cell">${tier.matched.range}</td>
+    <td class="points-badge ${orders === 0 ? 'zero' : ''}">${ptsText}</td>
+    <td class="next-cell">${nextText}</td>`;
+}
+
+function buildOverviewSuggestion(type, label, orders, tier) {
+  if (orders <= 0 || !tier.next || !isFinite(tier.matched.maxA)) return null;
+  const need  = tier.matched.maxA - orders;
+  const badge = type === 'del' ? 'G' : type === 'pick' ? 'L' : 'H';
+  const cls   = type === 'del' ? 'sugg-del'  : type === 'pick' ? 'sugg-pick'  : 'sugg-ret';
+  const bcls  = type === 'del' ? 'sugg-type-del' : type === 'pick' ? 'sugg-type-pick' : 'sugg-type-ret';
+  return `<div class="suggestion-item ${cls}">
+    <div class="sugg-left"><h4><span class="sugg-type-badge ${bcls}">${badge}</span> ${label} · ${_fmt(orders)} đơn</h4>
+    <p>Thêm <b style="${NEED_HIGHLIGHT}">+${_fmt(need)}</b> đơn đạt ${tier.next.range}</p></div>
+    <div class="sugg-points">+${formatPts(tier.next.pt - tier.matched.pt)}</div>
+  </div>`;
+}
+
+function _updateAllViews() {
+  const { agg, total } = aggregateWeights(state.appData, state.periodFilter);
+
+  const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
+  const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
+  const retTbody  = document.getElementById('retTableBody');  retTbody.innerHTML = '';
+
+  const ovSuggBuf = [];
+  let delPts = 0, pickPts = 0, retPts = 0;
+
+  for (let col = 0; col < 8; col++) {
+    const dOrders = agg.del[col], pOrders = agg.pick[col], rOrders = agg.ret[col];
+    const dTier = lookupTier(dOrders, col, TABLE_5_DATA);
+    const pTier = lookupTier(pOrders, col, TABLE_4_DATA);
+    const rTier = lookupTier(rOrders, col, TABLE_6_DATA);
+    delPts  += dTier.matched.pt;
+    pickPts += pTier.matched.pt;
+    retPts  += rTier.matched.pt;
+
+    delTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`);
+    pickTbody.insertAdjacentHTML('beforeend', `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
+    retTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
+
+    const o1 = buildOverviewSuggestion('del',  WEIGHT_LABELS[col], dOrders, dTier); if (o1) ovSuggBuf.push(o1);
+    const o2 = buildOverviewSuggestion('pick', WEIGHT_LABELS[col], pOrders, pTier); if (o2) ovSuggBuf.push(o2);
+    const o3 = buildOverviewSuggestion('ret',  WEIGHT_LABELS[col], rOrders, rTier); if (o3) ovSuggBuf.push(o3);
+  }
+
+  const ovBox = document.getElementById('overviewMilestoneList');
+  if (total.del + total.pick + total.ret === 0) {
+    ovBox.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.</div>';
+  } else {
+    ovBox.innerHTML = ovSuggBuf.join('');
+  }
+
+  const rawBase   = delPts + pickPts + retPts;
+  const rankBonus = Math.round(rawBase * state.rankBonus);
+
+  const salaryDays = getSalaryDaysForPeriod(state.periodFilter);
+  const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region);
+  const displayDays = Math.min(workDays, salaryDays);
+
+  const salaryBase   = state.manualSalary || 0;
+  const manualBuuCuc = state.manualPoints?.buuCuc || 0;
+  const manualTaiXe  = state.manualPoints?.taiXe  || 0;
+  const monthlyTotal = salaryBase + manualBuuCuc + manualTaiXe;
+
+  const perDay = salaryDays > 0 ? monthlyTotal / salaryDays : 0;
+  const incomeAccumulated = Math.round(perDay * displayDays);
+
+  const finalTotal  = rawBase + rankBonus + incomeAccumulated;
+  const totalOrders = total.del + total.pick + total.ret;
+
+  // ===== Hero: ẩn điểm nếu 0 đơn =====
+  const heroValueEl = document.getElementById('overallTotalPoints');
+  const heroSubEl   = document.getElementById('rankBonusDetailText');
+  const heroPillEl  = document.getElementById('overallTotalOrders');
+
+  if (totalOrders === 0) {
+    heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
+    heroSubEl.innerText = 'Bắt đầu nhập sản lượng để tính điểm';
+    heroPillEl.innerText = '0 đơn';
+  } else {
+    heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+    heroSubEl.innerText = `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
+    heroPillEl.innerText = `${_fmt(totalOrders)} đơn`;
+  }
+
+  // Ratio bar
+  const ratioBar = document.getElementById('ratioBar');
+  const pctDelEl  = document.getElementById('ratioPctDel');
+  const pctPickEl = document.getElementById('ratioPctPick');
+  const pctRetEl  = document.getElementById('ratioPctRet');
+
+  if (totalOrders > 0) {
+    if (ratioBar) ratioBar.classList.remove('is-empty');
+    const rawDel  = (total.del  / totalOrders) * 100;
+    const rawPick = (total.pick / totalOrders) * 100;
+    const rawRet  = (total.ret  / totalOrders) * 100;
+    let pDel  = Math.floor(rawDel);
+    let pPick = Math.floor(rawPick);
+    let pRet  = Math.floor(rawRet);
+    const remainder = 100 - (pDel + pPick + pRet);
+    const fracs = [
+      { k: 'del',  f: rawDel  - pDel  },
+      { k: 'pick', f: rawPick - pPick },
+      { k: 'ret',  f: rawRet  - pRet  }
+    ].sort((a, b) => b.f - a.f);
+    for (let i = 0; i < remainder; i++) {
+      if (fracs[i % 3].k === 'del') pDel++;
+      else if (fracs[i % 3].k === 'pick') pPick++;
+      else pRet++;
+    }
+    document.getElementById('ratioBarDel').style.width  = pDel  + '%';
+    document.getElementById('ratioBarPick').style.width = pPick + '%';
+    document.getElementById('ratioBarRet').style.width  = pRet  + '%';
+    if (pctDelEl)  pctDelEl.innerText  = pDel  + '%';
+    if (pctPickEl) pctPickEl.innerText = pPick + '%';
+    if (pctRetEl)  pctRetEl.innerText  = pRet  + '%';
+  } else {
+    if (ratioBar) ratioBar.classList.add('is-empty');
+    document.getElementById('ratioBarDel').style.width  = '33.3%';
+    document.getElementById('ratioBarPick').style.width = '33.3%';
+    document.getElementById('ratioBarRet').style.width  = '33.4%';
+    if (pctDelEl)  pctDelEl.innerText  = '0%';
+    if (pctPickEl) pctPickEl.innerText = '0%';
+    if (pctRetEl)  pctRetEl.innerText  = '0%';
+  }
+
+  // Mini tiles
+  document.getElementById('miniDelPoints').innerText  = _fmt(delPts);
+  document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
+  document.getElementById('miniPickPoints').innerText = _fmt(pickPts);
+  document.getElementById('miniPickOrders').innerText = _fmt(total.pick);
+  document.getElementById('miniRetPoints').innerText  = _fmt(retPts);
+  document.getElementById('miniRetOrders').innerText  = _fmt(total.ret);
+
+  // Hero tab chi tiết
+  document.getElementById('delTotalPoints').innerHTML =
+    `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
+  document.getElementById('pickTotalPoints').innerHTML =
+    `${_fmt(pickPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('pickTotalOrders').innerText = `${_fmt(total.pick)} đơn`;
+  document.getElementById('retTotalPoints').innerHTML =
+    `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
+
+  // Income UI
+  const salaryBaseEl   = document.getElementById('salaryBaseInput');
+  const buuCucInput    = document.getElementById('manualBuuCucInput');
+  const taiXeInput     = document.getElementById('manualTaiXeInput');
+  const incomeDayCount = document.getElementById('incomeDayCount');
+  const incomePerDay   = document.getElementById('incomePerDayText');
+  const incomeTotal    = document.getElementById('incomeTotalDisplay');
+  const incomeTotalInner = document.getElementById('incomeTotalDisplayInner');
+
+  if (salaryBaseEl && document.activeElement !== salaryBaseEl) salaryBaseEl.value = salaryBase;
+  if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
+  if (taiXeInput  && document.activeElement !== taiXeInput)    taiXeInput.value   = manualTaiXe;
+
+  const workDaysText = Number.isInteger(displayDays)
+    ? displayDays.toString()
+    : displayDays.toFixed(1);
+
+  if (incomeDayCount) incomeDayCount.innerText = `${workDaysText}/${salaryDays} công`;
+  if (incomePerDay)   incomePerDay.innerText   = formatPts(Math.round(perDay)) + '/công';
+  if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
+  if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
+
+  // Count
+  const filteredCount =
+    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
+    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
+    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length;
+  document.getElementById('histCountNote').innerText = `${filteredCount} bản ghi`;
+
+  persistData();
+
+  const currentHash = JSON.stringify(state.appData);
+  if (_lastDataHash === null) {
+    _lastDataHash = currentHash;
+  } else if (currentHash !== _lastDataHash) {
+    _lastDataHash = currentHash;
+    window.dispatchEvent(new CustomEvent('spx:datachanged'));
+  }
+
+  renderHistory();
+}
+
+let _updateAllViews_debounced = null;
+export function updateAllViews() {
+  if (!_updateAllViews_debounced) {
+    _updateAllViews_debounced = (() => {
+      let t = null;
+      return () => { clearTimeout(t); t = setTimeout(_updateAllViews, 60); };
+    })();
+  }
+  _updateAllViews_debounced();
+}
+
+export function renderHistory() {
+  const container = document.getElementById('historyEntries');
+  if (!container) return;
+  const prevScroll = container.scrollTop;
+  container.innerHTML = '';
+
+  let list = [];
+  if (state.histFilter === 'all' || state.histFilter === 'delivery')
+    state.appData.delivery.forEach(r => list.push({ ...r, type: 'delivery' }));
+  if (state.histFilter === 'all' || state.histFilter === 'pickup')
+    state.appData.pickup.forEach(r => list.push({ ...r, type: 'pickup' }));
+  if (state.histFilter === 'all' || state.histFilter === 'return')
+    state.appData.return.forEach(r => list.push({ ...r, type: 'return' }));
+
+  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter));
+  list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
+
+  if (list.length === 0) {
+    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
     return;
   }
-  const summary = { Giao: 0, Lấy: 0, Hoàn: 0 };
-  dups.forEach(d => {
-    const label = d.type === 'delivery' ? 'Giao' : d.type === 'pickup' ? 'Lấy' : 'Hoàn';
-    summary[label]++;
+
+  list.forEach(r => {
+    let dayTotal = 0;
+    const parts = [];
+    WEIGHT_KEYS.forEach((k, col) => {
+      const v = parseInt(r.weights[k], 10) || 0;
+      dayTotal += v;
+      if (v > 0) parts.push(`${WEIGHT_LABELS[col].replace('>', '').replace(' kg', '')}: ${_fmt(v)}`);
+    });
+
+    const tagMap = { delivery: ['tag-delivery', 'Giao'], pickup: ['tag-pickup', 'Lấy'], return: ['tag-return', 'Hoàn'] };
+    const [tagClass, tagText] = tagMap[r.type];
+
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = `<div>
+      <div class="hist-meta"><span class="hist-badge-tag ${tagClass}">${tagText}</span>${formatDateDisplay(r.date)} · <span>${_fmt(dayTotal)} đơn</span></div>
+      <div class="hist-detail">${parts.join(' • ') || '0 đơn'}</div></div>
+      <div class="hist-actions">
+        <button class="hist-btn hist-edit-btn" onclick="openEditModal('${r.type}', ${r.id})">Sửa</button>
+        <button class="hist-btn hist-del-btn" onclick="deleteRecord('${r.type}', ${r.id})">Xóa</button>
+      </div>`;
+    container.appendChild(div);
   });
-  let msg = `Tìm thấy ${dups.length} bản ghi trùng lặp:\n`;
-  Object.keys(summary).forEach(k => {
-    if (summary[k] > 0) msg += `• ${k}: ${summary[k]}\n`;
-  });
-  msg += '\nXóa hết các bản ghi trùng (giữ lại 1 bản gốc)?';
-  if (!confirm(msg)) return;
-  const idsByType = { delivery: [], pickup: [], return: [] };
-  dups.forEach(d => idsByType[d.type].push(d.id));
-  Object.keys(idsByType).forEach(type => {
-    const ids = idsByType[type];
-    state.appData[type] = state.appData[type].filter(r => !ids.includes(r.id));
-  });
-  updateAllViews();
-  alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
+
+  requestAnimationFrame(() => { container.scrollTop = prevScroll; });
 }
-
-// ================ COACHMARK — Hướng dẫn lần đầu ================
-const COACHMARK_KEY = 'spx_coachmark_seen';
-
-function showCoachmarkIfNeeded() {
-  if (localStorage.getItem(COACHMARK_KEY) === '1') return;
-  const coach = document.getElementById('coachmark');
-  if (!coach) return;
-
-  setTimeout(() => {
-    coach.classList.add('active');
-    document.body.classList.add('coachmark-active');
-  }, 1200);
-}
-
-window.dismissCoachmark = function() {
-  const coach = document.getElementById('coachmark');
-  if (coach) coach.classList.remove('active');
-  document.body.classList.remove('coachmark-active');
-  localStorage.setItem(COACHMARK_KEY, '1');
-};
-
-function attachCoachmarkAutoDismiss() {
-  const fab = document.querySelector('.nav-btn-fab');
-  if (!fab) return;
-  fab.addEventListener('click', () => {
-    if (localStorage.getItem(COACHMARK_KEY) !== '1') {
-      window.dismissCoachmark();
-    }
-  });
-}
-
-// ================ EXPOSE TO WINDOW ================
-Object.assign(window, {
-  toggleTheme,
-  toggleThemeFromMenu,
-  switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
-  setRankTier,
-
-  // ===== REGION — inline onclick handler =====
-  changeRegion: function(regionKey, el) {
-    try {
-      console.log('[Region] change →', regionKey);
-      if (!regionKey || (regionKey !== 'mien' && regionKey !== 'hcm_hn')) return;
-
-      const oldRegion = state.region;
-      if (oldRegion === regionKey) return;
-
-      state.region = regionKey;
-      localStorage.setItem('spx_region', regionKey);
-      console.log('[Region] state updated:', oldRegion, '→', regionKey);
-
-      document.querySelectorAll('.region-pill').forEach(p => p.classList.remove('active'));
-      if (el) el.classList.add('active');
-
-      updateAllViews();
-
-      const label = regionKey === 'hcm_hn'
-        ? 'TP.HCM & Hà Nội (80/40)'
-        : 'Miền Bắc/Trung/Nam (60/30)';
-      alert(`Đã chọn khu vực: ${label}`);
-    } catch (e) {
-      console.error('[Region] error:', e);
-      alert('Lỗi đổi khu vực: ' + e.message);
-    }
-  },
-
-  openAddModal, openEditModal, closeModal,
-  openMenuModal, closeMenuModal,
-  openHistoryTab,
-  openSettingsModal, closeSettingsModal,
-  openCoffeeModal, closeCoffeeModal, copyBankNumber,
-  openGuideModal, closeGuideModal,
-  handleOcrImage, openOcrLightbox, closeOcrLightbox,
-  openBatchOcrModal, closeBatchOcrModal, appendBatchFiles,
-  saveBatchAll, importBatchItem, removeBatchItem,
-  backToBatch, hasBatchPending, showBackToBatchBtn,
-  saveRecord, deleteRecord, clearAllHistory,
-  copyDataJson, openPasteJsonModal, closePasteJsonModal,
-  confirmImportJsonString, exportData, importData, restoreFromVault,
-  testCloudConnection, pushToCloud, pullFromCloud, initCloudUI,
-  undoLast,
-
-  saveManualPoints: _saveManualPoints,
-  saveSalaryConfig: _saveSalaryConfig,
-
-  forceSaveConfig: function() {
-    const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
-    const taiXe  = parseInt(document.getElementById('manualTaiXeInput').value, 10) || 0;
-    const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
-    state.manualPoints = { buuCuc, taiXe };
-    state.manualSalary = salary;
-    localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
-    localStorage.setItem('spx_manual_salary', salary);
-    localStorage.setItem('spx_region', state.region);
-    clearTimeout(manualPointsTimer);
-    clearTimeout(salaryTimer);
-    updateAllViews();
-    alert('Đã lưu cấu hình!\n\n• Lương: ' + salary.toLocaleString('vi-VN') +
-          '\n• Bưu cục: ' + buuCuc.toLocaleString('vi-VN') +
-          '\n• Tài xế: ' + taiXe.toLocaleString('vi-VN') +
-          '\n• Khu vực: ' + (state.region === 'hcm_hn' ? 'TP.HCM & HN' : 'Miền'));
-  },
-
-  findDuplicates: _findDuplicates,
-  cleanupDuplicates: _cleanupDuplicates
-});
-
-// ================ INIT ================
-(function init() {
-  loadState();
-  initTheme();
-  initRankUI();
-  initRegionUI();
-  attachAutoClearInputs();
-  updateAllViews();
-  showCoachmarkIfNeeded();
-  attachCoachmarkAutoDismiss();
-  setTimeout(() => preloadTesseractWorker(), 2000);
-})();
