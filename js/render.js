@@ -24,7 +24,7 @@ function getSalaryDaysForPeriod(period) {
   return month === 2 ? 24 : 26;
 }
 
-// ===== Tính công =====
+// ===== Tính công (quy đổi 6 lấy = 1 giao = 1 hoàn) =====
 function getWorkDaysByPeriod(period, region) {
   const dailyByType = {};
   ['delivery', 'pickup', 'return'].forEach(type => {
@@ -75,6 +75,17 @@ function renderRow(weightLabel, orders, tier, typeClass) {
     <td class="next-cell">${nextText}</td>`;
 }
 
+// ===== Helper: kiểm tra row có "gần mốc" không =====
+// Điều kiện: có đơn > 0, có tier.next, và số đơn cần thêm <= 20% của dải hiện tại
+function isNearTarget(orders, tier) {
+  if (orders <= 0) return false;
+  if (!tier.next || !isFinite(tier.matched.maxA)) return false;
+  const need = tier.matched.maxA - orders;
+  const range = tier.matched.maxA - (tier.matched.min || 0);
+  if (range <= 0) return false;
+  return (need / range) <= 0.20;
+}
+
 function buildOverviewSuggestion(type, label, orders, tier) {
   if (orders <= 0 || !tier.next || !isFinite(tier.matched.maxA)) return null;
   const need  = tier.matched.maxA - orders;
@@ -107,9 +118,17 @@ function _updateAllViews() {
     pickPts += pTier.matched.pt;
     retPts  += rTier.matched.pt;
 
-    delTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`);
-    pickTbody.insertAdjacentHTML('beforeend', `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
-    retTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
+    // Kiểm tra row gần mốc
+    const dNear = isNearTarget(dOrders, dTier);
+    const pNear = isNearTarget(pOrders, pTier);
+    const rNear = isNearTarget(rOrders, rTier);
+
+    delTbody.insertAdjacentHTML('beforeend',
+      `<tr class="${dNear ? 'row-near' : ''}">${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`);
+    pickTbody.insertAdjacentHTML('beforeend',
+      `<tr class="${pNear ? 'row-near-pick' : ''}">${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
+    retTbody.insertAdjacentHTML('beforeend',
+      `<tr class="${rNear ? 'row-near-ret' : ''}">${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
 
     const o1 = buildOverviewSuggestion('del',  WEIGHT_LABELS[col], dOrders, dTier); if (o1) ovSuggBuf.push(o1);
     const o2 = buildOverviewSuggestion('pick', WEIGHT_LABELS[col], pOrders, pTier); if (o2) ovSuggBuf.push(o2);
@@ -141,19 +160,22 @@ function _updateAllViews() {
   const finalTotal  = rawBase + rankBonus + incomeAccumulated;
   const totalOrders = total.del + total.pick + total.ret;
 
-  // ===== Hero: ẩn điểm nếu 0 đơn =====
+  // ===== HERO: ẩn điểm nếu 0 đơn, thu nhỏ =====
   const heroValueEl = document.getElementById('overallTotalPoints');
   const heroSubEl   = document.getElementById('rankBonusDetailText');
   const heroPillEl  = document.getElementById('overallTotalOrders');
+  const heroCardEl  = document.querySelector('#tab-overview .hero');
 
   if (totalOrders === 0) {
     heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
     heroSubEl.innerText = 'Bắt đầu nhập sản lượng để tính điểm';
     heroPillEl.innerText = '0 đơn';
+    if (heroCardEl) heroCardEl.classList.add('hero-is-empty');
   } else {
     heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
     heroSubEl.innerText = `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
     heroPillEl.innerText = `${_fmt(totalOrders)} đơn`;
+    if (heroCardEl) heroCardEl.classList.remove('hero-is-empty');
   }
 
   // Ratio bar
