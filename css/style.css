@@ -1,9 +1,5 @@
 /* =============================================================
-   SPX Tracker v3.6 — Reverted về v33
-   • Hero đơn giản (không sparkline, không delta, không shadow)
-   • Table không progress bar, không highlight row
-   • Không section label
-   • Giữ: Region selector, công thức công mới, LCB + ⓘ, Guide
+   SPX Tracker v3.7 — Nút Quét to hơn (48px)
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -373,7 +369,7 @@ body {
 .nav-btn.active .nav-icon { stroke-width: 2.2; }
 .nav-btn:active { transform: scale(0.94); }
 
-/* ============ NÚT QUÉT ============ */
+/* ============ NÚT QUÉT — TO HƠN ============ */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -384,12 +380,12 @@ body {
   border: none;
   cursor: pointer;
   padding: 0;
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   font-family: inherit;
 }
 .fab-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--accent);
   color: #fff;
@@ -397,36 +393,38 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 0 3px var(--surface),
-    0 2px 8px rgba(255, 87, 34, 0.28);
+    0 0 0 4px var(--surface),
+    0 4px 16px rgba(255, 87, 34, 0.35),
+    0 2px 6px rgba(255, 87, 34, 0.20);
   transition: transform 0.15s, box-shadow 0.2s;
   animation: fabPulse 1.6s ease-in-out 2.2s 2;
 }
 .fab-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 .fab-label { display: none; }
 .nav-btn-fab:active .fab-icon {
-  transform: scale(0.9);
+  transform: scale(0.92);
   box-shadow:
-    0 0 0 3px var(--surface),
-    0 1px 4px rgba(255, 87, 34, 0.3);
+    0 0 0 4px var(--surface),
+    0 2px 6px rgba(255, 87, 34, 0.35);
   animation: none;
 }
 @keyframes fabPulse {
   0%, 100% {
     transform: scale(1);
     box-shadow:
-      0 0 0 3px var(--surface),
-      0 2px 8px rgba(255, 87, 34, 0.28);
+      0 0 0 4px var(--surface),
+      0 4px 16px rgba(255, 87, 34, 0.35),
+      0 2px 6px rgba(255, 87, 34, 0.20);
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.12);
     box-shadow:
-      0 0 0 3px var(--surface),
-      0 0 0 8px rgba(255, 87, 34, 0.15),
-      0 6px 20px rgba(255, 87, 34, 0.45);
+      0 0 0 4px var(--surface),
+      0 0 0 10px rgba(255, 87, 34, 0.15),
+      0 8px 24px rgba(255, 87, 34, 0.5);
   }
 }
 
@@ -1559,8 +1557,8 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .hero-sm .hero-value { font-size: 22px; }
   .tile-val { font-size: 18px; }
   .rank-pill { font-size: 10px; padding: 8px 2px; }
-  .fab-icon { width: 38px; height: 38px; }
-  .fab-icon svg { width: 18px; height: 18px; }
+  .fab-icon { width: 44px; height: 44px; }
+  .fab-icon svg { width: 22px; height: 22px; }
   .nav-label { font-size: 10px; }
   .table-clean th { font-size: 9px; padding: 9px 5px; }
   .table-clean td { font-size: 11px; padding: 10px 5px; }
