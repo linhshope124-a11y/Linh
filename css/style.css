@@ -1,9 +1,9 @@
 /* =============================================================
-   SPX Tracker v3.6 — Polish lên 9/10
-   • Hero có shadow + sparkline + delta
-   • Table có progress bar inline + highlight row gần mốc
-   • Section divider
-   • Empty state có illustration
+   SPX Tracker v3.6 — Reverted về v33
+   • Hero đơn giản (không sparkline, không delta, không shadow)
+   • Table không progress bar, không highlight row
+   • Không section label
+   • Giữ: Region selector, công thức công mới, LCB + ⓘ, Guide
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -317,23 +317,9 @@ body {
 .app-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding-top: 12px;
   padding-bottom: 24px;
-}
-
-/* ============ SECTION LABEL ============ */
-.section-label {
-  font-size: 10.5px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: var(--text-3);
-  padding: 8px 4px 0;
-  margin-top: 2px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* ============ BOTTOM NAV ============ */
@@ -514,69 +500,14 @@ body {
 }
 .info-icon:active { transform: scale(0.9); }
 
-/* ============ HERO v2 — SÂU + SPARKLINE + DELTA ============ */
+/* ============ HERO ============ */
 .hero {
+  background: linear-gradient(135deg, var(--accent-soft) 0%, var(--surface) 60%);
+  border: 1px solid var(--accent-border);
   border-radius: var(--r-lg);
   padding: 18px;
-  position: relative;
-  overflow: hidden;
 }
 .hero-sm { padding: 14px 16px; }
-
-.hero-giao {
-  background: linear-gradient(135deg, #fff7ed 0%, #ffffff 65%);
-  border: 1px solid #fdba74;
-  box-shadow:
-    0 4px 24px rgba(194, 65, 12, 0.10),
-    0 1px 3px rgba(194, 65, 12, 0.06);
-}
-.hero-lay {
-  background: linear-gradient(135deg, #fefce8 0%, #ffffff 65%);
-  border: 1px solid #fde68a;
-  box-shadow:
-    0 4px 24px rgba(202, 138, 4, 0.10),
-    0 1px 3px rgba(202, 138, 4, 0.06);
-}
-.hero-hoan {
-  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 65%);
-  border: 1px solid #fecaca;
-  box-shadow:
-    0 4px 24px rgba(220, 38, 38, 0.10),
-    0 1px 3px rgba(220, 38, 38, 0.06);
-}
-/* Hero mặc định (tab Tổng quan) — cam */
-.hero:not(.hero-giao):not(.hero-lay):not(.hero-hoan) {
-  background: linear-gradient(135deg, var(--accent-soft) 0%, #ffffff 65%);
-  border: 1px solid var(--accent-border);
-  box-shadow:
-    0 4px 24px rgba(255, 87, 34, 0.10),
-    0 1px 3px rgba(255, 87, 34, 0.06);
-}
-
-.hero-body {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-.hero-main { flex: 1; min-width: 0; }
-
-.hero-spark {
-  flex: 0 0 90px;
-  height: 40px;
-  color: var(--accent);
-  opacity: 0.75;
-  align-self: flex-end;
-  margin-bottom: 4px;
-}
-.hero-sm .hero-spark {
-  flex: 0 0 70px;
-  height: 32px;
-}
-.hero-spark svg { width: 100%; height: 100%; display: block; }
-
 .hero-top {
   display: flex;
   justify-content: space-between;
@@ -600,12 +531,6 @@ body {
   color: var(--text-2);
   white-space: nowrap;
 }
-.hero-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 .hero-value {
   font-size: 30px;
   font-weight: 800;
@@ -627,24 +552,12 @@ body {
   font-weight: 500;
   margin-top: 6px;
 }
-.hero-delta {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 6px;
-  white-space: nowrap;
-  line-height: 1.4;
-}
-.hero-delta.up   { color: var(--success); background: var(--success-bg); }
-.hero-delta.down { color: var(--danger);  background: var(--danger-bg); }
-.hero-delta.flat { color: var(--text-3);  background: var(--surface-2); }
-
+.hero-giao { border-color: var(--giao-bd); }
+.hero-lay  { border-color: var(--lay-bd); }
+.hero-hoan { border-color: var(--hoan-bd); }
 .hero-giao .hero-eyebrow { color: var(--giao); }
 .hero-lay  .hero-eyebrow { color: var(--lay); }
 .hero-hoan .hero-eyebrow { color: var(--hoan); }
-.hero-giao .hero-spark   { color: var(--giao); }
-.hero-lay  .hero-spark   { color: var(--lay); }
-.hero-hoan .hero-spark   { color: var(--hoan); }
 
 /* ============ TILES ============ */
 .tile-grid {
@@ -982,50 +895,11 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .table-clean .next-cell {
   font-size: 10.5px;
   font-weight: 700;
-  white-space: nowrap;
 }
 .table-clean .next-cell .need-num { color: var(--danger); font-weight: 800; }
 .table-clean .next-cell .gain-num { color: var(--success); font-weight: 700; }
-.table-clean .next-cell .dot-sep  { color: var(--text-3); font-weight: 500; margin: 0 2px; }
 .table-clean .next-cell .zero-dash { color: var(--text-3); font-weight: 400; }
-
-/* ===== Highlight row gần mốc ===== */
-.table-clean tr.row-near {
-  background: linear-gradient(90deg, #fff7ed 0%, transparent 55%);
-  border-left: 3px solid var(--giao);
-}
-.table-clean tr.row-near-pick {
-  background: linear-gradient(90deg, #fefce8 0%, transparent 55%);
-  border-left: 3px solid var(--lay);
-}
-.table-clean tr.row-near-ret {
-  background: linear-gradient(90deg, #fef2f2 0%, transparent 55%);
-  border-left: 3px solid var(--hoan);
-}
-
-/* ===== Progress bar mini trong cột SL ===== */
-.table-clean td .sl-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.table-clean td .sl-bar {
-  height: 3px;
-  background: var(--surface-2);
-  border-radius: 4px;
-  overflow: hidden;
-  width: 100%;
-  min-width: 40px;
-}
-.table-clean td .sl-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.3s;
-  background: var(--border-2);
-}
-.table-clean tr.row-near      td .sl-bar-fill { background: var(--giao); }
-.table-clean tr.row-near-pick td .sl-bar-fill { background: var(--lay); }
-.table-clean tr.row-near-ret  td .sl-bar-fill { background: var(--hoan); }
+.table-clean .next-cell .arrow { color: var(--text-3); font-weight: 500; }
 
 /* ============ FILTER BAR ============ */
 .filter-bar {
@@ -1088,33 +962,6 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .sugg-type-del  { background: var(--giao-soft); border-color: var(--giao-bd); color: var(--giao); }
 .sugg-type-pick { background: var(--lay-soft);  border-color: var(--lay-bd);  color: var(--lay); }
 .sugg-type-ret  { background: var(--hoan-soft); border-color: var(--hoan-bd); color: var(--hoan); }
-
-/* ============ EMPTY STATE ============ */
-.empty-state {
-  text-align: center;
-  padding: 28px 16px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.empty-icon {
-  font-size: 44px;
-  line-height: 1;
-  opacity: 0.6;
-  filter: grayscale(0.3);
-}
-.empty-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-2);
-}
-.empty-sub {
-  font-size: 11.5px;
-  color: var(--text-3);
-  line-height: 1.5;
-  max-width: 240px;
-}
 
 /* ============ HISTORY ENTRY ============ */
 .history-entry {
@@ -1703,33 +1550,6 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .app-toast.error   { background: var(--danger);  color: #fff; }
 .app-toast.warning { background: var(--warning); color: #fff; }
 
-/* ============ DARK MODE POLISH ============ */
-[data-theme="dark"] .hero:not(.hero-giao):not(.hero-lay):not(.hero-hoan) {
-  background: linear-gradient(135deg, rgba(255, 110, 64, 0.10) 0%, var(--surface) 60%);
-  box-shadow: 0 4px 24px rgba(255, 110, 64, 0.10);
-}
-[data-theme="dark"] .hero-giao {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.10) 0%, var(--surface) 60%);
-  box-shadow: 0 4px 24px rgba(251, 146, 60, 0.10);
-}
-[data-theme="dark"] .hero-lay {
-  background: linear-gradient(135deg, rgba(250, 204, 21, 0.10) 0%, var(--surface) 60%);
-  box-shadow: 0 4px 24px rgba(250, 204, 21, 0.10);
-}
-[data-theme="dark"] .hero-hoan {
-  background: linear-gradient(135deg, rgba(248, 113, 113, 0.10) 0%, var(--surface) 60%);
-  box-shadow: 0 4px 24px rgba(248, 113, 113, 0.10);
-}
-[data-theme="dark"] .table-clean tr.row-near {
-  background: linear-gradient(90deg, rgba(251, 146, 60, 0.10) 0%, transparent 55%);
-}
-[data-theme="dark"] .table-clean tr.row-near-pick {
-  background: linear-gradient(90deg, rgba(250, 204, 21, 0.10) 0%, transparent 55%);
-}
-[data-theme="dark"] .table-clean tr.row-near-ret {
-  background: linear-gradient(90deg, rgba(248, 113, 113, 0.10) 0%, transparent 55%);
-}
-
 /* ============ RESPONSIVE ============ */
 @media (min-width: 640px) {
   .bottom-nav { border-radius: var(--r-xl) var(--r-xl) 0 0; }
@@ -1748,8 +1568,6 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .table-clean th:last-child, .table-clean td:last-child   { padding-right: 12px; }
   .region-pill { padding: 8px 8px; font-size: 11px; }
   .region-pill span:last-child { font-size: 9.5px; }
-  .hero-spark { flex: 0 0 60px; height: 30px; }
-  .hero-sm .hero-spark { flex: 0 0 50px; height: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
