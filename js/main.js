@@ -3,7 +3,7 @@ import { initTheme, toggleTheme } from './theme.js';
 import {
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier, initRankUI,
-  setRegion, initRegionUI,
+  initRegionUI,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -116,7 +116,35 @@ Object.assign(window, {
   toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
-  setRegion,
+
+  // ===== REGION — inline onclick handler =====
+  changeRegion: function(regionKey, el) {
+    try {
+      console.log('[Region] change →', regionKey);
+      if (!regionKey || (regionKey !== 'mien' && regionKey !== 'hcm_hn')) return;
+
+      const oldRegion = state.region;
+      if (oldRegion === regionKey) return;
+
+      state.region = regionKey;
+      localStorage.setItem('spx_region', regionKey);
+      console.log('[Region] state updated:', oldRegion, '→', regionKey);
+
+      document.querySelectorAll('.region-pill').forEach(p => p.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      updateAllViews();
+
+      const label = regionKey === 'hcm_hn'
+        ? 'TP.HCM & Hà Nội (80/40)'
+        : 'Miền Bắc/Trung/Nam (60/30)';
+      alert(`Đã chọn khu vực: ${label}`);
+    } catch (e) {
+      console.error('[Region] error:', e);
+      alert('Lỗi đổi khu vực: ' + e.message);
+    }
+  },
+
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
