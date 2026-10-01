@@ -6,7 +6,7 @@ import { toggleTheme } from './theme.js';
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
   state.activeTab = tabId;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('tab-' + tabId);
@@ -22,7 +22,7 @@ export function switchMainTab(tabId, el) {
 
 export function openHistoryTab() {
   state.activeTab = 'history';
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('tab-history');
   if (panel) panel.classList.add('active');
@@ -81,7 +81,6 @@ export function setRankTier(rankKey, bonusPct, el) {
     window.__spxLongPressFired = false;
     return;
   }
-
   state.rankBonus = bonusPct;
   state.rankName  = rankKey;
   persistSettings();
@@ -96,14 +95,12 @@ function resetRankToNone() {
   state.rankBonus = 0;
   state.rankName  = 'none';
   persistSettings();
-
   document.querySelectorAll('.rank-pill').forEach(p => {
     p.classList.remove('active');
     p.classList.remove('long-pressing');
   });
   const label = document.getElementById('currentBonusPctLabel');
   if (label) label.innerText = '+0%';
-
   updateAllViews();
   showToast('Đã bỏ chọn hạng thưởng', 'success', 1800);
 }
@@ -115,39 +112,31 @@ function attachRankLongPress() {
 
   document.querySelectorAll('.rank-pill').forEach(pill => {
     let timer = null;
-
     const start = () => {
       window.__spxLongPressFired = false;
       pill.classList.add('long-pressing');
-
       timer = setTimeout(() => {
         window.__spxLongPressFired = true;
-
         if (pill.classList.contains('active')) {
-          if (navigator.vibrate) {
-            try { navigator.vibrate(30); } catch {}
-          }
+          if (navigator.vibrate) { try { navigator.vibrate(30); } catch {} }
           resetRankToNone();
         } else {
           pill.classList.remove('long-pressing');
         }
       }, 550);
     };
-
     const cancel = () => {
       clearTimeout(timer);
       timer = null;
       pill.classList.remove('long-pressing');
     };
-
     pill.addEventListener('touchstart',  start,  { passive: true });
     pill.addEventListener('touchend',    cancel);
     pill.addEventListener('touchcancel', cancel);
     pill.addEventListener('touchmove',   cancel, { passive: true });
-
-    pill.addEventListener('mousedown', start);
-    pill.addEventListener('mouseup',   cancel);
-    pill.addEventListener('mouseleave',cancel);
+    pill.addEventListener('mousedown',   start);
+    pill.addEventListener('mouseup',     cancel);
+    pill.addEventListener('mouseleave',  cancel);
   });
 }
 
@@ -157,7 +146,6 @@ export function initRankUI() {
   });
   const label = document.getElementById('currentBonusPctLabel');
   if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
-
   attachRankLongPress();
 }
 
@@ -170,16 +158,12 @@ export function toggleThemeFromMenu() {
 
 export function updateMenuThemeUI() {
   const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const icon  = document.getElementById('menuThemeIcon');
   const title = document.getElementById('menuThemeTitle');
   const sub   = document.getElementById('menuThemeSub');
-
   if (current === 'dark') {
-    if (icon)  icon.innerText  = '☀️';
     if (title) title.innerText = 'Chế độ sáng';
     if (sub)   sub.innerText   = 'Chuyển về giao diện sáng';
   } else {
-    if (icon)  icon.innerText  = '🌙';
     if (title) title.innerText = 'Chế độ tối';
     if (sub)   sub.innerText   = 'Chuyển sang giao diện tối';
   }
@@ -280,6 +264,11 @@ export function closeSettingsModal() {
   document.getElementById('settingsModal').classList.remove('active');
 }
 
+// ================ GUIDE MODAL ================
+export function openGuideModal()  { document.getElementById('guideModal').classList.add('active'); }
+export function closeGuideModal() { document.getElementById('guideModal').classList.remove('active'); }
+
+// ================ COFFEE MODAL ================
 export function openCoffeeModal()  { document.getElementById('coffeeModal').classList.add('active'); }
 export function closeCoffeeModal() { document.getElementById('coffeeModal').classList.remove('active'); }
 
