@@ -81,7 +81,12 @@
         <!-- HẠNG THƯỞNG -->
         <section class="card">
           <div class="card-head-inline">
-            <span class="card-label">Hạng thưởng</span>
+            <span class="card-label">
+              Hạng thưởng
+              <button class="info-icon" type="button"
+                      onclick="alert('Nhấn nhanh để chọn hạng\nNhấn giữ 0.5s để bỏ chọn')"
+                      aria-label="Trợ giúp">i</button>
+            </span>
             <span class="card-value" id="currentBonusPctLabel">+0%</span>
           </div>
           <div class="rank-pill-group">
@@ -91,7 +96,6 @@
             <button class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</button>
             <button class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</button>
           </div>
-          <div class="card-hint">Nhấn giữ để bỏ chọn</div>
         </section>
 
         <!-- PHÂN BỔ -->
@@ -336,7 +340,6 @@
         <circle cx="12" cy="12" r="3"/>
       </svg>
     </span>
-    <span class="fab-label">Quét</span>
   </button>
 
   <button class="nav-btn" data-tab="pickup" onclick="switchMainTab('pickup', this)" aria-label="Lấy">
@@ -608,7 +611,7 @@
 
       <div class="settings-section-title">🧹 Công cụ</div>
       <p class="settings-hint">Tìm và xóa các bản ghi trùng lặp (cùng ngày + cùng số liệu).</p>
-      <button class="btn" onclick="cleanupDuplicates()" style="width:100%;background:var(--warning-soft);border-color:var(--warning-border);color:var(--warning);font-weight:600">
+      <button class="btn" onclick="cleanupDuplicates()" style="width:100%;background:var(--warning-bg);border-color:var(--warning-bd);color:var(--warning);font-weight:600">
         Dọn bản ghi trùng lặp
       </button>
 
@@ -616,7 +619,7 @@
 
       <div class="settings-section-title" style="color:var(--danger)">⚠️ Vùng nguy hiểm</div>
       <p class="settings-hint">Xóa toàn bộ dữ liệu sản lượng đã nhập. <b style="color:var(--danger)">Không thể khôi phục!</b></p>
-      <button class="btn" onclick="clearAllHistory()" style="width:100%;background:var(--danger-soft);border-color:var(--danger-border);color:var(--danger);font-weight:600">
+      <button class="btn" onclick="clearAllHistory()" style="width:100%;background:var(--danger-bg);border-color:var(--danger-bd);color:var(--danger);font-weight:600">
         Xóa toàn bộ nhật ký
       </button>
 
