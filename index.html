@@ -49,26 +49,14 @@
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
 
-        <!-- HERO với sparkline + delta -->
         <section class="hero">
-          <div class="hero-body">
-            <div class="hero-main">
-              <div class="hero-top">
-                <span class="hero-eyebrow">Tổng điểm tích lũy</span>
-                <span class="hero-pill" id="overallTotalOrders">0 đơn</span>
-              </div>
-              <div class="hero-value-row">
-                <span class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></span>
-                <span class="hero-delta" id="overallDelta"></span>
-              </div>
-              <div class="hero-sub" id="rankBonusDetailText">Gốc 0 · Thưởng +0 · TN +0</div>
-            </div>
-            <div class="hero-spark" id="heroSparkline" aria-hidden="true"></div>
+          <div class="hero-top">
+            <span class="hero-eyebrow">Tổng điểm tích lũy</span>
+            <span class="hero-pill" id="overallTotalOrders">0 đơn</span>
           </div>
+          <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+          <div class="hero-sub" id="rankBonusDetailText">Gốc 0 · Thưởng +0 · TN +0</div>
         </section>
-
-        <!-- SECTION: DỮ LIỆU -->
-        <div class="section-label">📊 Dữ liệu kỳ này</div>
 
         <section class="tile-grid">
           <div class="tile tile-giao">
@@ -87,9 +75,6 @@
             <div class="tile-foot"><b id="miniRetOrders">0</b> đơn</div>
           </div>
         </section>
-
-        <!-- SECTION: CẤU HÌNH -->
-        <div class="section-label">⚙️ Cấu hình</div>
 
         <section class="card">
           <div class="card-head-inline">
@@ -125,9 +110,6 @@
             <span class="legend-item"><span class="dot dot-hoan"></span>Hoàn <b id="ratioPctRet">0%</b></span>
           </div>
         </section>
-
-        <!-- SECTION: THU NHẬP -->
-        <div class="section-label">💰 Thu nhập</div>
 
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
@@ -197,10 +179,13 @@
           </div>
         </details>
 
-        <!-- SECTION: CƠ HỘI -->
-        <div class="section-label">🎯 Cơ hội tăng điểm</div>
-
         <section class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Cơ hội tăng điểm</h2>
+              <p class="card-sub">Số đơn cần thêm để đạt mốc tiếp theo</p>
+            </div>
+          </div>
           <div class="filter-bar">
             <button class="filter-btn active" onclick="setOverviewFilter('all', this)">Tất cả</button>
             <button class="filter-btn" onclick="setOverviewFilter('del', this)">Giao</button>
@@ -217,19 +202,11 @@
     <div class="tab-panel" id="tab-delivery">
       <main class="app-container">
         <section class="hero hero-sm hero-giao">
-          <div class="hero-body">
-            <div class="hero-main">
-              <div class="hero-top">
-                <span class="hero-eyebrow">Giao</span>
-                <span class="hero-pill" id="delTotalOrders">0 đơn</span>
-              </div>
-              <div class="hero-value-row">
-                <span class="hero-value" id="delTotalPoints">0 <span class="hero-value-unit">Điểm</span></span>
-                <span class="hero-delta" id="delDelta"></span>
-              </div>
-            </div>
-            <div class="hero-spark" id="delSparkline" aria-hidden="true"></div>
+          <div class="hero-top">
+            <span class="hero-eyebrow">Giao</span>
+            <span class="hero-pill" id="delTotalOrders">0 đơn</span>
           </div>
+          <div class="hero-value" id="delTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
         <section class="card card-flush">
           <div class="card-head-pad">
@@ -257,19 +234,11 @@
     <div class="tab-panel" id="tab-pickup">
       <main class="app-container">
         <section class="hero hero-sm hero-lay">
-          <div class="hero-body">
-            <div class="hero-main">
-              <div class="hero-top">
-                <span class="hero-eyebrow">Lấy</span>
-                <span class="hero-pill" id="pickTotalOrders">0 đơn</span>
-              </div>
-              <div class="hero-value-row">
-                <span class="hero-value" id="pickTotalPoints">0 <span class="hero-value-unit">Điểm</span></span>
-                <span class="hero-delta" id="pickDelta"></span>
-              </div>
-            </div>
-            <div class="hero-spark" id="pickSparkline" aria-hidden="true"></div>
+          <div class="hero-top">
+            <span class="hero-eyebrow">Lấy</span>
+            <span class="hero-pill" id="pickTotalOrders">0 đơn</span>
           </div>
+          <div class="hero-value" id="pickTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
         <section class="card card-flush">
           <div class="card-head-pad">
@@ -297,19 +266,11 @@
     <div class="tab-panel" id="tab-return">
       <main class="app-container">
         <section class="hero hero-sm hero-hoan">
-          <div class="hero-body">
-            <div class="hero-main">
-              <div class="hero-top">
-                <span class="hero-eyebrow">Hoàn</span>
-                <span class="hero-pill" id="retTotalOrders">0 đơn</span>
-              </div>
-              <div class="hero-value-row">
-                <span class="hero-value" id="retTotalPoints">0 <span class="hero-value-unit">Điểm</span></span>
-                <span class="hero-delta" id="retDelta"></span>
-              </div>
-            </div>
-            <div class="hero-spark" id="retSparkline" aria-hidden="true"></div>
+          <div class="hero-top">
+            <span class="hero-eyebrow">Hoàn</span>
+            <span class="hero-pill" id="retTotalOrders">0 đơn</span>
           </div>
+          <div class="hero-value" id="retTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
         </section>
         <section class="card card-flush">
           <div class="card-head-pad">
