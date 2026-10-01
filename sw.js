@@ -1,4 +1,4 @@
-const CACHE = 'spx-tracker-v15';
+const CACHE = 'spx-tracker-v18';
 const CORE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
@@ -21,7 +21,6 @@ self.addEventListener('activate', e => {
   );
 });
 
-// NETWORK-FIRST — luôn update khi có mạng, fallback cache khi offline
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
