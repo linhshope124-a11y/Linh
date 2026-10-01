@@ -12,7 +12,7 @@ PWA dành cho **tài xế SPX Express** — theo dõi sản lượng **Giao / L�
 
 **Không cần cài đặt.** Mở URL → Thêm vào màn hình chính → Dùng luôn.
 
-👉 **Mở app:** https://linhshope124-a11y.github.io/spx-tracker1/
+👉 **Mở app:** https://linhshope124-a11y.github.io/Linh/
 
 ---
 
