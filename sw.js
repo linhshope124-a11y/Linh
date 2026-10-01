@@ -1,30 +1,41 @@
-// ================================================================
-// SPX Tracker — Self-destruct SW
-// Mục đích: Xóa hết cache cũ + tự unregister
-// Sau khi push 1 lần, browser sẽ load bản mới sạch
-// ================================================================
-
-const CACHE = 'spx-self-destruct-v40';
+const CACHE = 'spx-tracker-v40';
+const CORE = [
+  './', './index.html', './manifest.json', './css/style.css',
+  './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
+  './js/calc.js', './js/theme.js', './js/ocr.js', './js/ui.js',
+  './js/render.js', './js/entry.js', './js/backup.js',
+  './js/cloud.js', './js/undo.js'
+];
 
 self.addEventListener('install', e => {
-  self.skipWaiting();
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
-      .then(() => self.registration.unregister())
-      .then(() => self.clients.matchAll({ type: 'window' }))
-      .then(clients => {
-        clients.forEach(c => {
-          try { c.navigate(c.url); } catch {}
-        });
-      })
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
-  // Không cache gì cả — luôn fetch từ network
-  e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+
+  e.respondWith(
+    fetch(req)
+      .then(res => {
+        if (res && res.status === 200) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
+  );
 });
