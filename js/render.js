@@ -7,32 +7,55 @@ const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-sp
 
 let _lastDataHash = null;
 
-function getWorkedDaysByPeriod(period) {
-  const now = new Date();
-  const cy = now.getFullYear();
-  const cm = now.getMonth() + 1;
-  let ly = cy, lm = cm - 1;
-  if (lm === 0) { lm = 12; ly--; }
-
-  const todayIso = `${cy}-${String(cm).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  const dates = new Set();
-
-  ['delivery', 'pickup', 'return'].forEach(type => {
-    state.appData[type].forEach(r => {
-      const [ry, rm] = r.date.split('-').map(Number);
-      if (period === 'today') {
-        if (r.date === todayIso) dates.add(r.date);
-      } else if (period === 'last_month') {
-        if (ry === ly && rm === lm) dates.add(r.date);
-      } else {
-        if (ry === cy && rm === cm) dates.add(r.date);
-      }
-    });
-  });
-  return dates.size;
+// ===== Ngưỡng công theo khu vực =====
+function getRegionThresholds(region) {
+  if (region === 'hcm_hn') return { full: 80, half: 40 };   // TP.HCM & Hà Nội
+  return { full: 60, half: 30 };                            // Miền Bắc/Trung/Nam
 }
 
-// ===== ROW bảng 5 cột: KG | SL | Mốc | Điểm | Cần =====
+// ===== Số ngày tối đa theo tháng (T2 = 24, còn lại 26) =====
+function getSalaryDaysForPeriod(period) {
+  const now = new Date();
+  let month = now.getMonth() + 1;
+  if (period === 'last_month') {
+    month -= 1;
+    if (month === 0) month = 12;
+  }
+  return month === 2 ? 24 : 26;
+}
+
+// ===== Tính công theo chính sách SPX =====
+// Công thức quy đổi: Giao + (Lấy / 6) + Hoàn
+function getWorkDaysByPeriod(period, region) {
+  const dailyByType = {};
+
+  ['delivery', 'pickup', 'return'].forEach(type => {
+    const key = type === 'delivery' ? 'del' : type === 'pickup' ? 'pick' : 'ret';
+    state.appData[type].forEach(r => {
+      if (!isDateInCurrentPeriod(r.date, period)) return;
+      if (!dailyByType[r.date]) dailyByType[r.date] = { del: 0, pick: 0, ret: 0 };
+      const dayTotal = WEIGHT_KEYS.reduce(
+        (sum, k) => sum + (parseInt(r.weights[k], 10) || 0), 0
+      );
+      dailyByType[r.date][key] += dayTotal;
+    });
+  });
+
+  const { full, half } = getRegionThresholds(region);
+  let workDays = 0;
+
+  Object.values(dailyByType).forEach(({ del, pick, ret }) => {
+    // Quy đổi: 6 lấy = 1 giao = 1 hoàn
+    const converted = del + (pick / 6) + ret;
+
+    if (converted >= full)      workDays += 1;
+    else if (converted >= half) workDays += 0.5;
+  });
+
+  return workDays;
+}
+
+// ===== ROW bảng 5 cột =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
@@ -109,10 +132,10 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  // Trần 26 ngày
-  const salaryDays = 26;
-  const workedDays = getWorkedDaysByPeriod(state.periodFilter);
-  const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
+  // ===== Thu nhập theo công =====
+  const salaryDays = getSalaryDaysForPeriod(state.periodFilter);
+  const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region);
+  const displayDays = Math.min(workDays, salaryDays);
 
   const salaryBase   = state.manualSalary || 0;
   const manualBuuCuc = state.manualPoints?.buuCuc || 0;
@@ -125,11 +148,20 @@ function _updateAllViews() {
   const finalTotal  = rawBase + rankBonus + incomeAccumulated;
   const totalOrders = total.del + total.pick + total.ret;
 
-  document.getElementById('overallTotalPoints').innerHTML =
-    `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
-  document.getElementById('rankBonusDetailText').innerText =
-    `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
-  document.getElementById('overallTotalOrders').innerText  = `${_fmt(totalOrders)} đơn`;
+  // ===== Hero =====
+  const heroValueEl = document.getElementById('overallTotalPoints');
+  const heroSubEl   = document.getElementById('rankBonusDetailText');
+  const heroPillEl  = document.getElementById('overallTotalOrders');
+
+  if (totalOrders === 0) {
+    heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
+    heroSubEl.innerText = 'Bắt đầu nhập sản lượng để tính điểm';
+    heroPillEl.innerText = '0 đơn';
+  } else {
+    heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+    heroSubEl.innerText = `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
+    heroPillEl.innerText = `${_fmt(totalOrders)} đơn`;
+  }
 
   // Ratio bar
   const ratioBar = document.getElementById('ratioBar');
@@ -205,8 +237,12 @@ function _updateAllViews() {
   if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
   if (taiXeInput  && document.activeElement !== taiXeInput)    taiXeInput.value   = manualTaiXe;
 
-  if (incomeDayCount) incomeDayCount.innerText = `${displayDays}/${salaryDays} ngày`;
-  if (incomePerDay)   incomePerDay.innerText   = formatPts(Math.round(perDay)) + '/ngày';
+  const workDaysText = Number.isInteger(displayDays)
+    ? displayDays.toString()
+    : displayDays.toFixed(1);
+
+  if (incomeDayCount) incomeDayCount.innerText = `${workDaysText}/${salaryDays} công`;
+  if (incomePerDay)   incomePerDay.innerText   = formatPts(Math.round(perDay)) + '/công';
   if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
   if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
 
