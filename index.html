@@ -134,7 +134,12 @@
 
           <div class="income-content">
             <div class="income-row">
-              <span class="income-row-label">Lương cơ bản</span>
+              <span class="income-row-label">
+                LCB
+                <button class="info-icon" type="button"
+                        onclick="alert('LCB = Lương cơ bản\n\nCách tính lương 1 ngày:\n(LCB + Bưu cục + Tài xế) / 26 ngày')"
+                        aria-label="Trợ giúp">i</button>
+              </span>
               <div class="income-row-input">
                 <input type="number" inputmode="numeric" id="salaryBaseInput" value="0" min="0" oninput="saveSalaryConfig()" onchange="saveSalaryConfig()">
                 <span class="income-unit">đ/tháng</span>
