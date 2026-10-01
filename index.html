@@ -49,7 +49,6 @@
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
 
-        <!-- HERO -->
         <section class="hero">
           <div class="hero-top">
             <span class="hero-eyebrow">Tổng điểm tích lũy</span>
@@ -59,7 +58,6 @@
           <div class="hero-sub" id="rankBonusDetailText">Gốc 0 · Thưởng +0 · TN +0</div>
         </section>
 
-        <!-- 3 TILES -->
         <section class="tile-grid">
           <div class="tile tile-giao">
             <div class="tile-label">Giao</div>
@@ -78,7 +76,6 @@
           </div>
         </section>
 
-        <!-- HẠNG THƯỞNG -->
         <section class="card">
           <div class="card-head-inline">
             <span class="card-label">
@@ -98,7 +95,6 @@
           </div>
         </section>
 
-        <!-- PHÂN BỔ -->
         <section class="card">
           <div class="card-head-inline">
             <span class="card-label">Phân bổ theo loại đơn</span>
@@ -115,17 +111,16 @@
           </div>
         </section>
 
-        <!-- THU NHẬP (accordion) -->
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
             <div class="income-summary-left">
               <span class="income-summary-title">
                 Thu nhập
                 <button class="info-icon" type="button"
-                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 ngày = (LCB + Bưu cục + Tài xế) / 26\n\nĐã tích lũy = Lương 1 ngày × số ngày công (tối đa 26)')"
+                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa\n\nĐã tích lũy = Lương 1 công × số công\n\nQuy đổi: Giao + Lấy/6 + Hoàn\n• Miền: ≥60 = 1 công, ≥30 = 0.5 công\n• TP.HCM & HN: ≥80 = 1 công, ≥40 = 0.5 công')"
                         aria-label="Trợ giúp">i</button>
               </span>
-              <span class="income-summary-days" id="incomeDayCount">0/26 ngày</span>
+              <span class="income-summary-days" id="incomeDayCount">0/26 công</span>
             </div>
             <div class="income-summary-right">
               <span class="income-summary-value" id="incomeTotalDisplay">+0 Điểm</span>
@@ -138,6 +133,20 @@
           </summary>
 
           <div class="income-content">
+            <div class="income-row income-row-region">
+              <span class="income-row-label">Khu vực tính công</span>
+              <div class="region-pill-group">
+                <button type="button" class="region-pill" data-region="mien" onclick="setRegion('mien', this)">
+                  <span>Miền</span>
+                  <span>60/30</span>
+                </button>
+                <button type="button" class="region-pill" data-region="hcm_hn" onclick="setRegion('hcm_hn', this)">
+                  <span>TP.HCM · HN</span>
+                  <span>80/40</span>
+                </button>
+              </div>
+            </div>
+
             <div class="income-row">
               <span class="income-row-label">LCB</span>
               <div class="income-row-input">
@@ -161,8 +170,8 @@
             </div>
             <div class="income-summary-box">
               <div class="income-summary-line">
-                <span>Lương 1 ngày</span>
-                <span id="incomePerDayText">0 Điểm/ngày</span>
+                <span>Lương 1 công</span>
+                <span id="incomePerDayText">0 Điểm/công</span>
               </div>
               <div class="income-summary-line total">
                 <span>Đã tích lũy</span>
@@ -173,7 +182,6 @@
           </div>
         </details>
 
-        <!-- CƠ HỘI TĂNG ĐIỂM -->
         <section class="card">
           <div class="card-head">
             <div>
@@ -487,7 +495,7 @@
         <ol class="guide-list">
           <li>Nhấn nút <b>Quét 📷</b> giữa bottom nav để chụp/quét ảnh</li>
           <li>Hoặc menu <b>☰ → Nhập sản lượng</b> để nhập tay</li>
-          <li>Mở <b>Thu nhập</b> → nhập LCB, bưu cục, tài xế</li>
+          <li>Mở <b>Thu nhập</b> → chọn khu vực + nhập LCB, bưu cục, tài xế</li>
         </ol>
       </section>
 
@@ -521,13 +529,19 @@
       <section class="guide-section">
         <h4 class="guide-h">💰 Thu nhập</h4>
         <ul class="guide-list">
+          <li><b>Khu vực</b> — Chọn Miền hoặc TP.HCM & Hà Nội</li>
           <li><b>LCB</b> — Lương cơ bản</li>
           <li><b>Bưu cục</b> — Phụ cấp bưu cục</li>
           <li><b>Tài xế</b> — Phụ cấp tài xế</li>
         </ul>
         <div class="guide-note">
-          Lương 1 ngày = (LCB + Bưu cục + Tài xế) / 26<br>
-          Trần <b>26 ngày</b> — làm hơn vẫn tính 26.
+          <b>Công thức quy đổi:</b><br>
+          Đơn tính công = Giao + Lấy/6 + Hoàn<br><br>
+          <b>Ngưỡng công theo khu vực:</b><br>
+          • Miền Bắc/Trung/Nam: ≥60 = 1 công · ≥30 = 0.5 công<br>
+          • TP.HCM &amp; Hà Nội: ≥80 = 1 công · ≥40 = 0.5 công<br><br>
+          <b>Số ngày tối đa:</b> Tháng 2 = 24, còn lại 26<br>
+          <b>Lương 1 công</b> = (LCB + Bưu cục + Tài xế) / số ngày tối đa
         </div>
       </section>
 
