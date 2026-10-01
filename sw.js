@@ -1,4 +1,4 @@
-const CACHE = 'spx-tracker-v31';
+const CACHE = 'spx-tracker-v33';
 const CORE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
@@ -21,6 +21,7 @@ self.addEventListener('activate', e => {
   );
 });
 
+// Network-first cho same-origin
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
