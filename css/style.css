@@ -1,9 +1,8 @@
 /* =============================================================
-   SPX Tracker v3.2 — C-Lite + Polish
-   • Palette 3 loại đơn đổi sang tone ấm
-   • Nút Quét: pulse animation khi mở app
-   • Icon ⓘ cho Hạng thưởng
-   • Gap pills 8px
+   SPX Tracker v3.3 — C-Lite + Final Polish
+   • Hero 30px gọn hơn
+   • Palette 3 loại đơn tăng contrast
+   • Bottom nav shadow đậm hơn
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -36,18 +35,18 @@
   --accent-soft:   #fff1eb;
   --accent-border: #ffd5c2;
 
-  /* ===== Palette mới: WARM (cam → vàng → đỏ) ===== */
-  --giao:      #ea580c;   /* orange-600 — đậm nhất */
-  --giao-soft: #fff7ed;   /* orange-50 */
-  --giao-bd:   #fed7aa;   /* orange-200 */
+  /* ===== Palette tăng contrast ===== */
+  --giao:      #c2410c;   /* orange-700 — đậm hơn */
+  --giao-soft: #fff7ed;
+  --giao-bd:   #fed7aa;
 
-  --lay:       #f59e0b;   /* amber-500 — vừa */
-  --lay-soft:  #fffbeb;   /* amber-50 */
-  --lay-bd:    #fde68a;   /* amber-200 */
+  --lay:       #eab308;   /* yellow-500 — sáng hơn */
+  --lay-soft:  #fefce8;
+  --lay-bd:    #fef08a;
 
-  --hoan:      #dc2626;   /* red-600 — phân biệt rõ */
-  --hoan-soft: #fef2f2;   /* red-50 */
-  --hoan-bd:   #fecaca;   /* red-200 */
+  --hoan:      #dc2626;   /* red-600 */
+  --hoan-soft: #fef2f2;
+  --hoan-bd:   #fecaca;
 
   --success:    #059669;
   --success-bg: #ecfdf5;
@@ -78,7 +77,6 @@
 
   --nav-h: 68px;
 
-  /* Backward-compat aliases */
   --spx-orange: var(--accent);
   --text-primary: var(--text-1);
   --text-secondary: var(--text-2);
@@ -124,14 +122,14 @@
   --accent-soft:   rgba(255, 110, 64, 0.12);
   --accent-border: rgba(255, 110, 64, 0.3);
 
-  /* WARM palette for dark */
+  /* Palette dark — vẫn giữ contrast cao */
   --giao:      #fb923c;
   --giao-soft: rgba(251, 146, 60, 0.12);
   --giao-bd:   rgba(251, 146, 60, 0.3);
 
-  --lay:       #fbbf24;
-  --lay-soft:  rgba(251, 191, 36, 0.12);
-  --lay-bd:    rgba(251, 191, 36, 0.3);
+  --lay:       #facc15;
+  --lay-soft:  rgba(250, 204, 21, 0.12);
+  --lay-bd:    rgba(250, 204, 21, 0.3);
 
   --hoan:      #f87171;
   --hoan-soft: rgba(248, 113, 113, 0.12);
@@ -325,7 +323,7 @@ body {
   padding-bottom: 24px;
 }
 
-/* ============ BOTTOM NAV ============ */
+/* ============ BOTTOM NAV — shadow đậm hơn ============ */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -339,9 +337,9 @@ body {
   z-index: 50;
   max-width: 500px;
   margin: 0 auto;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
 }
-[data-theme="dark"] .bottom-nav { box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.4); }
+[data-theme="dark"] .bottom-nav { box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5); }
 
 .nav-btn {
   width: 100%;
@@ -376,7 +374,7 @@ body {
 .nav-btn.active .nav-icon { stroke-width: 2.2; }
 .nav-btn:active { transform: scale(0.94); }
 
-/* ============ NÚT QUÉT — Pulse animation ============ */
+/* ============ NÚT QUÉT ============ */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -417,7 +415,6 @@ body {
     0 1px 4px rgba(255, 87, 34, 0.3);
   animation: none;
 }
-
 @keyframes fabPulse {
   0%, 100% {
     transform: scale(1);
@@ -508,11 +505,9 @@ body {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.info-icon:active {
-  transform: scale(0.9);
-}
+.info-icon:active { transform: scale(0.9); }
 
-/* ============ HERO ============ */
+/* ============ HERO — số 30px gọn hơn ============ */
 .hero {
   background: linear-gradient(135deg, var(--accent-soft) 0%, var(--surface) 60%);
   border: 1px solid var(--accent-border);
@@ -548,13 +543,13 @@ body {
   white-space: nowrap;
 }
 .hero-value {
-  font-size: 34px;
+  font-size: 30px;      /* 34px → 30px */
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-1);
   line-height: 1.05;
 }
-.hero-sm .hero-value { font-size: 26px; }
+.hero-sm .hero-value { font-size: 24px; }   /* 26px → 24px */
 .hero-value-unit {
   font-size: 0.5em;
   font-weight: 700;
@@ -617,7 +612,7 @@ body {
 .tile-lay  .tile-val { color: var(--lay); }
 .tile-hoan .tile-val { color: var(--hoan); }
 
-/* ============ RANK PILLS (gap 8px) ============ */
+/* ============ RANK PILLS ============ */
 .rank-pill-group {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -655,7 +650,7 @@ body {
   filter: brightness(0.95);
 }
 
-/* ============ RATIO BAR ============ */
+/* ============ RATIO BAR — contrast cao hơn ============ */
 .ratio-bar {
   height: 8px;
   background: var(--surface-2);
@@ -695,7 +690,7 @@ body {
 .dot-lay  { background: var(--lay); }
 .dot-hoan { background: var(--hoan); }
 
-/* ============ INCOME (accordion) ============ */
+/* ============ INCOME ============ */
 details.income-section { padding: 0; overflow: hidden; }
 details.income-section > summary {
   list-style: none;
@@ -1436,8 +1431,8 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .bottom-nav { border-radius: var(--r-xl) var(--r-xl) 0 0; }
 }
 @media (max-width: 360px) {
-  .hero-value { font-size: 30px; }
-  .hero-sm .hero-value { font-size: 24px; }
+  .hero-value { font-size: 26px; }
+  .hero-sm .hero-value { font-size: 22px; }
   .tile-val { font-size: 18px; }
   .rank-pill { font-size: 10px; padding: 8px 2px; }
   .fab-icon { width: 38px; height: 38px; }
@@ -1449,7 +1444,6 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .table-clean th:last-child, .table-clean td:last-child   { padding-right: 12px; }
 }
 
-/* Ưu tiên animation khi người dùng tắt chuyển động */
 @media (prefers-reduced-motion: reduce) {
   .fab-icon { animation: none !important; }
 }
