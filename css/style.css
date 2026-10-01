@@ -1,5 +1,8 @@
 /* =============================================================
-   SPX Tracker v3.7 — Nút Quét to hơn (48px)
+   SPX Tracker v3.8 — v38
+   • Hero empty: thu nhỏ, không CTA
+   • Row highlight gần mốc
+   • Coachmark lần đầu
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -369,7 +372,7 @@ body {
 .nav-btn.active .nav-icon { stroke-width: 2.2; }
 .nav-btn:active { transform: scale(0.94); }
 
-/* ============ NÚT QUÉT — TO HƠN ============ */
+/* ============ NÚT QUÉT — 48px ============ */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -556,6 +559,21 @@ body {
 .hero-giao .hero-eyebrow { color: var(--giao); }
 .hero-lay  .hero-eyebrow { color: var(--lay); }
 .hero-hoan .hero-eyebrow { color: var(--hoan); }
+
+/* Hero empty state — thu nhỏ */
+.hero.hero-is-empty {
+  padding: 14px 16px;
+}
+.hero.hero-is-empty .hero-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-3);
+  letter-spacing: -0.01em;
+}
+.hero.hero-is-empty .hero-sub {
+  margin-top: 4px;
+  font-size: 11px;
+}
 
 /* ============ TILES ============ */
 .tile-grid {
@@ -898,6 +916,52 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .table-clean .next-cell .gain-num { color: var(--success); font-weight: 700; }
 .table-clean .next-cell .zero-dash { color: var(--text-3); font-weight: 400; }
 .table-clean .next-cell .arrow { color: var(--text-3); font-weight: 500; }
+
+/* ===== ROW HIGHLIGHT GẦN MỐC ===== */
+.table-clean tr.row-near {
+  background: linear-gradient(90deg, rgba(194, 65, 12, 0.06) 0%, transparent 60%);
+  box-shadow: inset 3px 0 0 var(--giao);
+}
+.table-clean tr.row-near-pick {
+  background: linear-gradient(90deg, rgba(234, 179, 8, 0.06) 0%, transparent 60%);
+  box-shadow: inset 3px 0 0 var(--lay);
+}
+.table-clean tr.row-near-ret {
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.06) 0%, transparent 60%);
+  box-shadow: inset 3px 0 0 var(--hoan);
+}
+
+/* Dot nhấp nháy bên cạnh số đơn của row gần mốc */
+.table-clean tr.row-near .order-num::after,
+.table-clean tr.row-near-pick .order-num::after,
+.table-clean tr.row-near-ret .order-num::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-left: 5px;
+  vertical-align: middle;
+  animation: nearPulse 1.8s ease-in-out infinite;
+}
+.table-clean tr.row-near .order-num::after { background: var(--giao); }
+.table-clean tr.row-near-pick .order-num::after { background: var(--lay); }
+.table-clean tr.row-near-ret .order-num::after { background: var(--hoan); }
+
+@keyframes nearPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+
+[data-theme="dark"] .table-clean tr.row-near {
+  background: linear-gradient(90deg, rgba(251, 146, 60, 0.10) 0%, transparent 60%);
+}
+[data-theme="dark"] .table-clean tr.row-near-pick {
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.10) 0%, transparent 60%);
+}
+[data-theme="dark"] .table-clean tr.row-near-ret {
+  background: linear-gradient(90deg, rgba(248, 113, 113, 0.10) 0%, transparent 60%);
+}
 
 /* ============ FILTER BAR ============ */
 .filter-bar {
@@ -1547,6 +1611,110 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .app-toast.success { background: var(--success); color: #fff; }
 .app-toast.error   { background: var(--danger);  color: #fff; }
 .app-toast.warning { background: var(--warning); color: #fff; }
+
+/* ============ COACHMARK LẦN ĐẦU ============ */
+.coachmark-shade {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 400;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 0px));
+  animation: coachFadeIn 0.3s ease;
+}
+.coachmark-shade.active { display: flex; }
+
+@keyframes coachFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.coachmark-tooltip {
+  position: relative;
+  max-width: 340px;
+  margin: 0 20px;
+  padding: 18px 20px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    0 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: coachSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border);
+}
+@keyframes coachSlideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.coachmark-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-1);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.coachmark-text {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.coachmark-text b {
+  color: var(--accent);
+  font-weight: 700;
+}
+.coachmark-btn {
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  border-radius: var(--r-sm);
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.coachmark-btn:hover { background: var(--accent-hover); }
+.coachmark-btn:active { transform: scale(0.97); }
+
+.coachmark-arrow {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 20px;
+  height: 20px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0 0 4px 0;
+}
+
+body.coachmark-active .fab-icon {
+  animation: fabHighlight 1.2s ease-in-out infinite;
+  transform: scale(1.05);
+}
+@keyframes fabHighlight {
+  0%, 100% {
+    box-shadow:
+      0 0 0 4px var(--surface),
+      0 4px 16px rgba(255, 87, 34, 0.35),
+      0 0 0 0 rgba(255, 87, 34, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px var(--surface),
+      0 4px 16px rgba(255, 87, 34, 0.35),
+      0 0 0 12px rgba(255, 87, 34, 0.15);
+  }
+}
 
 /* ============ RESPONSIVE ============ */
 @media (min-width: 640px) {
