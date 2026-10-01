@@ -149,6 +149,26 @@ export function initRankUI() {
   attachRankLongPress();
 }
 
+// ================ REGION ================
+export function setRegion(regionKey, el) {
+  state.region = regionKey;
+  localStorage.setItem('spx_region', regionKey);
+  el.parentElement.querySelectorAll('.region-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  updateAllViews();
+  showToast(
+    `Khu vực: ${regionKey === 'hcm_hn' ? 'TP.HCM & Hà Nội (80/40)' : 'Miền Bắc/Trung/Nam (60/30)'}`,
+    'success',
+    1800
+  );
+}
+
+export function initRegionUI() {
+  document.querySelectorAll('.region-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.region === state.region);
+  });
+}
+
 // ================ THEME (từ menu) ================
 export function toggleThemeFromMenu() {
   toggleTheme();
