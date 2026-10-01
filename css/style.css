@@ -1,9 +1,7 @@
 /* =============================================================
-   SPX Tracker v3.3 — C-Lite + Final Polish
-   • Hero 30px gọn hơn
-   • Palette 3 loại đơn tăng contrast
-   • Bottom nav shadow đậm hơn
-   • LCB có icon ⓘ
+   SPX Tracker v3.4 — Option B
+   • Title "Thu nhập ⓘ" có icon
+   • Label "LCB" không icon
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -700,7 +698,14 @@ details.income-section > summary::-webkit-details-marker { display: none; }
 details.income-section > summary::marker { display: none; content: ''; }
 
 .income-summary-left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
-.income-summary-title { font-size: 14px; font-weight: 700; color: var(--text-1); }
+.income-summary-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
 .income-summary-days { font-size: 11px; color: var(--text-3); font-weight: 500; }
 .income-summary-right { display: flex; align-items: center; gap: 10px; }
 .income-summary-value { font-size: 14px; font-weight: 700; color: var(--accent); }
