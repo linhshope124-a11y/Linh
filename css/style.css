@@ -1,7 +1,5 @@
 /* =============================================================
-   SPX Tracker v3.4 — Option B
-   • Title "Thu nhập ⓘ" có icon
-   • Label "LCB" không icon
+   SPX Tracker v3.5 — Guide Modal thêm vào
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
@@ -1157,6 +1155,76 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
 .menu-text { flex: 1; min-width: 0; }
 .menu-title { font-size: 13.5px; font-weight: 600; color: var(--text-1); }
 .menu-sub { font-size: 11.5px; color: var(--text-3); margin-top: 2px; }
+
+/* ============ GUIDE MODAL ============ */
+.guide-modal-box { max-width: 500px; }
+.guide-body { padding: 8px 20px 20px; }
+
+.guide-section {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.guide-section:last-child { border-bottom: none; }
+
+.guide-h {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.guide-list {
+  padding-left: 20px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+.guide-list li { margin-bottom: 4px; }
+.guide-list b { color: var(--text-1); font-weight: 700; }
+
+.guide-p {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.guide-p:last-child { margin-bottom: 0; }
+.guide-p b { color: var(--text-1); font-weight: 700; }
+
+.guide-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.guide-card:last-child { margin-bottom: 0; }
+.guide-card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+.guide-card p {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+  margin: 0;
+}
+.guide-card b { color: var(--text-1); font-weight: 700; }
+
+.guide-note {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+.guide-note b { color: var(--accent); font-weight: 700; }
 
 /* ============ SETTINGS MODAL ============ */
 .settings-section-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--text-1); }
