@@ -8,6 +8,7 @@ export const state = {
   manualPoints: { buuCuc: 0, taiXe: 0 },
   manualSalary: 0,
   salaryDays: 26,
+  region: 'mien',   // 'mien' | 'hcm_hn'
   activeTab: 'overview',
   histFilter: 'all',
   overviewFilter: 'all',
@@ -16,7 +17,6 @@ export const state = {
   isOcrScan: false
 };
 
-// Lọc bỏ bản ghi rác khi load
 function sanitizeRecords(arr) {
   if (!Array.isArray(arr)) return [];
   return arr
@@ -51,9 +51,11 @@ export function loadState() {
   state.manualPoints = { buuCuc: mp.buuCuc || 0, taiXe: mp.taiXe || 0 };
 
   state.manualSalary = parseFloat(localStorage.getItem('spx_manual_salary')) || 0;
-
-  // Trần 26 ngày công — cố định
   state.salaryDays = 26;
+
+  // Khu vực tính công
+  const reg = localStorage.getItem('spx_region');
+  state.region = (reg === 'hcm_hn' || reg === 'mien') ? reg : 'mien';
 }
 
 export function persistData() {
@@ -65,4 +67,5 @@ export function persistData() {
 export function persistSettings() {
   localStorage.setItem(STORAGE_KEYS.rank,     state.rankBonus);
   localStorage.setItem(STORAGE_KEYS.rankName, state.rankName);
+  localStorage.setItem('spx_region', state.region);
 }
