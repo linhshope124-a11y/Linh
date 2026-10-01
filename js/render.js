@@ -1,324 +1,291 @@
-import { state, persistSettings } from './state.js';
-import { updateAllViews, renderHistory } from './render.js';
-import { getTodayIso } from './utils.js';
-import { toggleTheme } from './theme.js';
+import { state, persistData } from './state.js';
+import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
+import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
+import { formatPts, formatDateDisplay, _fmt } from './utils.js';
 
-// ================ TABS ================
-export function switchMainTab(tabId, el) {
-  state.activeTab = tabId;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if (el) el.classList.add('active');
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById('tab-' + tabId);
-  if (panel) panel.classList.add('active');
+const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-spacing:0.5px;';
 
-  if (tabId === 'history') {
-    state.histFilter = 'all';
-    document.querySelectorAll('#tab-history .filter-bar .filter-btn')
-      .forEach((b, i) => b.classList.toggle('active', i === 0));
-    renderHistory();
+let _lastDataHash = null;
+
+function getWorkedDaysByPeriod(period) {
+  const now = new Date();
+  const cy = now.getFullYear();
+  const cm = now.getMonth() + 1;
+  let ly = cy, lm = cm - 1;
+  if (lm === 0) { lm = 12; ly--; }
+
+  const todayIso = `${cy}-${String(cm).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const dates = new Set();
+
+  ['delivery', 'pickup', 'return'].forEach(type => {
+    state.appData[type].forEach(r => {
+      const [ry, rm] = r.date.split('-').map(Number);
+      if (period === 'today') {
+        if (r.date === todayIso) dates.add(r.date);
+      } else if (period === 'last_month') {
+        if (ry === ly && rm === lm) dates.add(r.date);
+      } else {
+        if (ry === cy && rm === cm) dates.add(r.date);
+      }
+    });
+  });
+  return dates.size;
+}
+
+// ===== ROW bảng 5 cột: KG | SL | Mốc | Điểm | Cần =====
+function renderRow(weightLabel, orders, tier, typeClass) {
+  const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
+
+  const ptsText = tier.matched.pt === 0
+    ? '<span class="zero-dash">—</span>'
+    : _fmt(tier.matched.pt);
+
+  let nextText;
+  if (orders <= 0) {
+    nextText = '<span class="zero-dash">—</span>';
+  } else if (!tier.next || !isFinite(tier.matched.maxA)) {
+    nextText = '<span style="color:var(--success);font-weight:700">MAX</span>';
+  } else {
+    const need = tier.matched.maxA - orders;
+    const gain = tier.next.pt - tier.matched.pt;
+    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)}đ</span>`;
   }
+
+  return `<td class="weight-name">${shortLabel}</td>
+    <td class="order-num ${typeClass} ${orders === 0 ? 'zero' : ''}">${_fmt(orders)}</td>
+    <td class="range-cell">${tier.matched.range}</td>
+    <td class="points-badge ${orders === 0 ? 'zero' : ''}">${ptsText}</td>
+    <td class="next-cell">${nextText}</td>`;
 }
 
-export function openHistoryTab() {
-  state.activeTab = 'history';
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  const panel = document.getElementById('tab-history');
-  if (panel) panel.classList.add('active');
-  state.histFilter = 'all';
-  document.querySelectorAll('#tab-history .filter-bar .filter-btn')
-    .forEach((b, i) => b.classList.toggle('active', i === 0));
+function buildOverviewSuggestion(type, label, orders, tier) {
+  if (orders <= 0 || !tier.next || !isFinite(tier.matched.maxA)) return null;
+  const need  = tier.matched.maxA - orders;
+  const badge = type === 'del' ? 'G' : type === 'pick' ? 'L' : 'H';
+  const cls   = type === 'del' ? 'sugg-del'  : type === 'pick' ? 'sugg-pick'  : 'sugg-ret';
+  const bcls  = type === 'del' ? 'sugg-type-del' : type === 'pick' ? 'sugg-type-pick' : 'sugg-type-ret';
+  return `<div class="suggestion-item ${cls}">
+    <div class="sugg-left"><h4><span class="sugg-type-badge ${bcls}">${badge}</span> ${label} · ${_fmt(orders)} đơn</h4>
+    <p>Thêm <b style="${NEED_HIGHLIGHT}">+${_fmt(need)}</b> đơn đạt ${tier.next.range}</p></div>
+    <div class="sugg-points">+${formatPts(tier.next.pt - tier.matched.pt)}</div>
+  </div>`;
+}
+
+function _updateAllViews() {
+  const { agg, total } = aggregateWeights(state.appData, state.periodFilter);
+
+  const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
+  const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
+  const retTbody  = document.getElementById('retTableBody');  retTbody.innerHTML = '';
+
+  const ovSuggBuf = [];
+  let delPts = 0, pickPts = 0, retPts = 0;
+
+  for (let col = 0; col < 8; col++) {
+    const dOrders = agg.del[col], pOrders = agg.pick[col], rOrders = agg.ret[col];
+    const dTier = lookupTier(dOrders, col, TABLE_5_DATA);
+    const pTier = lookupTier(pOrders, col, TABLE_4_DATA);
+    const rTier = lookupTier(rOrders, col, TABLE_6_DATA);
+    delPts  += dTier.matched.pt;
+    pickPts += pTier.matched.pt;
+    retPts  += rTier.matched.pt;
+
+    delTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`);
+    pickTbody.insertAdjacentHTML('beforeend', `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
+    retTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
+
+    const o1 = buildOverviewSuggestion('del',  WEIGHT_LABELS[col], dOrders, dTier); if (o1) ovSuggBuf.push(o1);
+    const o2 = buildOverviewSuggestion('pick', WEIGHT_LABELS[col], pOrders, pTier); if (o2) ovSuggBuf.push(o2);
+    const o3 = buildOverviewSuggestion('ret',  WEIGHT_LABELS[col], rOrders, rTier); if (o3) ovSuggBuf.push(o3);
+  }
+
+  const ovBox = document.getElementById('overviewMilestoneList');
+  if (total.del + total.pick + total.ret === 0) {
+    ovBox.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.</div>';
+  } else {
+    ovBox.innerHTML = ovSuggBuf.join('');
+  }
+
+  const rawBase   = delPts + pickPts + retPts;
+  const rankBonus = Math.round(rawBase * state.rankBonus);
+
+  // Trần 26 ngày
+  const salaryDays = 26;
+  const workedDays = getWorkedDaysByPeriod(state.periodFilter);
+  const displayDays = workedDays === 0 ? salaryDays : Math.min(workedDays, salaryDays);
+
+  const salaryBase   = state.manualSalary || 0;
+  const manualBuuCuc = state.manualPoints?.buuCuc || 0;
+  const manualTaiXe  = state.manualPoints?.taiXe  || 0;
+  const monthlyTotal = salaryBase + manualBuuCuc + manualTaiXe;
+
+  const perDay = salaryDays > 0 ? monthlyTotal / salaryDays : 0;
+  const incomeAccumulated = Math.round(perDay * displayDays);
+
+  const finalTotal  = rawBase + rankBonus + incomeAccumulated;
+  const totalOrders = total.del + total.pick + total.ret;
+
+  document.getElementById('overallTotalPoints').innerHTML =
+    `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('rankBonusDetailText').innerText =
+    `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
+  document.getElementById('overallTotalOrders').innerText  = `${_fmt(totalOrders)} đơn`;
+
+  // Ratio bar
+  const ratioBar = document.getElementById('ratioBar');
+  const pctDelEl  = document.getElementById('ratioPctDel');
+  const pctPickEl = document.getElementById('ratioPctPick');
+  const pctRetEl  = document.getElementById('ratioPctRet');
+
+  if (totalOrders > 0) {
+    if (ratioBar) ratioBar.classList.remove('is-empty');
+
+    const rawDel  = (total.del  / totalOrders) * 100;
+    const rawPick = (total.pick / totalOrders) * 100;
+    const rawRet  = (total.ret  / totalOrders) * 100;
+    let pDel  = Math.floor(rawDel);
+    let pPick = Math.floor(rawPick);
+    let pRet  = Math.floor(rawRet);
+    const remainder = 100 - (pDel + pPick + pRet);
+    const fracs = [
+      { k: 'del',  f: rawDel  - pDel  },
+      { k: 'pick', f: rawPick - pPick },
+      { k: 'ret',  f: rawRet  - pRet  }
+    ].sort((a, b) => b.f - a.f);
+    for (let i = 0; i < remainder; i++) {
+      if (fracs[i % 3].k === 'del') pDel++;
+      else if (fracs[i % 3].k === 'pick') pPick++;
+      else pRet++;
+    }
+    document.getElementById('ratioBarDel').style.width  = pDel  + '%';
+    document.getElementById('ratioBarPick').style.width = pPick + '%';
+    document.getElementById('ratioBarRet').style.width  = pRet  + '%';
+    if (pctDelEl)  pctDelEl.innerText  = pDel  + '%';
+    if (pctPickEl) pctPickEl.innerText = pPick + '%';
+    if (pctRetEl)  pctRetEl.innerText  = pRet  + '%';
+  } else {
+    if (ratioBar) ratioBar.classList.add('is-empty');
+    document.getElementById('ratioBarDel').style.width  = '33.3%';
+    document.getElementById('ratioBarPick').style.width = '33.3%';
+    document.getElementById('ratioBarRet').style.width  = '33.4%';
+    if (pctDelEl)  pctDelEl.innerText  = '0%';
+    if (pctPickEl) pctPickEl.innerText = '0%';
+    if (pctRetEl)  pctRetEl.innerText  = '0%';
+  }
+
+  // Mini tiles
+  document.getElementById('miniDelPoints').innerText  = _fmt(delPts);
+  document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
+  document.getElementById('miniPickPoints').innerText = _fmt(pickPts);
+  document.getElementById('miniPickOrders').innerText = _fmt(total.pick);
+  document.getElementById('miniRetPoints').innerText  = _fmt(retPts);
+  document.getElementById('miniRetOrders').innerText  = _fmt(total.ret);
+
+  // Hero tab chi tiết
+  document.getElementById('delTotalPoints').innerHTML =
+    `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
+  document.getElementById('pickTotalPoints').innerHTML =
+    `${_fmt(pickPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('pickTotalOrders').innerText = `${_fmt(total.pick)} đơn`;
+  document.getElementById('retTotalPoints').innerHTML =
+    `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
+
+  // Income UI
+  const salaryBaseEl   = document.getElementById('salaryBaseInput');
+  const buuCucInput    = document.getElementById('manualBuuCucInput');
+  const taiXeInput     = document.getElementById('manualTaiXeInput');
+  const incomeDayCount = document.getElementById('incomeDayCount');
+  const incomePerDay   = document.getElementById('incomePerDayText');
+  const incomeTotal    = document.getElementById('incomeTotalDisplay');
+  const incomeTotalInner = document.getElementById('incomeTotalDisplayInner');
+
+  if (salaryBaseEl && document.activeElement !== salaryBaseEl) salaryBaseEl.value = salaryBase;
+  if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
+  if (taiXeInput  && document.activeElement !== taiXeInput)    taiXeInput.value   = manualTaiXe;
+
+  if (incomeDayCount) incomeDayCount.innerText = `${displayDays}/${salaryDays} ngày`;
+  if (incomePerDay)   incomePerDay.innerText   = formatPts(Math.round(perDay)) + '/ngày';
+  if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
+  if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
+
+  // Count
+  const filteredCount =
+    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
+    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
+    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length;
+  document.getElementById('histCountNote').innerText = `${filteredCount} bản ghi`;
+
+  persistData();
+
+  const currentHash = JSON.stringify(state.appData);
+  if (_lastDataHash === null) {
+    _lastDataHash = currentHash;
+  } else if (currentHash !== _lastDataHash) {
+    _lastDataHash = currentHash;
+    window.dispatchEvent(new CustomEvent('spx:datachanged'));
+  }
+
   renderHistory();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-export function switchModalSubTab(tabKey) {
-  ['del', 'pick', 'ret'].forEach(k => {
-    const btn = document.getElementById('subtab-btn-' + k);
-    const pane = document.getElementById('pane-' + k);
-    if (btn) btn.classList.remove('active');
-    if (pane) pane.style.display = 'none';
-  });
-  const btn = document.getElementById('subtab-btn-' + tabKey);
-  const pane = document.getElementById('pane-' + tabKey);
-  if (btn) btn.classList.add('active');
-  if (pane) pane.style.display = 'block';
+let _updateAllViews_debounced = null;
+export function updateAllViews() {
+  if (!_updateAllViews_debounced) {
+    _updateAllViews_debounced = (() => {
+      let t = null;
+      return () => { clearTimeout(t); t = setTimeout(_updateAllViews, 60); };
+    })();
+  }
+  _updateAllViews_debounced();
 }
 
-// ================ FILTERS ================
-export function setOverviewFilter(filter, el) {
-  state.overviewFilter = filter;
-  const bar = el.closest('.filter-bar');
-  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  document.querySelectorAll('#overviewMilestoneList .suggestion-item').forEach(item => {
-    if (filter === 'all')       item.style.display = 'flex';
-    else if (filter === 'del')  item.style.display = item.classList.contains('sugg-del')  ? 'flex' : 'none';
-    else if (filter === 'pick') item.style.display = item.classList.contains('sugg-pick') ? 'flex' : 'none';
-    else if (filter === 'ret')  item.style.display = item.classList.contains('sugg-ret')  ? 'flex' : 'none';
-  });
-}
+export function renderHistory() {
+  const container = document.getElementById('historyEntries');
+  if (!container) return;
+  const prevScroll = container.scrollTop;
+  container.innerHTML = '';
 
-export function setPeriodFilter(period, el) {
-  state.periodFilter = period;
-  el.parentElement.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  updateAllViews();
-}
+  let list = [];
+  if (state.histFilter === 'all' || state.histFilter === 'delivery')
+    state.appData.delivery.forEach(r => list.push({ ...r, type: 'delivery' }));
+  if (state.histFilter === 'all' || state.histFilter === 'pickup')
+    state.appData.pickup.forEach(r => list.push({ ...r, type: 'pickup' }));
+  if (state.histFilter === 'all' || state.histFilter === 'return')
+    state.appData.return.forEach(r => list.push({ ...r, type: 'return' }));
 
-export function setHistFilter(filter, btn) {
-  state.histFilter = filter;
-  const bar = btn.closest('.filter-bar');
-  if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderHistory();
-}
+  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter));
+  list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
-// ================ RANK ================
-export function setRankTier(rankKey, bonusPct, el) {
-  if (window.__spxLongPressFired) {
-    window.__spxLongPressFired = false;
+  if (list.length === 0) {
+    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
     return;
   }
-  state.rankBonus = bonusPct;
-  state.rankName  = rankKey;
-  persistSettings();
-  el.parentElement.querySelectorAll('.rank-pill').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  const label = document.getElementById('currentBonusPctLabel');
-  if (label) label.innerText = `+${Math.round(bonusPct * 100)}%`;
-  updateAllViews();
-}
 
-function resetRankToNone() {
-  state.rankBonus = 0;
-  state.rankName  = 'none';
-  persistSettings();
-  document.querySelectorAll('.rank-pill').forEach(p => {
-    p.classList.remove('active');
-    p.classList.remove('long-pressing');
-  });
-  const label = document.getElementById('currentBonusPctLabel');
-  if (label) label.innerText = '+0%';
-  updateAllViews();
-  showToast('Đã bỏ chọn hạng thưởng', 'success', 1800);
-}
+  list.forEach(r => {
+    let dayTotal = 0;
+    const parts = [];
+    WEIGHT_KEYS.forEach((k, col) => {
+      const v = parseInt(r.weights[k], 10) || 0;
+      dayTotal += v;
+      if (v > 0) parts.push(`${WEIGHT_LABELS[col].replace('>', '').replace(' kg', '')}: ${_fmt(v)}`);
+    });
 
-let _rankLongPressAttached = false;
-function attachRankLongPress() {
-  if (_rankLongPressAttached) return;
-  _rankLongPressAttached = true;
+    const tagMap = { delivery: ['tag-delivery', 'Giao'], pickup: ['tag-pickup', 'Lấy'], return: ['tag-return', 'Hoàn'] };
+    const [tagClass, tagText] = tagMap[r.type];
 
-  document.querySelectorAll('.rank-pill').forEach(pill => {
-    let timer = null;
-    const start = () => {
-      window.__spxLongPressFired = false;
-      pill.classList.add('long-pressing');
-      timer = setTimeout(() => {
-        window.__spxLongPressFired = true;
-        if (pill.classList.contains('active')) {
-          if (navigator.vibrate) { try { navigator.vibrate(30); } catch {} }
-          resetRankToNone();
-        } else {
-          pill.classList.remove('long-pressing');
-        }
-      }, 550);
-    };
-    const cancel = () => {
-      clearTimeout(timer);
-      timer = null;
-      pill.classList.remove('long-pressing');
-    };
-    pill.addEventListener('touchstart',  start,  { passive: true });
-    pill.addEventListener('touchend',    cancel);
-    pill.addEventListener('touchcancel', cancel);
-    pill.addEventListener('touchmove',   cancel, { passive: true });
-    pill.addEventListener('mousedown',   start);
-    pill.addEventListener('mouseup',     cancel);
-    pill.addEventListener('mouseleave',  cancel);
-  });
-}
-
-export function initRankUI() {
-  document.querySelectorAll('.rank-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.rank === state.rankName);
-  });
-  const label = document.getElementById('currentBonusPctLabel');
-  if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
-  attachRankLongPress();
-}
-
-// ================ THEME (từ menu) ================
-export function toggleThemeFromMenu() {
-  toggleTheme();
-  updateMenuThemeUI();
-  closeMenuModal();
-}
-
-export function updateMenuThemeUI() {
-  const current = document.documentElement.getAttribute('data-theme') || 'light';
-  const title = document.getElementById('menuThemeTitle');
-  const sub   = document.getElementById('menuThemeSub');
-  if (current === 'dark') {
-    if (title) title.innerText = 'Chế độ sáng';
-    if (sub)   sub.innerText   = 'Chuyển về giao diện sáng';
-  } else {
-    if (title) title.innerText = 'Chế độ tối';
-    if (sub)   sub.innerText   = 'Chuyển sang giao diện tối';
-  }
-}
-
-// ================ MODALS ================
-export function openAddModal() {
-  document.getElementById('modalTitle').innerText = 'Nhập sản lượng ngày';
-  document.getElementById('editEntryId').value = '';
-  document.getElementById('editEntryType').value = '';
-  document.getElementById('modalSubTabGroup').style.display = 'flex';
-  document.getElementById('inputDate').value = getTodayIso();
-
-  ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(id => {
-    document.getElementById('del_inp_'  + id).value = 0;
-    document.getElementById('pick_inp_' + id).value = 0;
-    document.getElementById('ret_inp_'  + id).value = 0;
-  });
-  switchModalSubTab('del');
-  clearAllConfidenceHighlightsLocal();
-
-  if (state.isOcrScan && state.lastOcrImageDataUrl) {
-    document.getElementById('ocrPreviewImg').src = state.lastOcrImageDataUrl;
-    document.getElementById('ocrPreviewBox').style.display = 'block';
-    state.isOcrScan = false;
-  } else {
-    document.getElementById('ocrPreviewBox').style.display = 'none';
-  }
-  document.getElementById('entryModal').classList.add('active');
-}
-
-export function openEditModal(type, id) {
-  const item = (state.appData[type] || []).find(r => r.id === id);
-  if (!item) { showToast('Không tìm thấy bản ghi', 'error'); return; }
-
-  document.getElementById('modalTitle').innerText =
-    `Sửa (${type === 'delivery' ? 'Giao' : type === 'pickup' ? 'Lấy' : 'Hoàn'})`;
-  document.getElementById('editEntryId').value = id;
-  document.getElementById('editEntryType').value = type;
-  document.getElementById('inputDate').value = item.date;
-
-  ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(sfx => {
-    document.getElementById('del_inp_'  + sfx).value = 0;
-    document.getElementById('pick_inp_' + sfx).value = 0;
-    document.getElementById('ret_inp_'  + sfx).value = 0;
+    const div = document.createElement('div');
+    div.className = 'history-entry';
+    div.innerHTML = `<div>
+      <div class="hist-meta"><span class="hist-badge-tag ${tagClass}">${tagText}</span>${formatDateDisplay(r.date)} · <span>${_fmt(dayTotal)} đơn</span></div>
+      <div class="hist-detail">${parts.join(' • ') || '0 đơn'}</div></div>
+      <div class="hist-actions">
+        <button class="hist-btn hist-edit-btn" onclick="openEditModal('${r.type}', ${r.id})">Sửa</button>
+        <button class="hist-btn hist-del-btn" onclick="deleteRecord('${r.type}', ${r.id})">Xóa</button>
+      </div>`;
+    container.appendChild(div);
   });
 
-  const prefix = type === 'delivery' ? 'del_inp' : type === 'pickup' ? 'pick_inp' : 'ret_inp';
-  const subTab = type === 'delivery' ? 'del'     : type === 'pickup' ? 'pick'    : 'ret';
-  document.getElementById('modalSubTabGroup').style.display = 'none';
-  switchModalSubTab(subTab);
-
-  const mapKey = {
-    w0_2:'0_2', w2_4:'2_4', w4_6:'4_6', w6_8:'6_8',
-    w8_10:'8_10', w10_12:'10_12', w12_15:'12_15', wover_15:'over_15'
-  };
-  Object.keys(mapKey).forEach(k => {
-    const inp = document.getElementById(prefix + '_' + mapKey[k]);
-    if (inp) inp.value = item.weights[k] || 0;
-  });
-
-  document.getElementById('ocrPreviewBox').style.display = 'none';
-  clearAllConfidenceHighlightsLocal();
-  document.getElementById('entryModal').classList.add('active');
-}
-
-export function closeModal(force) {
-  if (!force) {
-    const hasData = ['del_inp','pick_inp','ret_inp'].some(pfx =>
-      ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].some(sfx => {
-        const el = document.getElementById(pfx + '_' + sfx);
-        return el && parseInt(el.value, 10) > 0;
-      })
-    );
-    const isEditing = document.getElementById('editEntryId').value !== '';
-    if (hasData && !isEditing && !confirm('Bạn đang có dữ liệu chưa lưu. Đóng và bỏ qua?')) return;
-  }
-  document.getElementById('entryModal').classList.remove('active');
-  state.isOcrScan = false;
-  state.lastOcrImageDataUrl = '';
-}
-
-// ================ MENU MODAL ================
-export function openMenuModal() {
-  updateMenuThemeUI();
-  document.getElementById('menuModal').classList.add('active');
-}
-export function closeMenuModal() {
-  document.getElementById('menuModal').classList.remove('active');
-}
-
-// ================ SETTINGS MODAL ================
-export function openSettingsModal() {
-  if (typeof window.initCloudUI === 'function') window.initCloudUI();
-  document.getElementById('settingsModal').classList.add('active');
-}
-export function closeSettingsModal() {
-  document.getElementById('settingsModal').classList.remove('active');
-}
-
-export function openCoffeeModal()  { document.getElementById('coffeeModal').classList.add('active'); }
-export function closeCoffeeModal() { document.getElementById('coffeeModal').classList.remove('active'); }
-
-export function copyBankNumber() {
-  const stk = document.getElementById('bankSTK').innerText.trim();
-  const btn = document.getElementById('copyBankBtn');
-  const ok = () => {
-    btn.innerHTML = '✓ Đã sao chép!';
-    btn.style.background = 'var(--success)';
-    btn.style.borderColor = 'var(--success)';
-    setTimeout(() => {
-      btn.innerHTML = '📋 Sao chép số tài khoản';
-      btn.style.background = '';
-      btn.style.borderColor = '';
-    }, 2000);
-  };
-  const fb = () => {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = stk; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      ok();
-    } catch { showToast('STK: ' + stk, 'warning'); }
-  };
-  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(stk).then(ok).catch(fb);
-  else fb();
-}
-
-// ================ TOAST ================
-export function showToast(message, type = 'success', duration = 2200) {
-  const toast = document.getElementById('appToast');
-  if (!toast) return;
-  toast.className = 'app-toast ' + type;
-  toast.innerText = message;
-  void toast.offsetWidth;
-  toast.classList.add('active');
-  clearTimeout(window.__spxToastTimer);
-  window.__spxToastTimer = setTimeout(() => {
-    toast.classList.remove('active');
-  }, duration);
-}
-
-// ================ HELPERS ================
-function clearAllConfidenceHighlightsLocal() {
-  ['del_inp','pick_inp','ret_inp'].forEach(pfx =>
-    ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(k => {
-      const input = document.getElementById(pfx + '_' + k);
-      if (!input) return;
-      input.classList.remove('conf-high', 'conf-mid', 'conf-low');
-      const parent = input.closest('.weight-input-item');
-      if (parent) {
-        const badge = parent.querySelector('.conf-badge');
-        if (badge) badge.remove();
-      }
-    })
-  );
+  requestAnimationFrame(() => { container.scrollTop = prevScroll; });
 }
