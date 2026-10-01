@@ -1,17 +1,15 @@
 /* =============================================================
-   SPX Tracker v3.1 — C-Lite Design System
-   • 8pt grid · SVG icons · Color system có naming
-   • Dashboard tiles cho tab Tổng quan
-   • Bảng gộp 5 cột cho tab chi tiết
-   • Menu sectioned
-   • Nút Quét 40px + viền trắng 3px, không label
+   SPX Tracker v3.2 — C-Lite + Polish
+   • Palette 3 loại đơn đổi sang tone ấm
+   • Nút Quét: pulse animation khi mở app
+   • Icon ⓘ cho Hạng thưởng
+   • Gap pills 8px
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
 /* ============ DESIGN TOKENS ============ */
 :root {
-  /* Neutral scale */
   --n-50:  #f8fafc;
   --n-100: #f1f5f9;
   --n-200: #e2e8f0;
@@ -23,7 +21,6 @@
   --n-800: #1e293b;
   --n-900: #0f172a;
 
-  /* Semantic */
   --bg:         #f8fafc;
   --surface:    #ffffff;
   --surface-2:  #f1f5f9;
@@ -34,26 +31,24 @@
   --text-2:     #475569;
   --text-3:     #94a3b8;
 
-  /* Brand */
   --accent:        #ff5722;
   --accent-hover:  #ea4512;
   --accent-soft:   #fff1eb;
   --accent-border: #ffd5c2;
 
-  /* Data colors */
-  --giao:      #7c3aed;
-  --giao-soft: #f5f3ff;
-  --giao-bd:   #ddd6fe;
+  /* ===== Palette mới: WARM (cam → vàng → đỏ) ===== */
+  --giao:      #ea580c;   /* orange-600 — đậm nhất */
+  --giao-soft: #fff7ed;   /* orange-50 */
+  --giao-bd:   #fed7aa;   /* orange-200 */
 
-  --lay:       #0891b2;
-  --lay-soft:  #ecfeff;
-  --lay-bd:    #a5f3fc;
+  --lay:       #f59e0b;   /* amber-500 — vừa */
+  --lay-soft:  #fffbeb;   /* amber-50 */
+  --lay-bd:    #fde68a;   /* amber-200 */
 
-  --hoan:      #d97706;
-  --hoan-soft: #fffbeb;
-  --hoan-bd:   #fde68a;
+  --hoan:      #dc2626;   /* red-600 — phân biệt rõ */
+  --hoan-soft: #fef2f2;   /* red-50 */
+  --hoan-bd:   #fecaca;   /* red-200 */
 
-  /* States */
   --success:    #059669;
   --success-bg: #ecfdf5;
   --success-bd: #a7f3d0;
@@ -70,20 +65,17 @@
   --info-bg: #eff6ff;
   --info-bd: #bfdbfe;
 
-  /* Radius */
   --r-xs: 6px;
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
 
-  /* Shadows */
   --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
   --sh-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
   --sh-md: 0 4px 16px rgba(15, 23, 42, 0.08);
   --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
-  /* Layout */
   --nav-h: 68px;
 
   /* Backward-compat aliases */
@@ -132,17 +124,18 @@
   --accent-soft:   rgba(255, 110, 64, 0.12);
   --accent-border: rgba(255, 110, 64, 0.3);
 
-  --giao:      #a371f7;
-  --giao-soft: rgba(163, 113, 247, 0.12);
-  --giao-bd:   rgba(163, 113, 247, 0.3);
+  /* WARM palette for dark */
+  --giao:      #fb923c;
+  --giao-soft: rgba(251, 146, 60, 0.12);
+  --giao-bd:   rgba(251, 146, 60, 0.3);
 
-  --lay:       #58a6ff;
-  --lay-soft:  rgba(88, 166, 255, 0.12);
-  --lay-bd:    rgba(88, 166, 255, 0.3);
+  --lay:       #fbbf24;
+  --lay-soft:  rgba(251, 191, 36, 0.12);
+  --lay-bd:    rgba(251, 191, 36, 0.3);
 
-  --hoan:      #d29922;
-  --hoan-soft: rgba(210, 153, 34, 0.12);
-  --hoan-bd:   rgba(210, 153, 34, 0.3);
+  --hoan:      #f87171;
+  --hoan-soft: rgba(248, 113, 113, 0.12);
+  --hoan-bd:   rgba(248, 113, 113, 0.3);
 
   --success:    #3fb950;
   --success-bg: rgba(63, 185, 80, 0.12);
@@ -378,14 +371,12 @@ body {
   font-weight: 500;
   letter-spacing: 0.1px;
 }
-.nav-btn.active {
-  color: var(--accent);
-}
+.nav-btn.active { color: var(--accent); }
 .nav-btn.active .nav-label { font-weight: 700; }
 .nav-btn.active .nav-icon { stroke-width: 2.2; }
 .nav-btn:active { transform: scale(0.94); }
 
-/* FAB Quét — 40px + viền trắng 3px, không label */
+/* ============ NÚT QUÉT — Pulse animation ============ */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -412,6 +403,7 @@ body {
     0 0 0 3px var(--surface),
     0 2px 8px rgba(255, 87, 34, 0.28);
   transition: transform 0.15s, box-shadow 0.2s;
+  animation: fabPulse 1.6s ease-in-out 2.2s 2;
 }
 .fab-icon svg {
   width: 20px;
@@ -423,6 +415,23 @@ body {
   box-shadow:
     0 0 0 3px var(--surface),
     0 1px 4px rgba(255, 87, 34, 0.3);
+  animation: none;
+}
+
+@keyframes fabPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 3px var(--surface),
+      0 2px 8px rgba(255, 87, 34, 0.28);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow:
+      0 0 0 3px var(--surface),
+      0 0 0 8px rgba(255, 87, 34, 0.15),
+      0 6px 20px rgba(255, 87, 34, 0.45);
+  }
 }
 
 /* ============ CARDS ============ */
@@ -440,9 +449,7 @@ body {
   align-items: flex-start;
   margin-bottom: 14px;
 }
-.card-head-pad {
-  padding: 16px 16px 12px;
-}
+.card-head-pad { padding: 16px 16px 12px; }
 .card-head-inline {
   display: flex;
   justify-content: space-between;
@@ -457,6 +464,9 @@ body {
   color: var(--text-3);
   text-transform: uppercase;
   letter-spacing: 0.6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .card-value {
   font-size: 13px;
@@ -469,6 +479,37 @@ body {
   margin-top: 10px;
   text-align: center;
   font-weight: 500;
+}
+
+/* ============ INFO ICON ============ */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--border-2);
+  background: transparent;
+  color: var(--text-3);
+  font-size: 9px;
+  font-weight: 800;
+  font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.15s;
+  text-transform: lowercase;
+  vertical-align: middle;
+}
+.info-icon:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.info-icon:active {
+  transform: scale(0.9);
 }
 
 /* ============ HERO ============ */
@@ -576,11 +617,11 @@ body {
 .tile-lay  .tile-val { color: var(--lay); }
 .tile-hoan .tile-val { color: var(--hoan); }
 
-/* ============ RANK PILLS ============ */
+/* ============ RANK PILLS (gap 8px) ============ */
 .rank-pill-group {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 .rank-pill {
   padding: 9px 4px;
@@ -628,10 +669,7 @@ body {
 .ratio-seg-del  { background: var(--giao); }
 .ratio-seg-pick { background: var(--lay); }
 .ratio-seg-ret  { background: var(--hoan); }
-
-.ratio-bar.is-empty .ratio-seg {
-  background: var(--border);
-}
+.ratio-bar.is-empty .ratio-seg { background: var(--border); }
 
 .ratio-legend {
   display: flex;
@@ -678,11 +716,7 @@ details.income-section > summary::marker { display: none; content: ''; }
 .income-summary-days { font-size: 11px; color: var(--text-3); font-weight: 500; }
 .income-summary-right { display: flex; align-items: center; gap: 10px; }
 .income-summary-value { font-size: 14px; font-weight: 700; color: var(--accent); }
-.income-chevron {
-  display: inline-flex;
-  color: var(--text-3);
-  transition: transform 0.2s;
-}
+.income-chevron { display: inline-flex; color: var(--text-3); transition: transform 0.2s; }
 details.income-section[open] .income-chevron { transform: rotate(180deg); }
 
 .income-content {
@@ -1413,4 +1447,9 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   .table-clean td { font-size: 11px; padding: 10px 5px; }
   .table-clean th:first-child, .table-clean td:first-child { padding-left: 12px; }
   .table-clean th:last-child, .table-clean td:last-child   { padding-right: 12px; }
+}
+
+/* Ưu tiên animation khi người dùng tắt chuyển động */
+@media (prefers-reduced-motion: reduce) {
+  .fab-icon { animation: none !important; }
 }
