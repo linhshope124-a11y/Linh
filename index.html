@@ -119,7 +119,12 @@
         <details class="card income-section" id="incomeDetails">
           <summary class="income-summary">
             <div class="income-summary-left">
-              <span class="income-summary-title">Thu nhập</span>
+              <span class="income-summary-title">
+                Thu nhập
+                <button class="info-icon" type="button"
+                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 ngày = (LCB + Bưu cục + Tài xế) / 26\n\nĐã tích lũy = Lương 1 ngày × số ngày công (tối đa 26)')"
+                        aria-label="Trợ giúp">i</button>
+              </span>
               <span class="income-summary-days" id="incomeDayCount">0/26 ngày</span>
             </div>
             <div class="income-summary-right">
@@ -134,12 +139,7 @@
 
           <div class="income-content">
             <div class="income-row">
-              <span class="income-row-label">
-                LCB
-                <button class="info-icon" type="button"
-                        onclick="alert('LCB = Lương cơ bản\n\nCách tính lương 1 ngày:\n(LCB + Bưu cục + Tài xế) / 26 ngày')"
-                        aria-label="Trợ giúp">i</button>
-              </span>
+              <span class="income-row-label">LCB</span>
               <div class="income-row-input">
                 <input type="number" inputmode="numeric" id="salaryBaseInput" value="0" min="0" oninput="saveSalaryConfig()" onchange="saveSalaryConfig()">
                 <span class="income-unit">đ/tháng</span>
