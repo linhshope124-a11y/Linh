@@ -1,11 +1,12 @@
-import { state, loadState, persistCurrentMonth } from './state.js';
+import { state, loadState, persistPeriodState } from './state.js';
 import { initTheme, toggleTheme } from './theme.js';
-import { getCurrentMonthIso, formatMonthLabel } from './utils.js';
+import { getTodayIso, getCurrentMonthIso } from './utils.js';
 import {
   switchMainTab, switchModalSubTab, setOverviewFilter, setHistFilter,
   setRankTier, initRankUI,
-  initRegionUI, updateMonthNavUI, updatePeriodToggleUI,
-  togglePeriod,
+  initRegionUI,
+  setPeriodMode, periodPrev, periodNext, openPeriodPicker,
+  jumpToMonth, jumpToDate, goToLatest, updatePeriodBarUI,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -112,53 +113,6 @@ function _cleanupDuplicates() {
   alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
 }
 
-// ================ MONTH NAVIGATION ================
-function _prevMonth() {
-  const [y, m] = state.currentMonth.split('-').map(Number);
-  let newY = y, newM = m - 1;
-  if (newM < 1) { newM = 12; newY--; }
-  if (newY < 2020) return;
-  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
-  persistCurrentMonth();
-  updateMonthNavUI();
-  updatePeriodToggleUI();
-  updateAllViews();
-}
-
-function _nextMonth() {
-  const now = getCurrentMonthIso();
-  if (state.currentMonth >= now) return;
-  const [y, m] = state.currentMonth.split('-').map(Number);
-  let newY = y, newM = m + 1;
-  if (newM > 12) { newM = 1; newY++; }
-  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
-  persistCurrentMonth();
-  updateMonthNavUI();
-  updatePeriodToggleUI();
-  updateAllViews();
-}
-
-function _openMonthPicker() {
-  const picker = document.getElementById('monthPickerInput');
-  if (!picker) return;
-  picker.value = state.currentMonth;
-  if (typeof picker.showPicker === 'function') {
-    try { picker.showPicker(); } catch { picker.click(); }
-  } else {
-    picker.click();
-  }
-}
-
-function _jumpToMonth(value) {
-  if (!value || !/^\d{4}-\d{2}$/.test(value)) return;
-  const now = getCurrentMonthIso();
-  state.currentMonth = value > now ? now : value;
-  persistCurrentMonth();
-  updateMonthNavUI();
-  updatePeriodToggleUI();
-  updateAllViews();
-}
-
 // ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
@@ -166,14 +120,16 @@ Object.assign(window, {
   switchMainTab, switchModalSubTab, setOverviewFilter, setHistFilter,
   setRankTier,
 
-  // ===== v43: PERIOD TOGGLE + MONTH NAV =====
-  togglePeriod,
-  prevMonth: _prevMonth,
-  nextMonth: _nextMonth,
-  openMonthPicker: _openMonthPicker,
-  jumpToMonth: _jumpToMonth,
+  // ===== v46: PERIOD BAR =====
+  setPeriodMode,
+  periodPrev,
+  periodNext,
+  openPeriodPicker,
+  jumpToMonth,
+  jumpToDate,
+  goToLatest,
 
-  // ===== REGION — inline onclick handler =====
+  // ===== REGION — inline onclick =====
   changeRegion: function(regionKey, el) {
     try {
       console.log('[Region] change →', regionKey);
@@ -249,9 +205,8 @@ Object.assign(window, {
   initRankUI();
   initRegionUI();
 
-  // v43: đồng bộ UI theo state
-  updateMonthNavUI();       // ẩn/hiện month-nav + label
-  updatePeriodToggleUI();   // active nút "Hôm nay" nếu period=today
+  // v46: đồng bộ period bar theo state đã load
+  updatePeriodBarUI();
 
   attachAutoClearInputs();
   updateAllViews();
