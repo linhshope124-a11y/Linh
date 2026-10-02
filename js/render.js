@@ -1,7 +1,7 @@
 import { state, persistData } from './state.js';
 import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
 import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
-import { formatPts, formatDateDisplay, _fmt } from './utils.js';
+import { formatPts, formatDateDisplay, _fmt, getCurrentMonthIso } from './utils.js';
 
 const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-spacing:0.5px;';
 
@@ -13,24 +13,26 @@ function getRegionThresholds(region) {
   return { full: 60, half: 30 };
 }
 
-// ===== Số ngày tối đa theo tháng =====
-function getSalaryDaysForPeriod(period) {
-  const now = new Date();
-  let month = now.getMonth() + 1;
-  if (period === 'last_month') {
-    month -= 1;
-    if (month === 0) month = 12;
+// ===== v42: Số ngày tối đa theo tháng =====
+// period='month' → dùng currentMonth
+// period='today' → dùng tháng hiện tại
+function getSalaryDaysForPeriod(period, currentMonth) {
+  let month;
+  if (period === 'month' && currentMonth && /^\d{4}-\d{2}$/.test(currentMonth)) {
+    month = parseInt(currentMonth.split('-')[1], 10);
+  } else {
+    month = new Date().getMonth() + 1;
   }
   return month === 2 ? 24 : 26;
 }
 
 // ===== Tính công (quy đổi 6 lấy = 1 giao = 1 hoàn) =====
-function getWorkDaysByPeriod(period, region) {
+function getWorkDaysByPeriod(period, region, currentMonth) {
   const dailyByType = {};
   ['delivery', 'pickup', 'return'].forEach(type => {
     const key = type === 'delivery' ? 'del' : type === 'pickup' ? 'pick' : 'ret';
     state.appData[type].forEach(r => {
-      if (!isDateInCurrentPeriod(r.date, period)) return;
+      if (!isDateInCurrentPeriod(r.date, period, currentMonth)) return;
       if (!dailyByType[r.date]) dailyByType[r.date] = { del: 0, pick: 0, ret: 0 };
       const dayTotal = WEIGHT_KEYS.reduce(
         (sum, k) => sum + (parseInt(r.weights[k], 10) || 0), 0
@@ -89,7 +91,8 @@ function buildOverviewSuggestion(type, label, orders, tier) {
 }
 
 function _updateAllViews() {
-  const { agg, total } = aggregateWeights(state.appData, state.periodFilter);
+  // v42: truyền state.currentMonth
+  const { agg, total } = aggregateWeights(state.appData, state.periodFilter, state.currentMonth);
 
   const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
   const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
@@ -126,8 +129,9 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  const salaryDays = getSalaryDaysForPeriod(state.periodFilter);
-  const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region);
+  // v42: truyền currentMonth
+  const salaryDays = getSalaryDaysForPeriod(state.periodFilter, state.currentMonth);
+  const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region, state.currentMonth);
   const displayDays = Math.min(workDays, salaryDays);
 
   const salaryBase   = state.manualSalary || 0;
@@ -238,11 +242,11 @@ function _updateAllViews() {
   if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
   if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
 
-  // Count
+  // v42: Count — truyền currentMonth vào cả 3 filter
   const filteredCount =
-    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
-    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length +
-    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter)).length;
+    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
+    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
+    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length;
   document.getElementById('histCountNote').innerText = `${filteredCount} bản ghi`;
 
   persistData();
@@ -283,7 +287,8 @@ export function renderHistory() {
   if (state.histFilter === 'all' || state.histFilter === 'return')
     state.appData.return.forEach(r => list.push({ ...r, type: 'return' }));
 
-  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter));
+  // v42: truyền currentMonth
+  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth));
   list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
   if (list.length === 0) {
