@@ -205,19 +205,69 @@ function getRangeKey(minV, maxV) {
   return null;
 }
 
-// ==================== PARSE ====================
+// ==================== PARSE v43.4 ====================
+// Primary: parse theo pattern "N Đơn hàng" theo thứ tự dải
+//   — Không phụ thuộc regex range (tránh miss khi OCR đọc méo dấu -)
+//   — Bắt được cả các dòng số nhỏ (1 đơn) mà range-based hay bỏ sót
+// Fallback: range-based (giữ nguyên logic cũ với 3 mode distance)
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
   const text = cleanText.replace(/[–—]/g, '-').replace(/,/g, '.');
 
+  // ===== Expected total (Tổng X đơn hàng) =====
   const totalRegex = /T[oổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
   let expectedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
   if (!Number.isFinite(expectedTotal)) expectedTotal = null;
-  const totalPos = totalMatch ? totalMatch.index : -1;
-  const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
+  // ============================================================
+  // PRIMARY v43.4: pattern "N Đơn hàng" theo thứ tự dải
+  // ============================================================
+  const RANGE_ORDER = ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'];
+  const orderLineRegex = /(\d{1,6})\s*(?:Đ[ơo]n\s*h[àa]ng)/gi;
+  const matchedOrders = [];
+  let om;
+  while ((om = orderLineRegex.exec(text)) !== null) {
+    const val = parseInt(om[1], 10);
+    // Loại trừ dòng "Tổng X đơn hàng"
+    const before = text.slice(Math.max(0, om.index - 15), om.index);
+    if (/T[oổ]ng\s*$/i.test(before)) continue;
+    if (!Number.isFinite(val)) continue;
+    if (val <= 0 || val > 99999) continue;
+    matchedOrders.push(val);
+  }
+
+  // Chỉ dùng nếu có ít nhất 2 dòng match (tránh false positive 1 dòng)
+  if (matchedOrders.length >= 2) {
+    const orderedByLine = {};
+    for (let i = 0; i < matchedOrders.length && i < 8; i++) {
+      orderedByLine[RANGE_ORDER[i]] = matchedOrders[i];
+    }
+    const sumByLine = Object.values(orderedByLine).reduce((a, b) => a + b, 0);
+
+    // Verify với expectedTotal (±1 tolerance để chấp nhận OCR hơi lệch)
+    const okTotal = expectedTotal === null || Math.abs(sumByLine - expectedTotal) <= 1;
+
+    if (okTotal) {
+      Object.keys(orderedByLine).forEach(k => {
+        weights[k] = orderedByLine[k];
+        confidences[k] = 92;
+      });
+      return {
+        weights,
+        confidences,
+        expectedTotal,
+        totalFound: sumByLine,
+        mode: 'by-order-line'
+      };
+    }
+    // Nếu lệch nhiều → rơi xuống fallback range-based bên dưới
+  }
+
+  // ============================================================
+  // FALLBACK: parse theo range (logic cũ, 3 mode distance)
+  // ============================================================
   const rangeRegex = /(\d{1,2})(?:\.\d{1,3})?\s*-\s*(\d{1,2})(?:\.\d{1,3})?/g;
   const ranges = [];
   let m;
@@ -230,6 +280,9 @@ function parseOcrText(cleanText) {
     }
   }
   ranges.sort((a, b) => a.pos - b.pos);
+
+  const totalPos = totalMatch ? totalMatch.index : -1;
+  const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
   const numRegex = /\d{1,6}/g;
   const nums = [];
@@ -522,6 +575,7 @@ async function processFiles(files) {
       let bestText = text1;
       let bestDiff = parsed1.expectedTotal !== null ? Math.abs(parsed1.totalFound - parsed1.expectedTotal) : 9999;
 
+      // Nếu lần 1 chưa khớp → thử thêm 2 config khác
       if (bestDiff > 0) {
         statusDesc.innerText = 'Quét lần 2...';
         const pre2 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 130 });
