@@ -13,12 +13,7 @@ function getRegionThresholds(region) {
 }
 
 function getSalaryDaysForPeriod() {
-  let monthStr;
-  if (state.periodMode === 'day') {
-    monthStr = (state.currentDate || getTodayIso()).slice(0, 7);
-  } else {
-    monthStr = state.currentMonth || getCurrentMonthIso();
-  }
+  const monthStr = state.currentMonth || getCurrentMonthIso();
   const month = parseInt(monthStr.split('-')[1], 10);
   return month === 2 ? 24 : 26;
 }
@@ -47,20 +42,13 @@ function getWorkDaysByPeriod() {
   return workDays;
 }
 
+// v50.1: context label có năm
 function updateHeroContextLabel() {
   const el = document.getElementById('heroContext');
   if (!el) return;
-  if (state.periodMode === 'day') {
-    const iso = state.currentDate || getTodayIso();
-    const [y, m, d] = iso.split('-');
-    const dt = new Date(iso + 'T00:00:00');
-    const wd = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][dt.getDay()];
-    el.innerText = `${wd}, ${d}/${m}/${y}`;
-  } else {
-    const cm = state.currentMonth || getCurrentMonthIso();
-    const m = parseInt(cm.split('-')[1], 10);
-    el.innerText = `Tháng ${m}`;
-  }
+  const cm = state.currentMonth || getCurrentMonthIso();
+  const [y, m] = cm.split('-');
+  el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
 }
 
 // ===== v49: renderRow 6 cột =====
@@ -142,9 +130,7 @@ function _updateAllViews() {
 
   const ovBox = document.getElementById('overviewMilestoneList');
   if (total.del + total.pick + total.ret === 0) {
-    const emptyMsg = state.periodMode === 'day'
-      ? 'Chưa có dữ liệu ngày này. Bấm menu → Nhập sản lượng để bắt đầu.'
-      : 'Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.';
+    const emptyMsg = 'Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.';
     ovBox.innerHTML = `<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">${emptyMsg}</div>`;
   } else {
     ovBox.innerHTML = ovSuggBuf.join('');
@@ -357,10 +343,7 @@ export function renderHistory() {
   list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
   if (list.length === 0) {
-    const emptyMsg = state.periodMode === 'day'
-      ? 'Chưa có bản ghi nào ngày này.'
-      : 'Chưa có bản ghi nào trong kỳ được chọn.';
-    container.innerHTML = `<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">${emptyMsg}</div>`;
+    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
     return;
   }
 
