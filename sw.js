@@ -1,4 +1,4 @@
-const CACHE = 'spx-tracker-v43.5';
+const CACHE = 'spx-tracker-v435d';
 const CORE = [
   './', './index.html', './manifest.json', './css/style.css',
   './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
