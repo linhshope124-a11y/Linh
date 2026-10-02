@@ -213,8 +213,7 @@ function identifyRangeKey(minV, maxV) {
 }
 
 // ==================== PARSE v43.5g ====================
-// Distance matching 2 chiều (before/after/closest) + normalize ¡
-// Bỏ primary "by-range-and-count" vì OCR có thể đảo thứ tự range/count
+// Distance matching 2 chiều (before/after/closest) + normalize ký tự lạ
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
@@ -420,6 +419,7 @@ function getTypeLabel(r) {
        : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
 }
 
+// v45: tryAutoSave không showToast — caller quyết định thông báo
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -440,14 +440,10 @@ function tryAutoSave(r) {
 
   state.appData[type].unshift({ id: generateId(), date: r.parsedDate, weights });
   updateAllViews();
-
-  const typeLabel = getTypeLabel(r);
-  const dateStr = formatDateDisplay(r.parsedDate);
-  showToast(`Đã lưu ${typeLabel} ${dateStr}: ${r.totalFound} đơn`, 'success');
   return true;
 }
 
-// ==================== MAIN ====================
+// ==================== MAIN v45 ====================
 export async function handleOcrImage(event) {
   const files = Array.from(event.target.files || []);
   event.target.value = '';
@@ -463,27 +459,74 @@ export async function handleOcrImage(event) {
     const newResults = await processFiles(files);
     overlay.style.display = 'none';
 
-    if (wasAppend) {
-      batchResults.push(...newResults);
-      renderBatchList();
-      document.getElementById('batchOcrModal').classList.add('active');
+    // Phân loại: chính xác → auto-save | lệch/lỗi → cần check
+    const autoSaved = [];
+    const needAttention = [];
+
+    for (const item of newResults) {
+      if (item.error) {
+        needAttention.push(item);
+        continue;
+      }
+      if (tryAutoSave(item.result)) {
+        autoSaved.push(item);
+      } else {
+        needAttention.push(item);
+      }
+    }
+
+    // ===== Case 1: Tất cả đều chính xác → không mở modal =====
+    if (needAttention.length === 0) {
+      if (autoSaved.length === 1) {
+        const r = autoSaved[0].result;
+        showToast(
+          `Đã tự động lưu ${getTypeLabel(r)} ${formatDateDisplay(r.parsedDate)}: ${r.totalFound} đơn`,
+          'success', 2500
+        );
+      } else if (autoSaved.length > 1) {
+        const totalOrders = autoSaved.reduce((s, i) => s + i.result.totalFound, 0);
+        showToast(`Đã tự động lưu ${autoSaved.length} ảnh (${totalOrders} đơn)`, 'success', 2500);
+      }
       return;
     }
 
-    const validCount = newResults.filter(r => !r.error).length;
-    if (files.length === 1 && validCount === 1) {
+    // ===== Case 2: Có ảnh cần check =====
+    if (wasAppend) {
+      batchResults.push(...needAttention);
+      renderBatchList();
+      document.getElementById('batchOcrModal').classList.add('active');
+      if (autoSaved.length > 0) {
+        showToast(
+          `Tự động lưu ${autoSaved.length}, còn ${needAttention.length} cần check`,
+          'warning', 3000
+        );
+      }
+      return;
+    }
+
+    // Quét 1 ảnh
+    if (files.length === 1) {
       const item = newResults[0];
-      if (tryAutoSave(item.result)) return;
+      if (item.error) {
+        showToast('Không đọc được ảnh: ' + item.error, 'error', 3000);
+        return;
+      }
       fillModalFromResult(item);
       return;
     }
-    if (files.length === 1 && validCount === 0) {
-      showToast('Không đọc được ảnh: ' + newResults[0].error, 'error', 3000);
-      return;
-    }
 
-    batchResults = newResults;
+    // Quét nhiều ảnh → mở batch modal với các ảnh cần check
+    batchResults = needAttention;
     openBatchOcrModal();
+
+    if (autoSaved.length > 0) {
+      setTimeout(() => {
+        showToast(
+          `Tự động lưu ${autoSaved.length}, còn ${needAttention.length} cần check`,
+          'warning', 3500
+        );
+      }, 400);
+    }
   } catch (err) {
     console.error(err);
     overlay.style.display = 'none';
