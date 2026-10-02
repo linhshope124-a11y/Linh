@@ -16,43 +16,37 @@
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
-<header class="top-nav">
-  <button class="btn-icon" onclick="openMenuModal()" title="Menu" aria-label="Menu">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
-  <div class="brand">SPX Tracker</div>
-  <span aria-hidden="true"></span>
-</header>
+<!-- ============ FLOATING HEADER v47 ============ -->
+<div class="header-wrapper">
+  <div class="header-card">
+    <div class="header-row-top">
+      <button class="header-icon-btn" onclick="openMenuModal()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
 
-<!-- ============ PERIOD BAR v46 ============ -->
-<div class="period-bar">
-  <!-- Hàng 1: mode toggle + latest -->
-  <div class="period-mode-row">
-    <div class="period-mode-group">
-      <button class="period-mode-btn active" data-mode="month" onclick="setPeriodMode('month', this)">Tháng</button>
-      <button class="period-mode-btn" data-mode="day" onclick="setPeriodMode('day', this)">Ngày</button>
+      <div class="period-mode-group">
+        <button class="period-mode-btn active" data-mode="month" onclick="setPeriodMode('month', this)">Tháng</button>
+        <button class="period-mode-btn" data-mode="day" onclick="setPeriodMode('day', this)">Ngày</button>
+      </div>
+
+      <button class="header-icon-btn" onclick="goToLatest()" aria-label="Mới nhất" title="Mới nhất">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 15 15"/>
+        </svg>
+      </button>
     </div>
-    <button class="go-latest-btn" id="goLatestBtn" onclick="goToLatest()" aria-label="Ngày mới nhất">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9"/>
-        <polyline points="12 7 12 12 15 15"/>
-      </svg>
-      <span>Mới nhất</span>
-    </button>
-  </div>
 
-  <!-- Hàng 2: nav -->
-  <div class="period-nav-row">
-    <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Trước">‹</button>
-    <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
-    <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Sau">›</button>
+    <div class="header-row-nav">
+      <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Trước">‹</button>
+      <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10</button>
+      <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Sau">›</button>
+    </div>
   </div>
-
   <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
   <input type="date" id="dayPickerInput" style="display:none" onchange="jumpToDate(this.value)">
 </div>
@@ -72,19 +66,47 @@
           </div>
 
           <div class="hero-data" id="heroData">
-            <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
-            <div class="hero-metrics" id="heroMetrics">
-              <div class="hero-metric">
-                <div class="hero-metric-value" id="heroBase">0</div>
-                <div class="hero-metric-label">Gốc</div>
+            <div class="hero-row-main">
+              <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+              <button type="button" class="hero-toggle-btn" onclick="toggleHeroMetrics()" aria-label="Chi tiết">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span id="heroToggleText">Chi tiết</span>
+              </button>
+            </div>
+
+            <div class="hero-metrics-wrap" id="heroMetricsWrap">
+              <div class="hero-metrics" id="heroMetrics">
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroBase">0</div>
+                  <div class="hero-metric-label">Gốc</div>
+                </div>
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroBonus">+0</div>
+                  <div class="hero-metric-label">Thưởng</div>
+                </div>
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroIncome">+0</div>
+                  <div class="hero-metric-label">Thu nhập</div>
+                </div>
               </div>
-              <div class="hero-metric">
-                <div class="hero-metric-value" id="heroBonus">+0</div>
-                <div class="hero-metric-label">Thưởng</div>
+            </div>
+
+            <div class="hero-tiles" id="heroTiles">
+              <div class="hero-tile hero-tile-giao">
+                <span class="hero-tile-label">Giao</span>
+                <span class="hero-tile-value" id="heroTileDel">0</span>
               </div>
-              <div class="hero-metric">
-                <div class="hero-metric-value" id="heroIncome">+0</div>
-                <div class="hero-metric-label">Thu nhập</div>
+              <div class="hero-tile hero-tile-lay">
+                <span class="hero-tile-label">Lấy</span>
+                <span class="hero-tile-value" id="heroTilePick">0</span>
+              </div>
+              <div class="hero-tile hero-tile-hoan">
+                <span class="hero-tile-label">Hoàn</span>
+                <span class="hero-tile-value" id="heroTileRet">0</span>
               </div>
             </div>
           </div>
@@ -114,49 +136,22 @@
           </div>
         </section>
 
-        <section class="tile-grid">
-          <div class="tile tile-giao">
-            <div class="tile-label">Giao</div>
-            <div class="tile-primary" id="miniDelOrders">0</div>
-            <div class="tile-primary-unit">đơn</div>
-            <div class="tile-secondary"><span id="miniDelPoints">0</span> điểm</div>
-          </div>
-          <div class="tile tile-lay">
-            <div class="tile-label">Lấy</div>
-            <div class="tile-primary" id="miniPickOrders">0</div>
-            <div class="tile-primary-unit">đơn</div>
-            <div class="tile-secondary"><span id="miniPickPoints">0</span> điểm</div>
-          </div>
-          <div class="tile tile-hoan">
-            <div class="tile-label">Hoàn</div>
-            <div class="tile-primary" id="miniRetOrders">0</div>
-            <div class="tile-primary-unit">đơn</div>
-            <div class="tile-secondary"><span id="miniRetPoints">0</span> điểm</div>
+        <section class="card card-rank">
+          <div class="rank-inline-row">
+            <span class="rank-inline-label">Hạng</span>
+            <div class="rank-pill-group rank-pill-group-inline">
+              <button class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</button>
+              <button class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</button>
+              <button class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</button>
+              <button class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</button>
+              <button class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</button>
+            </div>
           </div>
         </section>
 
-        <section class="card">
-          <div class="card-head-inline">
-            <span class="card-label">
-              Hạng thưởng
-              <button class="info-icon" type="button"
-                      onclick="alert('Nhấn nhanh để chọn hạng\nNhấn giữ 0.5s để bỏ chọn')"
-                      aria-label="Trợ giúp">i</button>
-            </span>
-            <span class="card-value" id="currentBonusPctLabel">+0%</span>
-          </div>
-          <div class="rank-pill-group">
-            <button class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</button>
-            <button class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</button>
-            <button class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</button>
-            <button class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</button>
-            <button class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</button>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-head-inline">
-            <span class="card-label">Phân bổ theo loại đơn</span>
+        <section class="card card-ratio">
+          <div class="card-head-inline card-head-ratio">
+            <span class="card-label">Phân bổ</span>
           </div>
 
           <div id="ratioContent">
@@ -165,22 +160,12 @@
               <div class="ratio-seg ratio-seg-pick" id="ratioBarPick" style="width:33.3%"></div>
               <div class="ratio-seg ratio-seg-ret"  id="ratioBarRet"  style="width:33.4%"></div>
             </div>
-            <div class="ratio-legend">
-              <div class="legend-col">
-                <span class="legend-item"><span class="dot dot-giao"></span>Giao</span>
-                <span class="legend-pct" id="ratioPctDel">0%</span>
-                <span class="legend-orders"><b id="ratioOrdersDel">0</b> đơn</span>
-              </div>
-              <div class="legend-col">
-                <span class="legend-item"><span class="dot dot-lay"></span>Lấy</span>
-                <span class="legend-pct" id="ratioPctPick">0%</span>
-                <span class="legend-orders"><b id="ratioOrdersPick">0</b> đơn</span>
-              </div>
-              <div class="legend-col">
-                <span class="legend-item"><span class="dot dot-hoan"></span>Hoàn</span>
-                <span class="legend-pct" id="ratioPctRet">0%</span>
-                <span class="legend-orders"><b id="ratioOrdersRet">0</b> đơn</span>
-              </div>
+            <div class="ratio-legend ratio-legend-inline">
+              <span class="legend-inline-item"><span class="dot dot-giao"></span><b id="ratioPctDel">0%</b></span>
+              <span class="legend-inline-sep">·</span>
+              <span class="legend-inline-item"><span class="dot dot-lay"></span><b id="ratioPctPick">0%</b></span>
+              <span class="legend-inline-sep">·</span>
+              <span class="legend-inline-item"><span class="dot dot-hoan"></span><b id="ratioPctRet">0%</b></span>
             </div>
           </div>
 
