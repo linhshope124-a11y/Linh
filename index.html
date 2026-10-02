@@ -16,10 +16,10 @@
 </head>
 <body>
 
-<!-- ============ FLOATING HEADER v47 ============ -->
+<!-- ============ FLOATING HEADER v50 ============ -->
 <div class="header-wrapper">
   <div class="header-card">
-    <div class="header-row-top">
+    <div class="header-row">
       <button class="header-icon-btn" onclick="openMenuModal()" aria-label="Menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <line x1="3" y1="6" x2="21" y2="6"/>
@@ -28,10 +28,11 @@
         </svg>
       </button>
 
-      <div class="period-mode-group">
-        <button class="period-mode-btn active" data-mode="month" onclick="setPeriodMode('month', this)">Tháng</button>
-        <button class="period-mode-btn" data-mode="day" onclick="setPeriodMode('day', this)">Ngày</button>
-      </div>
+      <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Tháng trước">‹</button>
+
+      <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
+
+      <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Tháng sau">›</button>
 
       <button class="header-icon-btn" onclick="goToLatest()" aria-label="Mới nhất" title="Mới nhất">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -40,15 +41,8 @@
         </svg>
       </button>
     </div>
-
-    <div class="header-row-nav">
-      <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Trước">‹</button>
-      <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10</button>
-      <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Sau">›</button>
-    </div>
   </div>
   <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
-  <input type="date" id="dayPickerInput" style="display:none" onchange="jumpToDate(this.value)">
 </div>
 
 <!-- ============ MAIN ============ -->
@@ -570,10 +564,9 @@
       <section class="guide-section">
         <h4 class="guide-h">📅 Chọn kỳ xem</h4>
         <ul class="guide-list">
-          <li><b>Tháng</b> — Xem tổng theo tháng (mặc định)</li>
-          <li><b>Ngày</b> — Xem chi tiết 1 ngày</li>
-          <li>Nhấn <b>label</b> ở giữa để mở bộ chọn ngày/tháng</li>
-          <li><b>Mới nhất</b> — Nhảy về ngày gần nhất có dữ liệu</li>
+          <li>Dùng <b>‹ ›</b> để chuyển tháng</li>
+          <li>Nhấn <b>label ở giữa</b> để mở bộ chọn tháng</li>
+          <li><b>🕰</b> (góc phải) — nhảy về tháng có dữ liệu gần nhất</li>
         </ul>
       </section>
 
