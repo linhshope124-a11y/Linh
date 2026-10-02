@@ -1,7 +1,7 @@
 import { state, persistData } from './state.js';
 import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
 import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
-import { formatPts, formatDateDisplay, _fmt, getCurrentMonthIso } from './utils.js';
+import { formatPts, formatDateDisplay, _fmt, getCurrentMonthIso, getTodayIso } from './utils.js';
 
 const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-spacing:0.5px;';
 
@@ -13,24 +13,26 @@ function getRegionThresholds(region) {
   return { full: 60, half: 30 };
 }
 
-// ===== Số ngày tối đa theo tháng =====
-function getSalaryDaysForPeriod(period, currentMonth) {
-  let month;
-  if (period === 'month' && currentMonth && /^\d{4}-\d{2}$/.test(currentMonth)) {
-    month = parseInt(currentMonth.split('-')[1], 10);
+// ===== v46: Số ngày tối đa — lấy theo tháng đang xem =====
+function getSalaryDaysForPeriod() {
+  let monthStr;
+  if (state.periodMode === 'day') {
+    // Lấy tháng từ currentDate
+    monthStr = (state.currentDate || getTodayIso()).slice(0, 7);
   } else {
-    month = new Date().getMonth() + 1;
+    monthStr = state.currentMonth || getCurrentMonthIso();
   }
+  const month = parseInt(monthStr.split('-')[1], 10);
   return month === 2 ? 24 : 26;
 }
 
 // ===== Tính công (quy đổi 6 lấy = 1 giao = 1 hoàn) =====
-function getWorkDaysByPeriod(period, region, currentMonth) {
+function getWorkDaysByPeriod() {
   const dailyByType = {};
   ['delivery', 'pickup', 'return'].forEach(type => {
     const key = type === 'delivery' ? 'del' : type === 'pickup' ? 'pick' : 'ret';
     state.appData[type].forEach(r => {
-      if (!isDateInCurrentPeriod(r.date, period, currentMonth)) return;
+      if (!isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate)) return;
       if (!dailyByType[r.date]) dailyByType[r.date] = { del: 0, pick: 0, ret: 0 };
       const dayTotal = WEIGHT_KEYS.reduce(
         (sum, k) => sum + (parseInt(r.weights[k], 10) || 0), 0
@@ -39,7 +41,7 @@ function getWorkDaysByPeriod(period, region, currentMonth) {
     });
   });
 
-  const { full, half } = getRegionThresholds(region);
+  const { full, half } = getRegionThresholds(state.region);
   let workDays = 0;
   Object.values(dailyByType).forEach(({ del, pick, ret }) => {
     const converted = del + (pick / 6) + ret;
@@ -49,24 +51,33 @@ function getWorkDaysByPeriod(period, region, currentMonth) {
   return workDays;
 }
 
-// ===== Hero context label v43.1 =====
+// ===== Hero context label v46 =====
+// month → "Tháng 10/2026"
+// day   → "T2, 02/10/2026"
 function updateHeroContextLabel() {
   const el = document.getElementById('heroContext');
   if (!el) return;
-  el.innerText = state.periodFilter === 'today' ? 'Hôm nay' : '';
+  if (state.periodMode === 'day') {
+    const iso = state.currentDate || getTodayIso();
+    const [y, m, d] = iso.split('-');
+    const dt = new Date(iso + 'T00:00:00');
+    const wd = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][dt.getDay()];
+    el.innerText = `${wd}, ${d}/${m}/${y}`;
+  } else {
+    const cm = state.currentMonth || getCurrentMonthIso();
+    const [y, m] = cm.split('-');
+    el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
+  }
 }
 
-// ===== ROW bảng 6 cột (v43.3) =====
+// ===== ROW bảng 6 cột =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
-  // Cột ĐIỂM (điểm hiện tại đạt được với SL này)
   const ptsText = tier.matched.pt === 0
     ? '<span class="zero-dash">—</span>'
     : _fmt(tier.matched.pt);
 
-  // Cột CẦN (số đơn cần thêm để lên mốc tiếp)
-  // Cột ĐƯỢC (số điểm sẽ gain khi lên mốc tiếp)
   let needText, gainText;
 
   if (orders <= 0) {
@@ -104,8 +115,13 @@ function buildOverviewSuggestion(type, label, orders, tier) {
 }
 
 function _updateAllViews() {
-  // Aggregate theo kỳ + tháng đang chọn
-  const { agg, total } = aggregateWeights(state.appData, state.periodFilter, state.currentMonth);
+  // Aggregate theo mode + month + date
+  const { agg, total } = aggregateWeights(
+    state.appData,
+    state.periodMode,
+    state.currentMonth,
+    state.currentDate
+  );
 
   const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
   const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
@@ -134,7 +150,10 @@ function _updateAllViews() {
 
   const ovBox = document.getElementById('overviewMilestoneList');
   if (total.del + total.pick + total.ret === 0) {
-    ovBox.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.</div>';
+    const emptyMsg = state.periodMode === 'day'
+      ? 'Chưa có dữ liệu ngày này. Bấm menu → Nhập sản lượng để bắt đầu.'
+      : 'Chưa có dữ liệu kỳ này. Bấm menu → Nhập sản lượng để bắt đầu.';
+    ovBox.innerHTML = `<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:16px">${emptyMsg}</div>`;
   } else {
     ovBox.innerHTML = ovSuggBuf.join('');
   }
@@ -142,8 +161,8 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  const salaryDays = getSalaryDaysForPeriod(state.periodFilter, state.currentMonth);
-  const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region, state.currentMonth);
+  const salaryDays = getSalaryDaysForPeriod();
+  const workDays   = getWorkDaysByPeriod();
   const displayDays = Math.min(workDays, salaryDays);
 
   const salaryBase   = state.manualSalary || 0;
@@ -158,7 +177,7 @@ function _updateAllViews() {
   const totalOrders = total.del + total.pick + total.ret;
   const isEmpty = totalOrders === 0;
 
-  // ===== HERO v43.1: toggle data / empty =====
+  // ===== HERO v46 =====
   const heroEl       = document.getElementById('overviewHero');
   const heroDataEl   = document.getElementById('heroData');
   const heroEmptyEl  = document.getElementById('heroEmpty');
@@ -180,7 +199,7 @@ function _updateAllViews() {
 
   updateHeroContextLabel();
 
-  // ===== RATIO BAR v43.1 =====
+  // ===== RATIO BAR =====
   const ratioContentEl = document.getElementById('ratioContent');
   const ratioEmptyEl   = document.getElementById('ratioEmpty');
   const pctDelEl  = document.getElementById('ratioPctDel');
@@ -225,7 +244,7 @@ function _updateAllViews() {
   if (ordersPickEl) ordersPickEl.innerText = _fmt(total.pick);
   if (ordersRetEl)  ordersRetEl.innerText  = _fmt(total.ret);
 
-  // ===== TILES v43.1: is-zero → dash =====
+  // ===== TILES =====
   const miniDelOrdersEl  = document.getElementById('miniDelOrders');
   const miniDelPointsEl  = document.getElementById('miniDelPoints');
   const miniPickOrdersEl = document.getElementById('miniPickOrders');
@@ -249,7 +268,7 @@ function _updateAllViews() {
   }
   if (miniRetPointsEl)  miniRetPointsEl.innerText  = _fmt(retPts);
 
-  // Hero tab chi tiết (Giao/Lấy/Hoàn)
+  // Hero tab chi tiết
   document.getElementById('delTotalPoints').innerHTML =
     `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
   document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
@@ -260,7 +279,7 @@ function _updateAllViews() {
     `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
   document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
 
-  // ===== Income UI v43 =====
+  // ===== Income UI =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -290,9 +309,9 @@ function _updateAllViews() {
 
   // ===== Count bản ghi =====
   const filteredCount =
-    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
-    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
-    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length;
+    state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate)).length +
+    state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate)).length +
+    state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate)).length;
   document.getElementById('histCountNote').innerText = `${filteredCount} bản ghi`;
 
   persistData();
@@ -333,11 +352,14 @@ export function renderHistory() {
   if (state.histFilter === 'all' || state.histFilter === 'return')
     state.appData.return.forEach(r => list.push({ ...r, type: 'return' }));
 
-  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth));
+  list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate));
   list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
   if (list.length === 0) {
-    container.innerHTML = '<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">Chưa có bản ghi nào trong kỳ được chọn.</div>';
+    const emptyMsg = state.periodMode === 'day'
+      ? 'Chưa có bản ghi nào ngày này.'
+      : 'Chưa có bản ghi nào trong kỳ được chọn.';
+    container.innerHTML = `<div style="font-size:11.5px;color:var(--text-3);text-align:center;padding:20px">${emptyMsg}</div>`;
     return;
   }
 
