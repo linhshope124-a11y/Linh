@@ -13,9 +13,7 @@ function getRegionThresholds(region) {
   return { full: 60, half: 30 };
 }
 
-// ===== v42: Số ngày tối đa theo tháng =====
-// period='month' → dùng currentMonth
-// period='today' → dùng tháng hiện tại
+// ===== Số ngày tối đa theo tháng =====
 function getSalaryDaysForPeriod(period, currentMonth) {
   let month;
   if (period === 'month' && currentMonth && /^\d{4}-\d{2}$/.test(currentMonth)) {
@@ -49,6 +47,19 @@ function getWorkDaysByPeriod(period, region, currentMonth) {
     else if (converted >= half) workDays += 0.5;
   });
   return workDays;
+}
+
+// ===== Update hero context label (Tháng 10/2026 / Hôm nay) =====
+function updateHeroContext() {
+  const el = document.getElementById('heroContext');
+  if (!el) return;
+  if (state.periodFilter === 'today') {
+    el.innerText = 'Hôm nay';
+  } else {
+    const cm = state.currentMonth || getCurrentMonthIso();
+    const [y, m] = cm.split('-');
+    el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
+  }
 }
 
 // ===== ROW bảng 5 cột =====
@@ -91,7 +102,7 @@ function buildOverviewSuggestion(type, label, orders, tier) {
 }
 
 function _updateAllViews() {
-  // v42: truyền state.currentMonth
+  // Aggregate theo kỳ + tháng đang chọn
   const { agg, total } = aggregateWeights(state.appData, state.periodFilter, state.currentMonth);
 
   const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
@@ -129,7 +140,6 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  // v42: truyền currentMonth
   const salaryDays = getSalaryDaysForPeriod(state.periodFilter, state.currentMonth);
   const workDays   = getWorkDaysByPeriod(state.periodFilter, state.region, state.currentMonth);
   const displayDays = Math.min(workDays, salaryDays);
@@ -145,26 +155,34 @@ function _updateAllViews() {
   const finalTotal  = rawBase + rankBonus + incomeAccumulated;
   const totalOrders = total.del + total.pick + total.ret;
 
-  // ===== Hero: ẩn điểm nếu 0 đơn =====
+  // ===== Hero v43: value + 3 metrics =====
   const heroValueEl = document.getElementById('overallTotalPoints');
-  const heroSubEl   = document.getElementById('rankBonusDetailText');
-  const heroPillEl  = document.getElementById('overallTotalOrders');
+  const heroBaseEl  = document.getElementById('heroBase');
+  const heroBonusEl = document.getElementById('heroBonus');
+  const heroIncomeEl = document.getElementById('heroIncome');
 
-  if (totalOrders === 0) {
-    heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
-    heroSubEl.innerText = 'Bắt đầu nhập sản lượng để tính điểm';
-    heroPillEl.innerText = '0 đơn';
-  } else {
-    heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
-    heroSubEl.innerText = `Gốc ${_fmt(rawBase)} · Thưởng +${_fmt(rankBonus)} · TN +${_fmt(incomeAccumulated)}`;
-    heroPillEl.innerText = `${_fmt(totalOrders)} đơn`;
+  if (heroValueEl) {
+    if (totalOrders === 0) {
+      heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
+    } else {
+      heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+    }
   }
+  if (heroBaseEl)   heroBaseEl.innerText   = _fmt(rawBase);
+  if (heroBonusEl)  heroBonusEl.innerText  = '+' + _fmt(rankBonus);
+  if (heroIncomeEl) heroIncomeEl.innerText = '+' + _fmt(incomeAccumulated);
 
-  // Ratio bar
+  // Update hero context label (Tháng X/Y / Hôm nay)
+  updateHeroContext();
+
+  // ===== Ratio bar + legend v43 =====
   const ratioBar = document.getElementById('ratioBar');
   const pctDelEl  = document.getElementById('ratioPctDel');
   const pctPickEl = document.getElementById('ratioPctPick');
   const pctRetEl  = document.getElementById('ratioPctRet');
+  const ordersDelEl  = document.getElementById('ratioOrdersDel');
+  const ordersPickEl = document.getElementById('ratioOrdersPick');
+  const ordersRetEl  = document.getElementById('ratioOrdersRet');
 
   if (totalOrders > 0) {
     if (ratioBar) ratioBar.classList.remove('is-empty');
@@ -200,16 +218,26 @@ function _updateAllViews() {
     if (pctPickEl) pctPickEl.innerText = '0%';
     if (pctRetEl)  pctRetEl.innerText  = '0%';
   }
+  if (ordersDelEl)  ordersDelEl.innerText  = _fmt(total.del);
+  if (ordersPickEl) ordersPickEl.innerText = _fmt(total.pick);
+  if (ordersRetEl)  ordersRetEl.innerText  = _fmt(total.ret);
 
-  // Mini tiles
-  document.getElementById('miniDelPoints').innerText  = _fmt(delPts);
-  document.getElementById('miniDelOrders').innerText  = _fmt(total.del);
-  document.getElementById('miniPickPoints').innerText = _fmt(pickPts);
-  document.getElementById('miniPickOrders').innerText = _fmt(total.pick);
-  document.getElementById('miniRetPoints').innerText  = _fmt(retPts);
-  document.getElementById('miniRetOrders').innerText  = _fmt(total.ret);
+  // ===== Tiles v43: primary = orders, secondary = points =====
+  const miniDelOrdersEl  = document.getElementById('miniDelOrders');
+  const miniDelPointsEl  = document.getElementById('miniDelPoints');
+  const miniPickOrdersEl = document.getElementById('miniPickOrders');
+  const miniPickPointsEl = document.getElementById('miniPickPoints');
+  const miniRetOrdersEl  = document.getElementById('miniRetOrders');
+  const miniRetPointsEl  = document.getElementById('miniRetPoints');
 
-  // Hero tab chi tiết
+  if (miniDelOrdersEl)  miniDelOrdersEl.innerText  = _fmt(total.del);
+  if (miniDelPointsEl)  miniDelPointsEl.innerText  = _fmt(delPts);
+  if (miniPickOrdersEl) miniPickOrdersEl.innerText = _fmt(total.pick);
+  if (miniPickPointsEl) miniPickPointsEl.innerText = _fmt(pickPts);
+  if (miniRetOrdersEl)  miniRetOrdersEl.innerText  = _fmt(total.ret);
+  if (miniRetPointsEl)  miniRetPointsEl.innerText  = _fmt(retPts);
+
+  // Hero tab chi tiết (Giao/Lấy/Hoàn)
   document.getElementById('delTotalPoints').innerHTML =
     `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
   document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
@@ -220,7 +248,7 @@ function _updateAllViews() {
     `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
   document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
 
-  // Income UI
+  // ===== Income UI v43 =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -228,6 +256,7 @@ function _updateAllViews() {
   const incomePerDay   = document.getElementById('incomePerDayText');
   const incomeTotal    = document.getElementById('incomeTotalDisplay');
   const incomeTotalInner = document.getElementById('incomeTotalDisplayInner');
+  const progressFill   = document.getElementById('incomeProgressFill');
 
   if (salaryBaseEl && document.activeElement !== salaryBaseEl) salaryBaseEl.value = salaryBase;
   if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
@@ -242,7 +271,13 @@ function _updateAllViews() {
   if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
   if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
 
-  // v42: Count — truyền currentMonth vào cả 3 filter
+  // Progress fill %
+  if (progressFill) {
+    const pct = salaryDays > 0 ? Math.min(100, Math.round((displayDays / salaryDays) * 100)) : 0;
+    progressFill.style.width = pct + '%';
+  }
+
+  // ===== Count bản ghi =====
   const filteredCount =
     state.appData.delivery.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
     state.appData.pickup.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth)).length +
@@ -287,7 +322,6 @@ export function renderHistory() {
   if (state.histFilter === 'all' || state.histFilter === 'return')
     state.appData.return.forEach(r => list.push({ ...r, type: 'return' }));
 
-  // v42: truyền currentMonth
   list = list.filter(r => isDateInCurrentPeriod(r.date, state.periodFilter, state.currentMonth));
   list.sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
 
