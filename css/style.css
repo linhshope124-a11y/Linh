@@ -2625,3 +2625,66 @@ details.income-section[open] .income-chevron {
 @media (prefers-reduced-motion: reduce) {
   .hero-metrics-wrap { transition: none !important; }
 }
+
+/* =============================================================
+   v50: HEADER 1 HÀNG — bỏ toggle Ngày
+   ============================================================= */
+
+/* Row gộp 5 phần tử ngang */
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Card padding gọn hơn (1 hàng) */
+.header-card {
+  padding: 10px 12px !important;
+}
+
+/* Label vẫn flex 1 */
+.header-row .period-label {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 12px;
+  font-size: 13.5px;
+}
+
+/* Nav buttons trong hàng gọn */
+.header-row .period-nav-btn {
+  width: 38px;
+  height: 38px;
+  font-size: 20px;
+}
+
+/* Icon buttons trong hàng gọn */
+.header-row .header-icon-btn {
+  width: 38px;
+  height: 38px;
+}
+
+/* Responsive iPhone SE */
+@media (max-width: 360px) {
+  .header-row {
+    gap: 6px;
+  }
+  .header-row .header-icon-btn,
+  .header-row .period-nav-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .header-row .header-icon-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .header-row .period-nav-btn {
+    font-size: 18px;
+  }
+  .header-row .period-label {
+    font-size: 12.5px;
+    padding: 8px 10px;
+  }
+  .header-card {
+    padding: 9px 10px !important;
+  }
+}
