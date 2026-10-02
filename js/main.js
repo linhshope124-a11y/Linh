@@ -113,6 +113,27 @@ function _cleanupDuplicates() {
   alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
 }
 
+// ================ v48: HERO COLLAPSIBLE ================
+function _toggleHeroMetrics() {
+  const wrap = document.getElementById('heroMetricsWrap');
+  const text = document.getElementById('heroToggleText');
+  if (!wrap) return;
+  const isExpanded = wrap.classList.toggle('expanded');
+  if (text) text.innerText = isExpanded ? 'Ẩn' : 'Chi tiết';
+  try { localStorage.setItem('spx_hero_expanded', isExpanded ? '1' : '0'); } catch {}
+}
+
+function _initHeroExpandState() {
+  const wrap = document.getElementById('heroMetricsWrap');
+  const text = document.getElementById('heroToggleText');
+  if (!wrap) return;
+  const saved = localStorage.getItem('spx_hero_expanded') === '1';
+  if (saved) {
+    wrap.classList.add('expanded');
+    if (text) text.innerText = 'Ẩn';
+  }
+}
+
 // ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
@@ -195,7 +216,10 @@ Object.assign(window, {
   },
 
   findDuplicates: _findDuplicates,
-  cleanupDuplicates: _cleanupDuplicates
+  cleanupDuplicates: _cleanupDuplicates,
+
+  // v48: Hero toggle
+  toggleHeroMetrics: _toggleHeroMetrics
 });
 
 // ================ INIT ================
@@ -207,6 +231,9 @@ Object.assign(window, {
 
   // v46: đồng bộ period bar theo state đã load
   updatePeriodBarUI();
+
+  // v48: đồng bộ hero expand state
+  _initHeroExpandState();
 
   attachAutoClearInputs();
   updateAllViews();
