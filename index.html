@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ FLOATING HEADER v50 ============ -->
+<!-- ============ FLOATING HEADER v50.3 ============ -->
 <div class="header-wrapper">
   <div class="header-card">
     <div class="header-row">
@@ -28,11 +28,11 @@
         </svg>
       </button>
 
-      <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Tháng trước">‹</button>
-
-      <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
-
-      <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Tháng sau">›</button>
+      <div class="period-cluster">
+        <button class="period-arrow-btn" id="periodPrev" onclick="periodPrev()" aria-label="Tháng trước">‹</button>
+        <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
+        <button class="period-arrow-btn" id="periodNext" onclick="periodNext()" aria-label="Tháng sau">›</button>
+      </div>
 
       <button class="header-icon-btn" onclick="goToLatest()" aria-label="Mới nhất" title="Mới nhất">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
