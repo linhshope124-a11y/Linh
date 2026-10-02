@@ -74,7 +74,7 @@ function renderRow(weightLabel, orders, tier, typeClass) {
   } else {
     const need = tier.matched.maxA - orders;
     const gain = tier.next.pt - tier.matched.pt;
-    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)}đ</span>`;
+    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)} điểm</span>`;
   }
 
   return `<td class="weight-name">${shortLabel}</td>
