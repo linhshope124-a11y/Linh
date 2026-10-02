@@ -12,11 +12,11 @@ function formatDateLabel(isoDate) {
   return `${wd}, ${d}/${m}/${y}`;
 }
 
-// v49: label gọn "Tháng 10" (bỏ năm — đã đủ rõ)
+// v50.1: label "Tháng 10/2026"
 function formatMonthLabelShort(isoMonth) {
   if (!isoMonth || !/^\d{4}-\d{2}$/.test(isoMonth)) return '';
-  const m = parseInt(isoMonth.split('-')[1], 10);
-  return `Tháng ${m}`;
+  const [y, m] = isoMonth.split('-');
+  return `Tháng ${parseInt(m, 10)}/${y}`;
 }
 
 // ================ TABS ================
@@ -86,7 +86,8 @@ export function setHistFilter(filter, btn) {
 
 // ================ v46: PERIOD BAR ================
 export function setPeriodMode(mode, el) {
-  if (mode !== 'month' && mode !== 'day') return;
+  // v50: chỉ chấp nhận 'month' — toggle Ngày đã bỏ
+  if (mode !== 'month') return;
   if (state.periodMode === mode) return;
 
   state.periodMode = mode;
@@ -96,62 +97,35 @@ export function setPeriodMode(mode, el) {
 }
 
 export function periodPrev() {
-  if (state.periodMode === 'day') {
-    const [y, m, d] = state.currentDate.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    dt.setDate(dt.getDate() - 1);
-    if (dt.getFullYear() < 2020) return;
-    state.currentDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-  } else {
-    const [y, m] = state.currentMonth.split('-').map(Number);
-    let newY = y, newM = m - 1;
-    if (newM < 1) { newM = 12; newY--; }
-    if (newY < 2020) return;
-    state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
-  }
+  const [y, m] = state.currentMonth.split('-').map(Number);
+  let newY = y, newM = m - 1;
+  if (newM < 1) { newM = 12; newY--; }
+  if (newY < 2020) return;
+  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
   persistPeriodState();
   updatePeriodBarUI();
   updateAllViews();
 }
 
 export function periodNext() {
-  const today = getTodayIso();
   const nowMonth = getCurrentMonthIso();
-
-  if (state.periodMode === 'day') {
-    if (state.currentDate >= today) return;
-    const [y, m, d] = state.currentDate.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    dt.setDate(dt.getDate() + 1);
-    state.currentDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-  } else {
-    if (state.currentMonth >= nowMonth) return;
-    const [y, m] = state.currentMonth.split('-').map(Number);
-    let newY = y, newM = m + 1;
-    if (newM > 12) { newM = 1; newY++; }
-    state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
-  }
+  if (state.currentMonth >= nowMonth) return;
+  const [y, m] = state.currentMonth.split('-').map(Number);
+  let newY = y, newM = m + 1;
+  if (newM > 12) { newM = 1; newY++; }
+  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
   persistPeriodState();
   updatePeriodBarUI();
   updateAllViews();
 }
 
 export function openPeriodPicker() {
-  if (state.periodMode === 'day') {
-    const p = document.getElementById('dayPickerInput');
-    if (!p) return;
-    p.value = state.currentDate;
-    if (typeof p.showPicker === 'function') {
-      try { p.showPicker(); } catch { p.click(); }
-    } else p.click();
-  } else {
-    const p = document.getElementById('monthPickerInput');
-    if (!p) return;
-    p.value = state.currentMonth;
-    if (typeof p.showPicker === 'function') {
-      try { p.showPicker(); } catch { p.click(); }
-    } else p.click();
-  }
+  const p = document.getElementById('monthPickerInput');
+  if (!p) return;
+  p.value = state.currentMonth;
+  if (typeof p.showPicker === 'function') {
+    try { p.showPicker(); } catch { p.click(); }
+  } else p.click();
 }
 
 export function jumpToMonth(value) {
@@ -164,6 +138,7 @@ export function jumpToMonth(value) {
 }
 
 export function jumpToDate(value) {
+  // v50: giữ hàm để tương thích, không dùng nữa
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
   const today = getTodayIso();
   state.currentDate = value > today ? today : value;
@@ -189,11 +164,8 @@ export function goToLatest() {
     targetDate = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
   }
 
-  if (state.periodMode === 'day') {
-    state.currentDate = targetDate;
-  } else {
-    state.currentMonth = targetDate.slice(0, 7);
-  }
+  // v50: luôn nhảy theo tháng
+  state.currentMonth = targetDate.slice(0, 7);
   persistPeriodState();
   updatePeriodBarUI();
   updateAllViews();
@@ -205,31 +177,18 @@ export function updatePeriodBarUI() {
   const nextBtn = document.getElementById('periodNext');
   if (!label) return;
 
-  document.querySelectorAll('.period-mode-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.mode === state.periodMode);
-  });
-
-  // v49: label gọn "Tháng 10" hoặc "T6, 03/10/2026"
-  if (state.periodMode === 'day') {
-    label.innerText = formatDateLabel(state.currentDate);
-  } else {
-    label.innerText = formatMonthLabelShort(state.currentMonth || getCurrentMonthIso());
-  }
+  // v50: luôn mode month
+  label.innerText = formatMonthLabelShort(state.currentMonth || getCurrentMonthIso());
 
   if (prevBtn) {
-    const atLowerBound = state.periodMode === 'day'
-      ? state.currentDate <= '2020-01-01'
-      : state.currentMonth <= '2020-01';
+    const atLowerBound = state.currentMonth <= '2020-01';
     prevBtn.disabled = atLowerBound;
     prevBtn.classList.toggle('disabled', atLowerBound);
   }
 
   if (nextBtn) {
-    const today = getTodayIso();
     const nowMonth = getCurrentMonthIso();
-    const atUpperBound = state.periodMode === 'day'
-      ? state.currentDate >= today
-      : state.currentMonth >= nowMonth;
+    const atUpperBound = state.currentMonth >= nowMonth;
     nextBtn.disabled = atUpperBound;
     nextBtn.classList.toggle('disabled', atUpperBound);
   }
