@@ -1,5 +1,5 @@
 /* =============================================================
-   SPX Tracker v43 — Professional Redesign
+   SPX Tracker v43.1 — Professional Redesign + Empty States
    Nút Quét 48px · Region selector · Month Picker
    ============================================================= */
 
@@ -286,7 +286,7 @@ body {
 .btn-ocr { background: var(--info); border-color: var(--info); color: #fff; }
 .btn-ocr:hover { filter: brightness(0.95); }
 
-/* ============ PERIOD BAR v43 — 1 hàng ngang ============ */
+/* ============ PERIOD BAR ============ */
 .period-bar {
   max-width: 600px;
   margin: 14px auto 4px;
@@ -298,8 +298,6 @@ body {
   justify-content: space-between;
   gap: 10px;
 }
-
-/* Month nav — cụm điều hướng tháng */
 .month-nav {
   display: flex;
   align-items: center;
@@ -359,8 +357,6 @@ body {
 .month-nav-label:active {
   transform: scale(0.98);
 }
-
-/* Toggle "Hôm nay" */
 .period-toggle {
   padding: 8px 16px;
   font-size: 12.5px;
@@ -386,6 +382,20 @@ body {
 }
 [data-theme="dark"] .period-toggle.active {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.period-toggle:active { transform: scale(0.97); }
+
+@media (hover: hover) {
+  .month-nav-btn:hover:not(:disabled) {
+    background: var(--surface-2);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .month-nav-label:hover {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent);
+  }
 }
 
 /* ============ LAYOUT ============ */
@@ -420,7 +430,6 @@ body {
 [data-theme="dark"] .bottom-nav {
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.45);
 }
-
 .nav-btn {
   width: 100%;
   padding: 8px 2px;
@@ -593,7 +602,7 @@ body {
 }
 .info-icon:active { transform: scale(0.9); }
 
-/* ============ HERO v43 ============ */
+/* ============ HERO v43.1 ============ */
 .hero {
   position: relative;
   padding: 20px;
@@ -616,6 +625,9 @@ body {
     var(--accent) 100%);
   opacity: 0.9;
 }
+/* v43.1: ẩn vạch cam khi hero empty */
+.hero.no-data::before { display: none; }
+
 .hero-sm {
   padding: 16px 18px;
 }
@@ -640,6 +652,7 @@ body {
   font-weight: 600;
   color: var(--text-3);
   white-space: nowrap;
+  min-height: 1px;
 }
 .hero-pill {
   background: var(--surface-2);
@@ -653,6 +666,8 @@ body {
   letter-spacing: 0.1px;
 }
 
+/* Data state */
+.hero-data { display: block; }
 .hero-value {
   font-size: 42px;
   font-weight: 800;
@@ -669,18 +684,6 @@ body {
   margin-left: 8px;
   vertical-align: baseline;
 }
-.hero-sub {
-  font-size: 12px;
-  color: var(--text-3);
-  font-weight: 500;
-  margin-top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  align-items: center;
-}
-
-/* Hero metrics — 3 cột đều */
 .hero-metrics {
   margin-top: 14px;
   padding-top: 14px;
@@ -712,6 +715,66 @@ body {
   letter-spacing: 0.6px;
 }
 
+/* Empty state v43.1 */
+.hero-empty { display: none; }
+.hero-empty-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.hero-empty-sub {
+  font-size: 12.5px;
+  color: var(--text-3);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.hero-empty-cta {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.btn-cta-ocr,
+.btn-cta-manual {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+  border: 1px solid;
+}
+.btn-cta-ocr {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
+}
+.btn-cta-ocr:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-cta-manual {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-1);
+}
+.btn-cta-manual:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-cta-ocr:active,
+.btn-cta-manual:active { transform: scale(0.97); }
+.btn-cta-ocr svg,
+.btn-cta-manual svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* Hero variants (tab Giao/Lấy/Hoàn) */
 .hero-giao { border-color: var(--giao-bd); }
 .hero-lay  { border-color: var(--lay-bd); }
 .hero-hoan { border-color: var(--hoan-bd); }
@@ -719,7 +782,7 @@ body {
 .hero-lay  .hero-eyebrow { color: var(--lay); }
 .hero-hoan .hero-eyebrow { color: var(--hoan); }
 
-/* ============ TILES v43 — số đơn là primary ============ */
+/* ============ TILES v43 ============ */
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -756,6 +819,12 @@ body {
   color: var(--text-1);
   font-family: 'JetBrains Mono', monospace;
 }
+/* v43.1: số 0 hiển thị dash mờ */
+.tile-primary.is-zero {
+  color: var(--text-3);
+  font-size: 22px;
+  opacity: 0.55;
+}
 .tile-primary-unit {
   font-size: 11px;
   font-weight: 600;
@@ -782,8 +851,10 @@ body {
 .tile-giao .tile-secondary span { color: var(--giao); }
 .tile-lay  .tile-secondary span { color: var(--lay); }
 .tile-hoan .tile-secondary span { color: var(--hoan); }
+/* Giữ màu mờ khi zero */
+.tile-primary.is-zero { color: var(--text-3) !important; }
 
-/* Legacy tile-val — giữ để không vỡ JS cũ */
+/* Legacy tile-val */
 .tile-val {
   font-size: 20px;
   font-weight: 800;
@@ -802,18 +873,18 @@ body {
 .tile-lay  .tile-val { color: var(--lay); }
 .tile-hoan .tile-val { color: var(--hoan); }
 
-/* ============ RANK PILLS v43 ============ */
+/* ============ RANK PILLS v43.1 — fix K.Cương ============ */
 .rank-pill-group {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
 .rank-pill {
-  padding: 11px 6px;
+  padding: 11px 4px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   text-align: center;
   cursor: pointer;
@@ -827,7 +898,7 @@ body {
   user-select: none;
   touch-action: manipulation;
   font-family: inherit;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
 }
 .rank-pill.active {
   background: var(--accent);
@@ -844,7 +915,7 @@ body {
   background: var(--surface-2);
 }
 
-/* ============ REGION PILLS v43 ============ */
+/* ============ REGION PILLS ============ */
 .income-row-region {
   flex-direction: column !important;
   align-items: stretch !important;
@@ -896,7 +967,7 @@ body {
 .region-pill.active span:last-child { opacity: 0.85; }
 .region-pill:active { transform: scale(0.97); }
 
-/* ============ RATIO BAR v43 ============ */
+/* ============ RATIO BAR v43.1 ============ */
 .ratio-bar {
   height: 12px;
   background: var(--surface-2);
@@ -913,12 +984,7 @@ body {
 .ratio-seg-del  { background: var(--giao); }
 .ratio-seg-pick { background: var(--lay); }
 .ratio-seg-ret  { background: var(--hoan); }
-.ratio-bar.is-empty .ratio-seg {
-  background: var(--border);
-  min-width: 0;
-}
 
-/* Legend 3 cột */
 .ratio-legend {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -967,6 +1033,16 @@ body {
 .dot-lay  { background: var(--lay); }
 .dot-hoan { background: var(--hoan); }
 
+/* v43.1: Empty state cho ratio */
+.ratio-empty {
+  text-align: center;
+  padding: 20px 12px;
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
 /* ============ INCOME v43 ============ */
 details.income-section { padding: 0; overflow: hidden; }
 details.income-section > summary {
@@ -1004,8 +1080,6 @@ details.income-section > summary::marker { display: none; content: ''; }
   color: var(--text-3);
   font-weight: 500;
 }
-
-/* Progress bar cho công */
 .income-days-wrap {
   display: flex;
   flex-direction: column;
@@ -1026,7 +1100,6 @@ details.income-section > summary::marker { display: none; content: ''; }
   border-radius: 999px;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .income-summary-right {
   display: flex;
   align-items: center;
@@ -2049,29 +2122,55 @@ details.income-section[open] .income-chevron {
 }
 
 @media (max-width: 360px) {
+  .hero { padding: 18px; }
   .hero-value { font-size: 36px; }
   .hero-sm .hero-value { font-size: 28px; }
   .hero-metric-value { font-size: 14px; }
   .hero-metric-label { font-size: 9.5px; }
+  .hero-empty-title { font-size: 16px; }
+  .hero-empty-sub { font-size: 12px; }
+  .btn-cta-ocr, .btn-cta-manual {
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+  .btn-cta-ocr svg, .btn-cta-manual svg { width: 14px; height: 14px; }
+
+  .tile { padding: 14px 8px 12px; }
   .tile-primary { font-size: 21px; }
   .tile-val { font-size: 18px; }
-  .rank-pill { font-size: 10.5px; padding: 10px 4px; }
+
+  /* Rank pills — fix K.Cương không bị cắt trên màn hình nhỏ */
+  .rank-pill-group { gap: 4px; }
+  .rank-pill {
+    font-size: 10px;
+    padding: 10px 2px;
+    letter-spacing: -0.02em;
+  }
+
   .fab-icon { width: 44px; height: 44px; }
   .fab-icon svg { width: 22px; height: 22px; }
   .nav-label { font-size: 10px; }
+
   .table-clean th { font-size: 9px; padding: 10px 5px; }
   .table-clean td { font-size: 11.5px; padding: 11px 5px; }
   .table-clean th:first-child, .table-clean td:first-child { padding-left: 14px; }
   .table-clean th:last-child,  .table-clean td:last-child  { padding-right: 14px; }
+
   .region-pill { padding: 10px 8px; font-size: 11.5px; }
   .region-pill span:last-child { font-size: 9.5px; }
+
   .month-nav-label { font-size: 12px; padding: 7px 10px; }
   .month-nav-btn { width: 32px; height: 32px; font-size: 16px; }
   .period-toggle { padding: 7px 12px; font-size: 12px; }
+
   .legend-pct { font-size: 12.5px; }
   .legend-orders { font-size: 10px; }
+
+  .income-summary { padding: 16px !important; }
   .income-summary-value { font-size: 14px; }
   .income-summary-title { font-size: 14px; }
+
+  .ratio-empty { padding: 16px 12px; font-size: 11.5px; }
 }
 
 /* ============ REDUCED MOTION ============ */
@@ -2087,20 +2186,5 @@ details.income-section[open] .income-chevron {
   .modal-box {
     transition: none !important;
     animation: none !important;
-  }
-}
-.period-toggle:active { transform: scale(0.97); }
-
-/* Media hover guard — chỉ áp dụng hover khi có chuột thật */
-@media (hover: hover) {
-  .month-nav-btn:hover:not(:disabled) {
-    background: var(--surface-2);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .month-nav-label:hover {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
   }
 }
