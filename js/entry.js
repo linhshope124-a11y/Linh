@@ -85,7 +85,6 @@ export function saveRecord() {
     }
 
     const addedIds = [];
-    // ===== FIX: dùng generateId() độc lập, không +1/+2 =====
     if (delT  > 0) {
       const id = generateId();
       state.appData.delivery.unshift({ id, date, weights: delW });
