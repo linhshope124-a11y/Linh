@@ -49,17 +49,13 @@ function getWorkDaysByPeriod(period, region, currentMonth) {
   return workDays;
 }
 
-// ===== Update hero context label (Tháng 10/2026 / Hôm nay) =====
-function updateHeroContext() {
+// ===== Hero context label v43.1 =====
+// period=month → rỗng (vì period bar đã có label)
+// period=today → "Hôm nay"
+function updateHeroContextLabel() {
   const el = document.getElementById('heroContext');
   if (!el) return;
-  if (state.periodFilter === 'today') {
-    el.innerText = 'Hôm nay';
-  } else {
-    const cm = state.currentMonth || getCurrentMonthIso();
-    const [y, m] = cm.split('-');
-    el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
-  }
+  el.innerText = state.periodFilter === 'today' ? 'Hôm nay' : '';
 }
 
 // ===== ROW bảng 5 cột =====
@@ -154,29 +150,34 @@ function _updateAllViews() {
 
   const finalTotal  = rawBase + rankBonus + incomeAccumulated;
   const totalOrders = total.del + total.pick + total.ret;
+  const isEmpty = totalOrders === 0;
 
-  // ===== Hero v43: value + 3 metrics =====
-  const heroValueEl = document.getElementById('overallTotalPoints');
-  const heroBaseEl  = document.getElementById('heroBase');
-  const heroBonusEl = document.getElementById('heroBonus');
+  // ===== HERO v43.1: toggle data / empty =====
+  const heroEl       = document.getElementById('overviewHero');
+  const heroDataEl   = document.getElementById('heroData');
+  const heroEmptyEl  = document.getElementById('heroEmpty');
+  const heroValueEl  = document.getElementById('overallTotalPoints');
+  const heroBaseEl   = document.getElementById('heroBase');
+  const heroBonusEl  = document.getElementById('heroBonus');
   const heroIncomeEl = document.getElementById('heroIncome');
 
-  if (heroValueEl) {
-    if (totalOrders === 0) {
-      heroValueEl.innerHTML = '<span style="font-size:0.45em;color:var(--text-3);font-weight:600;letter-spacing:0">Chưa có dữ liệu</span>';
-    } else {
-      heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
-    }
+  if (heroEl) heroEl.classList.toggle('no-data', isEmpty);
+  if (heroDataEl)  heroDataEl.style.display  = isEmpty ? 'none'  : 'block';
+  if (heroEmptyEl) heroEmptyEl.style.display = isEmpty ? 'block' : 'none';
+
+  if (!isEmpty) {
+    if (heroValueEl) heroValueEl.innerHTML = `${_fmt(finalTotal)} <span class="hero-value-unit">Điểm</span>`;
+    if (heroBaseEl)   heroBaseEl.innerText   = _fmt(rawBase);
+    if (heroBonusEl)  heroBonusEl.innerText  = '+' + _fmt(rankBonus);
+    if (heroIncomeEl) heroIncomeEl.innerText = '+' + _fmt(incomeAccumulated);
   }
-  if (heroBaseEl)   heroBaseEl.innerText   = _fmt(rawBase);
-  if (heroBonusEl)  heroBonusEl.innerText  = '+' + _fmt(rankBonus);
-  if (heroIncomeEl) heroIncomeEl.innerText = '+' + _fmt(incomeAccumulated);
 
-  // Update hero context label (Tháng X/Y / Hôm nay)
-  updateHeroContext();
+  // Update hero context (rỗng khi month, "Hôm nay" khi today)
+  updateHeroContextLabel();
 
-  // ===== Ratio bar + legend v43 =====
-  const ratioBar = document.getElementById('ratioBar');
+  // ===== RATIO BAR v43.1 =====
+  const ratioContentEl = document.getElementById('ratioContent');
+  const ratioEmptyEl   = document.getElementById('ratioEmpty');
   const pctDelEl  = document.getElementById('ratioPctDel');
   const pctPickEl = document.getElementById('ratioPctPick');
   const pctRetEl  = document.getElementById('ratioPctRet');
@@ -185,7 +186,9 @@ function _updateAllViews() {
   const ordersRetEl  = document.getElementById('ratioOrdersRet');
 
   if (totalOrders > 0) {
-    if (ratioBar) ratioBar.classList.remove('is-empty');
+    if (ratioContentEl) ratioContentEl.style.display = 'block';
+    if (ratioEmptyEl)   ratioEmptyEl.style.display   = 'none';
+
     const rawDel  = (total.del  / totalOrders) * 100;
     const rawPick = (total.pick / totalOrders) * 100;
     const rawRet  = (total.ret  / totalOrders) * 100;
@@ -210,19 +213,14 @@ function _updateAllViews() {
     if (pctPickEl) pctPickEl.innerText = pPick + '%';
     if (pctRetEl)  pctRetEl.innerText  = pRet  + '%';
   } else {
-    if (ratioBar) ratioBar.classList.add('is-empty');
-    document.getElementById('ratioBarDel').style.width  = '33.3%';
-    document.getElementById('ratioBarPick').style.width = '33.3%';
-    document.getElementById('ratioBarRet').style.width  = '33.4%';
-    if (pctDelEl)  pctDelEl.innerText  = '0%';
-    if (pctPickEl) pctPickEl.innerText = '0%';
-    if (pctRetEl)  pctRetEl.innerText  = '0%';
+    if (ratioContentEl) ratioContentEl.style.display = 'none';
+    if (ratioEmptyEl)   ratioEmptyEl.style.display   = 'block';
   }
   if (ordersDelEl)  ordersDelEl.innerText  = _fmt(total.del);
   if (ordersPickEl) ordersPickEl.innerText = _fmt(total.pick);
   if (ordersRetEl)  ordersRetEl.innerText  = _fmt(total.ret);
 
-  // ===== Tiles v43: primary = orders, secondary = points =====
+  // ===== TILES v43.1: is-zero → dash =====
   const miniDelOrdersEl  = document.getElementById('miniDelOrders');
   const miniDelPointsEl  = document.getElementById('miniDelPoints');
   const miniPickOrdersEl = document.getElementById('miniPickOrders');
@@ -230,11 +228,20 @@ function _updateAllViews() {
   const miniRetOrdersEl  = document.getElementById('miniRetOrders');
   const miniRetPointsEl  = document.getElementById('miniRetPoints');
 
-  if (miniDelOrdersEl)  miniDelOrdersEl.innerText  = _fmt(total.del);
+  if (miniDelOrdersEl) {
+    miniDelOrdersEl.innerText = total.del === 0 ? '—' : _fmt(total.del);
+    miniDelOrdersEl.classList.toggle('is-zero', total.del === 0);
+  }
   if (miniDelPointsEl)  miniDelPointsEl.innerText  = _fmt(delPts);
-  if (miniPickOrdersEl) miniPickOrdersEl.innerText = _fmt(total.pick);
+  if (miniPickOrdersEl) {
+    miniPickOrdersEl.innerText = total.pick === 0 ? '—' : _fmt(total.pick);
+    miniPickOrdersEl.classList.toggle('is-zero', total.pick === 0);
+  }
   if (miniPickPointsEl) miniPickPointsEl.innerText = _fmt(pickPts);
-  if (miniRetOrdersEl)  miniRetOrdersEl.innerText  = _fmt(total.ret);
+  if (miniRetOrdersEl) {
+    miniRetOrdersEl.innerText = total.ret === 0 ? '—' : _fmt(total.ret);
+    miniRetOrdersEl.classList.toggle('is-zero', total.ret === 0);
+  }
   if (miniRetPointsEl)  miniRetPointsEl.innerText  = _fmt(retPts);
 
   // Hero tab chi tiết (Giao/Lấy/Hoàn)
@@ -271,7 +278,6 @@ function _updateAllViews() {
   if (incomeTotal)    incomeTotal.innerText    = '+' + formatPts(incomeAccumulated);
   if (incomeTotalInner) incomeTotalInner.innerText = '+' + formatPts(incomeAccumulated);
 
-  // Progress fill %
   if (progressFill) {
     const pct = salaryDays > 0 ? Math.min(100, Math.round((displayDays / salaryDays) * 100)) : 0;
     progressFill.style.width = pct + '%';
