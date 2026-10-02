@@ -428,7 +428,7 @@ function findExactDuplicate(r) {
   ) || null;
 }
 
-// v45.1: auto-save chỉ khi chính xác (không check duplicate — caller làm)
+// v45.1: auto-save không showToast — caller lo thông báo
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -461,10 +461,9 @@ export async function handleOcrImage(event) {
     const newResults = await processFiles(files);
     overlay.style.display = 'none';
 
-    // Phân loại 3 nhóm
     const autoSaved = [];
-    const duplicates = [];   // v45.1: ảnh trùng — không lưu, không mở modal
-    const needAttention = []; // ảnh lệch / lỗi — cần user check
+    const duplicates = [];
+    const needAttention = [];
 
     for (const item of newResults) {
       if (item.error) {
@@ -473,7 +472,6 @@ export async function handleOcrImage(event) {
       }
       const r = item.result;
 
-      // Ưu tiên check trùng trước
       if (findExactDuplicate(r)) {
         duplicates.push(item);
         continue;
@@ -486,7 +484,7 @@ export async function handleOcrImage(event) {
       }
     }
 
-    // ===== Case A: Có ảnh cần check → xử lý như cũ =====
+    // Case A: có ảnh cần check
     if (needAttention.length > 0) {
       if (wasAppend) {
         batchResults.push(...needAttention);
@@ -496,7 +494,6 @@ export async function handleOcrImage(event) {
         return;
       }
 
-      // Quét 1 ảnh
       if (files.length === 1) {
         const item = newResults[0];
         if (item.error) {
@@ -507,14 +504,13 @@ export async function handleOcrImage(event) {
         return;
       }
 
-      // Quét nhiều ảnh → mở batch modal với các ảnh cần check
       batchResults = needAttention;
       openBatchOcrModal();
       showSummaryToast(autoSaved.length, duplicates.length, needAttention.length, 400);
       return;
     }
 
-    // ===== Case B: Không có ảnh cần check =====
+    // Case B: không có ảnh cần check
     if (files.length === 1) {
       const item = newResults[0];
       const r = item.result;
@@ -534,7 +530,6 @@ export async function handleOcrImage(event) {
       return;
     }
 
-    // Nhiều ảnh — tổng hợp thông báo
     if (autoSaved.length > 0 || duplicates.length > 0) {
       showSummaryToast(autoSaved.length, duplicates.length, 0);
     }
@@ -545,7 +540,6 @@ export async function handleOcrImage(event) {
   }
 }
 
-// v45.1: helper tạo toast tổng hợp
 function showSummaryToast(saved, dup, need, delayMs = 0) {
   const parts = [];
   if (saved > 0) parts.push(`Đã lưu ${saved}`);
