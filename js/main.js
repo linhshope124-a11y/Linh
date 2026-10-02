@@ -1,9 +1,10 @@
-import { state, loadState } from './state.js';
+import { state, loadState, persistCurrentMonth } from './state.js';
 import { initTheme, toggleTheme } from './theme.js';
+import { getCurrentMonthIso, formatMonthLabel } from './utils.js';
 import {
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier, initRankUI,
-  initRegionUI,
+  initRegionUI, updateMonthNavUI,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -110,12 +111,65 @@ function _cleanupDuplicates() {
   alert(`Đã xóa ${dups.length} bản ghi trùng lặp!`);
 }
 
+// ================ v42: MONTH NAVIGATION ================
+function _prevMonth() {
+  const [y, m] = state.currentMonth.split('-').map(Number);
+  let newY = y, newM = m - 1;
+  if (newM < 1) { newM = 12; newY--; }
+  // Giới hạn: không cho về trước 2020
+  if (newY < 2020) return;
+  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
+  persistCurrentMonth();
+  updateMonthNavUI();
+  updateAllViews();
+}
+
+function _nextMonth() {
+  const now = getCurrentMonthIso();
+  if (state.currentMonth >= now) return; // không vượt quá tháng hiện tại
+  const [y, m] = state.currentMonth.split('-').map(Number);
+  let newY = y, newM = m + 1;
+  if (newM > 12) { newM = 1; newY++; }
+  state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
+  persistCurrentMonth();
+  updateMonthNavUI();
+  updateAllViews();
+}
+
+function _openMonthPicker() {
+  const picker = document.getElementById('monthPickerInput');
+  if (!picker) return;
+  picker.value = state.currentMonth;
+  // Mở native picker (Chrome/Edge/Safari hỗ trợ)
+  if (typeof picker.showPicker === 'function') {
+    try { picker.showPicker(); } catch { picker.click(); }
+  } else {
+    picker.click();
+  }
+}
+
+function _jumpToMonth(value) {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return;
+  const now = getCurrentMonthIso();
+  // Không cho chọn tháng tương lai
+  state.currentMonth = value > now ? now : value;
+  persistCurrentMonth();
+  updateMonthNavUI();
+  updateAllViews();
+}
+
 // ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
   toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setPeriodFilter, setHistFilter,
   setRankTier,
+
+  // ===== v42: MONTH NAV =====
+  prevMonth: _prevMonth,
+  nextMonth: _nextMonth,
+  openMonthPicker: _openMonthPicker,
+  jumpToMonth: _jumpToMonth,
 
   // ===== REGION — inline onclick handler =====
   changeRegion: function(regionKey, el) {
@@ -192,6 +246,7 @@ Object.assign(window, {
   initTheme();
   initRankUI();
   initRegionUI();
+  updateMonthNavUI();   // v42: set label + disable nút › nếu đang ở tháng hiện tại
   attachAutoClearInputs();
   updateAllViews();
   setTimeout(() => preloadTesseractWorker(), 2000);
