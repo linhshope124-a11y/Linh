@@ -1,2830 +1,928 @@
-/* =============================================================
-   SPX Tracker v46 — Period Mode Toggle (Tháng / Ngày)
-   Nút Quét 48px · Region selector · Latest
-   ============================================================= */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
-
-/* ============ DESIGN TOKENS ============ */
-:root {
-  --n-50:  #f8fafc;
-  --n-100: #f1f5f9;
-  --n-200: #e2e8f0;
-  --n-300: #cbd5e1;
-  --n-400: #94a3b8;
-  --n-500: #64748b;
-  --n-600: #475569;
-  --n-700: #334155;
-  --n-800: #1e293b;
-  --n-900: #0f172a;
-
-  --bg:         #f8fafc;
-  --surface:    #ffffff;
-  --surface-2:  #f1f5f9;
-  --border:     #e5e7eb;
-  --border-2:   #d1d5db;
-
-  --text-1:     #0f172a;
-  --text-2:     #475569;
-  --text-3:     #94a3b8;
-
-  --accent:        #ff5722;
-  --accent-hover:  #ea4512;
-  --accent-soft:   #fff1eb;
-  --accent-border: #ffd5c2;
-
-  --giao:      #c2410c;
-  --giao-soft: #fff7ed;
-  --giao-bd:   #fed7aa;
-
-  --lay:       #eab308;
-  --lay-soft:  #fefce8;
-  --lay-bd:    #fef08a;
-
-  --hoan:      #dc2626;
-  --hoan-soft: #fef2f2;
-  --hoan-bd:   #fecaca;
-
-  --success:    #059669;
-  --success-bg: #ecfdf5;
-  --success-bd: #a7f3d0;
-
-  --danger:     #dc2626;
-  --danger-bg:  #fef2f2;
-  --danger-bd:  #fecaca;
-
-  --warning:    #d97706;
-  --warning-bg: #fffbeb;
-  --warning-bd: #fde68a;
-
-  --info:    #2563eb;
-  --info-bg: #eff6ff;
-  --info-bd: #bfdbfe;
-
-  --r-xs: 6px;
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 14px;
-  --r-xl: 16px;
-
-  --sh-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --sh-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
-  --sh-md: 0 4px 16px rgba(15, 23, 42, 0.08);
-  --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
-
-  --nav-h: 68px;
-
-  --spx-orange: var(--accent);
-  --text-primary: var(--text-1);
-  --text-secondary: var(--text-2);
-  --text-muted: var(--text-3);
-  --glass-surface: var(--surface);
-  --glass-subtle: var(--surface-2);
-  --glass-border: var(--border);
-  --glass-border-subtle: var(--border);
-  --glass-shadow: var(--sh-xs);
-  --glass-emerald: var(--success-bg);
-  --glass-emerald-border: var(--success-bd);
-  --glass-emerald-text: var(--success);
-  --glass-violet: var(--giao-soft);
-  --glass-violet-border: var(--giao-bd);
-  --glass-violet-text: var(--giao);
-  --glass-sky: var(--lay-soft);
-  --glass-sky-border: var(--lay-bd);
-  --glass-sky-text: var(--lay);
-  --glass-amber: var(--hoan-soft);
-  --glass-amber-border: var(--hoan-bd);
-  --glass-amber-text: var(--hoan);
-  --glass-rose: var(--danger-bg);
-  --glass-rose-border: var(--danger-bd);
-  --glass-rose-text: var(--danger);
-  --radius-lg: var(--r-lg);
-  --radius-md: var(--r-md);
-  --radius-sm: var(--r-sm);
-}
-
-[data-theme="dark"] {
-  --bg:        #0d1117;
-  --surface:   #161b22;
-  --surface-2: #21262d;
-  --border:    #30363d;
-  --border-2:  #484f58;
-
-  --text-1: #e6edf3;
-  --text-2: #adbac7;
-  --text-3: #768390;
-
-  --accent:        #ff6e40;
-  --accent-hover:  #ff5722;
-  --accent-soft:   rgba(255, 110, 64, 0.12);
-  --accent-border: rgba(255, 110, 64, 0.3);
-
-  --giao:      #fb923c;
-  --giao-soft: rgba(251, 146, 60, 0.12);
-  --giao-bd:   rgba(251, 146, 60, 0.3);
-
-  --lay:       #facc15;
-  --lay-soft:  rgba(250, 204, 21, 0.12);
-  --lay-bd:    rgba(250, 204, 21, 0.3);
-
-  --hoan:      #f87171;
-  --hoan-soft: rgba(248, 113, 113, 0.12);
-  --hoan-bd:   rgba(248, 113, 113, 0.3);
-
-  --success:    #3fb950;
-  --success-bg: rgba(63, 185, 80, 0.12);
-  --success-bd: rgba(63, 185, 80, 0.3);
-
-  --danger:     #f85149;
-  --danger-bg:  rgba(248, 81, 73, 0.12);
-  --danger-bd:  rgba(248, 81, 73, 0.3);
-
-  --warning:    #d29922;
-  --warning-bg: rgba(210, 153, 34, 0.12);
-  --warning-bd: rgba(210, 153, 34, 0.3);
-
-  --info:    #58a6ff;
-  --info-bg: rgba(88, 166, 255, 0.12);
-  --info-bd: rgba(88, 166, 255, 0.3);
-
-  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --sh-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
-  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.5);
-  --sh-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
-
-  --text-primary: var(--text-1);
-  --text-secondary: var(--text-2);
-  --text-muted: var(--text-3);
-  --glass-surface: var(--surface);
-  --glass-subtle: var(--surface-2);
-  --glass-border: var(--border);
-  --glass-border-subtle: var(--border);
-  --glass-shadow: var(--sh-xs);
-  --glass-emerald: var(--success-bg);
-  --glass-emerald-border: var(--success-bd);
-  --glass-emerald-text: var(--success);
-  --glass-violet: var(--giao-soft);
-  --glass-violet-border: var(--giao-bd);
-  --glass-violet-text: var(--giao);
-  --glass-sky: var(--lay-soft);
-  --glass-sky-border: var(--lay-bd);
-  --glass-sky-text: var(--lay);
-  --glass-amber: var(--hoan-soft);
-  --glass-amber-border: var(--hoan-bd);
-  --glass-amber-text: var(--hoan);
-  --glass-rose: var(--danger-bg);
-  --glass-rose-border: var(--danger-bd);
-  --glass-rose-text: var(--danger);
-}
-
-/* ============ BASE ============ */
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-}
-body {
-  background: var(--bg);
-  color: var(--text-1);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
-  min-height: 100vh;
-  padding-bottom: calc(var(--nav-h) + 24px + env(safe-area-inset-bottom, 16px));
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background 0.2s, color 0.2s;
-}
-
-.num, .order-num, .points-badge, .hero-value, .tile-primary, .tile-val,
-.overview-value, .batch-total, .phone-display, .income-summary-value,
-.hero-metric-value, .legend-pct,
-[data-tab-num] {
-  font-feature-settings: "tnum";
-  font-variant-numeric: tabular-nums;
-}
-
-/* ============ HEADER ============ */
-.top-nav {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 10px 14px;
-  padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
-  gap: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 40;
-}
-.brand {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-  color: var(--text-1);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.btn-icon {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  color: var(--text-1);
-  flex-shrink: 0;
-}
-.btn-icon:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.btn-icon:active { transform: scale(0.94); }
-
-/* ============ BUTTONS ============ */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: inherit;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  background: var(--surface);
-  color: var(--text-1);
-  transition: all 0.15s;
-  white-space: nowrap;
-  letter-spacing: -0.005em;
-}
-.btn:hover { background: var(--surface-2); }
-.btn:active { transform: scale(0.97); }
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
-}
-.btn-primary:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
-.btn-primary:active {
-  box-shadow: 0 1px 3px rgba(255, 87, 34, 0.25);
-}
-.btn-ocr { background: var(--info); border-color: var(--info); color: #fff; }
-.btn-ocr:hover { filter: brightness(0.95); }
-
-/* ============ PERIOD BAR v46 ============ */
-.period-bar {
-  max-width: 600px;
-  margin: 14px auto 4px;
-  padding: 0 16px;
-}
-
-/* Hàng 1: mode toggle + Latest */
-.period-mode-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.period-mode-group {
-  display: inline-flex;
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 3px;
-  border: 1px solid var(--border);
-  gap: 2px;
-}
-.period-mode-btn {
-  padding: 7px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-}
-.period-mode-btn.active {
-  background: var(--text-1);
-  color: var(--bg);
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
-}
-[data-theme="dark"] .period-mode-btn.active {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-.period-mode-btn:active { transform: scale(0.97); }
-
-.go-latest-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  letter-spacing: -0.005em;
-}
-.go-latest-btn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-.go-latest-btn:active {
-  transform: scale(0.97);
-  background: var(--surface-2);
-}
-
-/* Hàng 2: nav ‹ label › */
-.period-nav-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.period-nav-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-  padding: 0;
-  font-family: inherit;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.period-nav-btn:active:not(:disabled) { transform: scale(0.92); }
-.period-nav-btn:disabled,
-.period-nav-btn.disabled {
-  opacity: 0.32;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-.period-label {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-1);
-  font-size: 14px;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: -0.015em;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-tap-highlight-color: transparent;
-}
-.period-label:active { transform: scale(0.98); }
-
-@media (hover: hover) {
-  .go-latest-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .period-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-  .period-label:hover {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
-  }
-  .period-mode-btn:not(.active):hover { background: var(--border); }
-}
-
-/* ============ LAYOUT ============ */
-.layout-shell { max-width: 600px; margin: 0 auto; padding: 0 16px; }
-.content-area { min-width: 0; width: 100%; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-.app-container {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding-top: 14px;
-  padding-bottom: 24px;
-}
-
-/* ============ BOTTOM NAV ============ */
-.bottom-nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
-  display: grid;
-  grid-template-columns: 1fr 1fr 68px 1fr 1fr;
-  align-items: center;
-  gap: 2px;
-  z-index: 50;
-  max-width: 500px;
-  margin: 0 auto;
-  box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.06);
-}
-[data-theme="dark"] .bottom-nav {
-  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.45);
-}
-
-.nav-btn {
-  width: 100%;
-  padding: 8px 2px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--r-sm);
-  gap: 4px;
-  transition: all 0.15s;
-  color: var(--text-3);
-  font-family: inherit;
-  min-height: 54px;
-}
-.nav-icon {
-  width: 22px;
-  height: 22px;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: transform 0.2s;
-}
-.nav-label {
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.15px;
-}
-.nav-btn.active { color: var(--accent); }
-.nav-btn.active .nav-label { font-weight: 800; }
-.nav-btn.active .nav-icon {
-  stroke-width: 2.2;
-  transform: scale(1.05);
-}
-.nav-btn:active { transform: scale(0.94); }
-
-/* ============ NÚT QUÉT 48px ============ */
-.nav-btn-fab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transform: translateY(-8px);
-  font-family: inherit;
-}
-.fab-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    0 0 0 4px var(--surface),
-    0 4px 16px rgba(255, 87, 34, 0.35),
-    0 2px 6px rgba(255, 87, 34, 0.20);
-  transition: transform 0.15s, box-shadow 0.2s;
-  animation: fabPulse 1.6s ease-in-out 2.2s 2;
-}
-.fab-icon svg {
-  width: 24px;
-  height: 24px;
-}
-.nav-btn-fab:active .fab-icon {
-  transform: scale(0.92);
-  box-shadow:
-    0 0 0 4px var(--surface),
-    0 2px 6px rgba(255, 87, 34, 0.35);
-  animation: none;
-}
-@keyframes fabPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 0 4px var(--surface),
-      0 4px 16px rgba(255, 87, 34, 0.35),
-      0 2px 6px rgba(255, 87, 34, 0.20);
-  }
-  50% {
-    transform: scale(1.12);
-    box-shadow:
-      0 0 0 4px var(--surface),
-      0 0 0 10px rgba(255, 87, 34, 0.15),
-      0 8px 24px rgba(255, 87, 34, 0.5);
-  }
-}
-
-/* ============ CARDS ============ */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: var(--sh-xs);
-}
-.card-flush { padding: 0; overflow: hidden; border-radius: 14px; }
-.card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 14px;
-}
-.card-head-pad { padding: 18px 18px 14px; }
-.card-head-inline {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-.card-title {
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text-1);
-  letter-spacing: -0.015em;
-}
-.card-sub { font-size: 11.5px; color: var(--text-3); margin-top: 3px; }
-.card-label {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  opacity: 0.9;
-}
-.card-value {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--accent);
-  letter-spacing: -0.01em;
-}
-
-/* ============ INFO ICON ============ */
-.info-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 1px solid var(--border-2);
-  background: transparent;
-  color: var(--text-3);
-  font-size: 10px;
-  font-weight: 800;
-  font-style: italic;
-  font-family: Georgia, 'Times New Roman', serif;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  transition: all 0.15s;
-  text-transform: lowercase;
-  vertical-align: middle;
-  flex-shrink: 0;
-}
-.info-icon:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-.info-icon:active { transform: scale(0.9); }
-
-/* ============ HERO ============ */
-.hero {
-  position: relative;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background:
-    radial-gradient(140% 100% at 100% 0%, var(--accent-soft) 0%, transparent 55%),
-    var(--surface);
-  box-shadow: var(--sh-xs);
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg,
-    var(--accent) 0%,
-    var(--accent-hover) 60%,
-    var(--accent) 100%);
-  opacity: 0.9;
-}
-.hero.no-data::before { display: none; }
-
-.hero-sm {
-  padding: 16px 18px;
-}
-.hero-sm::before { height: 2px; }
-
-.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  gap: 10px;
-}
-.hero-eyebrow {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0;
-  color: var(--text-3);
-  text-transform: none;
-}
-.hero-context {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  white-space: nowrap;
-  min-height: 1px;
-}
-.hero-pill {
-  background: var(--surface-2);
-  border: none;
-  padding: 5px 11px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-2);
-  white-space: nowrap;
-  letter-spacing: 0.1px;
-}
-
-.hero-data { display: block; }
-.hero-value {
-  font-size: 42px;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  color: var(--text-1);
-  line-height: 0.98;
-}
-.hero-sm .hero-value { font-size: 32px; }
-.hero-value-unit {
-  font-size: 0.4em;
-  font-weight: 600;
-  color: var(--text-3);
-  letter-spacing: 0;
-  margin-left: 8px;
-  vertical-align: baseline;
-}
-.hero-metrics {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.hero-metric {
-  text-align: center;
-  min-width: 0;
-}
-.hero-metric-value {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-1);
-  letter-spacing: -0.025em;
-  font-family: 'JetBrains Mono', monospace;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.hero-metric-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-3);
-  margin-top: 3px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-/* Empty state */
-.hero-empty { display: none; }
-.hero-empty-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-1);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-.hero-empty-sub {
-  font-size: 12.5px;
-  color: var(--text-3);
-  margin-top: 6px;
-  line-height: 1.5;
-}
-.hero-empty-cta {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-.btn-cta-ocr,
-.btn-cta-manual {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 11px 12px;
-  border-radius: 10px;
-  font-size: 12.5px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-  border: 1px solid;
-}
-.btn-cta-ocr {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.25);
-}
-.btn-cta-ocr:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-.btn-cta-manual {
-  background: var(--surface);
-  border-color: var(--border);
-  color: var(--text-1);
-}
-.btn-cta-manual:hover { border-color: var(--accent); color: var(--accent); }
-.btn-cta-ocr:active,
-.btn-cta-manual:active { transform: scale(0.97); }
-.btn-cta-ocr svg,
-.btn-cta-manual svg { width: 15px; height: 15px; flex-shrink: 0; }
-
-/* Hero variants */
-.hero-giao { border-color: var(--giao-bd); }
-.hero-lay  { border-color: var(--lay-bd); }
-.hero-hoan { border-color: var(--hoan-bd); }
-.hero-giao .hero-eyebrow { color: var(--giao); }
-.hero-lay  .hero-eyebrow { color: var(--lay); }
-.hero-hoan .hero-eyebrow { color: var(--hoan); }
-
-/* ============ TILES ============ */
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 10px 14px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transition: transform 0.15s;
-  box-shadow: var(--sh-xs);
-}
-.tile:active { transform: scale(0.985); }
-.tile-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: var(--text-3);
-  opacity: 0.9;
-  margin-bottom: 4px;
-}
-.tile-primary {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--text-1);
-  font-family: 'JetBrains Mono', monospace;
-}
-.tile-primary.is-zero {
-  color: var(--text-3) !important;
-  font-size: 22px;
-  opacity: 0.55;
-}
-.tile-primary-unit {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  margin-top: 1px;
-}
-.tile-secondary {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
-  width: 100%;
-}
-.tile-secondary span {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.tile-giao .tile-primary { color: var(--giao); }
-.tile-lay  .tile-primary { color: var(--lay); }
-.tile-hoan .tile-primary { color: var(--hoan); }
-.tile-giao .tile-secondary span { color: var(--giao); }
-.tile-lay  .tile-secondary span { color: var(--lay); }
-.tile-hoan .tile-secondary span { color: var(--hoan); }
-.tile-primary.is-zero { color: var(--text-3) !important; }
-
-/* Legacy tile-val */
-.tile-val {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.tile-foot {
-  font-size: 10.5px;
-  color: var(--text-3);
-  font-weight: 500;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border);
-}
-.tile-foot b { color: var(--text-2); font-weight: 700; }
-.tile-giao .tile-val { color: var(--giao); }
-.tile-lay  .tile-val { color: var(--lay); }
-.tile-hoan .tile-val { color: var(--hoan); }
-
-/* ============ RANK PILLS ============ */
-.rank-pill-group {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
-}
-.rank-pill {
-  padding: 11px 4px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  color: var(--text-2);
-  transition: all 0.18s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-  font-family: inherit;
-  letter-spacing: -0.01em;
-}
-.rank-pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(255, 87, 34, 0.28);
-}
-.rank-pill.long-pressing {
-  transform: scale(0.94);
-  filter: brightness(0.95);
-}
-.rank-pill:not(.active):active {
-  background: var(--surface-2);
-}
-
-/* ============ REGION PILLS ============ */
-.income-row-region {
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 8px;
-  padding: 12px 0;
-}
-.income-row-region .income-row-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.region-pill-group {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 6px;
-}
-.region-pill {
-  padding: 12px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-.region-pill span:last-child {
-  font-size: 10px;
-  opacity: 0.7;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-}
-.region-pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(255, 87, 34, 0.28);
-}
-.region-pill.active span:last-child { opacity: 0.85; }
-.region-pill:active { transform: scale(0.97); }
-
-/* ============ RATIO BAR ============ */
-.ratio-bar {
-  height: 12px;
-  background: var(--surface-2);
-  border-radius: 999px;
-  display: flex;
-  overflow: hidden;
-  gap: 2px;
-  margin-bottom: 14px;
-}
-.ratio-seg {
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 6px;
-}
-.ratio-seg-del  { background: var(--giao); }
-.ratio-seg-pick { background: var(--lay); }
-.ratio-seg-ret  { background: var(--hoan); }
-
-.ratio-legend {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.legend-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-.legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-2);
-}
-.legend-pct {
-  font-size: 13.5px;
-  font-weight: 800;
-  color: var(--text-1);
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-.legend-orders {
-  font-size: 10.5px;
-  color: var(--text-3);
-  font-weight: 500;
-}
-.legend-orders b {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
-  color: var(--text-2);
-}
-.dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.dot-giao { background: var(--giao); }
-.dot-lay  { background: var(--lay); }
-.dot-hoan { background: var(--hoan); }
-
-.ratio-empty {
-  text-align: center;
-  padding: 20px 12px;
-  font-size: 12px;
-  color: var(--text-3);
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-/* ============ INCOME ============ */
-details.income-section { padding: 0; overflow: hidden; }
-details.income-section > summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-details.income-section > summary::-webkit-details-marker { display: none; }
-details.income-section > summary::marker { display: none; content: ''; }
-
-.income-summary-left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-width: 0;
-}
-.income-summary-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-1);
-  letter-spacing: -0.015em;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.income-summary-days {
-  font-size: 11.5px;
-  color: var(--text-3);
-  font-weight: 500;
-}
-.income-days-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 3px;
-}
-.income-progress {
-  height: 4px;
-  background: var(--surface-2);
-  border-radius: 999px;
-  overflow: hidden;
-  max-width: 180px;
-}
-.income-progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
-  border-radius: 999px;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.income-summary-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-.income-summary-value {
-  font-size: 16px;
-  font-weight: 800;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.025em;
-  color: var(--accent);
-  white-space: nowrap;
-}
-.income-chevron {
-  display: inline-flex;
-  color: var(--text-3);
-  transition: transform 0.2s;
-}
-details.income-section[open] .income-chevron {
-  transform: rotate(180deg);
-}
-
-.income-content {
-  padding: 16px 18px 18px;
-  border-top: 1px solid var(--border);
-}
-.income-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.income-row:last-of-type {
-  border-bottom: none;
-  padding-bottom: 4px;
-}
-.income-row-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.income-row-input {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.income-row-input input {
-  width: 120px;
-  padding: 9px 12px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface-2);
-  color: var(--accent);
-  font-size: 14.5px;
-  font-weight: 800;
-  text-align: right;
-  outline: none;
-  font-family: 'JetBrains Mono', monospace;
-  transition: border-color 0.15s;
-  letter-spacing: -0.02em;
-}
-.income-row-input input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.income-unit {
-  font-size: 10.5px;
-  color: var(--text-3);
-  white-space: nowrap;
-}
-
-.income-summary-box {
-  margin-top: 16px;
-  padding: 14px 16px;
-  background: var(--surface-2);
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-.income-summary-line {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-3);
-  margin-bottom: 8px;
-}
-.income-summary-line.total {
-  padding-top: 10px;
-  margin-bottom: 0;
-  border-top: 1px solid var(--border);
-  font-size: 12.5px;
-  color: var(--text-2);
-  font-weight: 600;
-  align-items: center;
-}
-.income-summary-line.total b {
-  color: var(--accent);
-  font-size: 18px;
-  font-weight: 800;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.03em;
-}
-.income-save-btn {
-  width: 100%;
-  margin-top: 14px;
-  padding: 13px;
-  font-size: 13px;
-  border-radius: 10px;
-}
-
-/* ============ TABLE ============ */
-.table-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.table-clean table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  table-layout: auto;
-}
-.table-clean th {
-  text-align: left;
-  padding: 12px 8px;
-  color: var(--text-3);
-  font-size: 9.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-2);
-  white-space: nowrap;
-}
-.table-clean th:first-child { padding-left: 18px; }
-.table-clean th:last-child  { padding-right: 18px; text-align: right; }
-.table-clean th.th-right { text-align: right; }
-.table-clean td {
-  padding: 13px 8px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-1);
-  font-size: 12.5px;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-.table-clean td:first-child { padding-left: 18px; }
-.table-clean td:last-child  { padding-right: 18px; text-align: right; }
-.table-clean tr:last-child td { border-bottom: none; }
-
-.table-clean .weight-name {
-  font-weight: 600;
-  color: var(--text-2);
-  font-size: 11px;
-}
-.table-clean .order-num {
-  font-weight: 800;
-  font-size: 13px;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.02em;
-}
-.table-clean .order-num.delivery-num { color: var(--giao); }
-.table-clean .order-num.pickup-num   { color: var(--lay); }
-.table-clean .order-num.return-num   { color: var(--hoan); }
-.table-clean .order-num.zero { color: var(--text-3); font-weight: 500; }
-
-.table-clean .range-cell {
-  color: var(--text-3);
-  font-size: 10.5px;
-  font-weight: 500;
-}
-.table-clean .points-badge {
-  color: var(--accent);
-  font-weight: 800;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.02em;
-}
-.table-clean .points-badge.zero { color: var(--text-3); font-weight: 400; }
-
-.table-clean .next-cell {
-  font-size: 10.5px;
-  font-weight: 700;
-}
-.table-clean .next-cell .need-num { color: var(--danger); font-weight: 800; }
-.table-clean .next-cell .gain-num { color: var(--success); font-weight: 700; }
-.table-clean .next-cell .zero-dash { color: var(--text-3); font-weight: 400; }
-.table-clean .next-cell .arrow { color: var(--text-3); font-weight: 500; }
-
-/* v43.3: cột Cần / Được */
-.table-clean .need-cell,
-.table-clean .gain-cell {
-  padding-left: 4px;
-  padding-right: 4px;
-  text-align: right;
-}
-.table-clean .need-cell .need-num {
-  color: var(--danger);
-  font-weight: 800;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  letter-spacing: -0.02em;
-}
-.table-clean .gain-cell .gain-num {
-  color: var(--success);
-  font-weight: 800;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  letter-spacing: -0.02em;
-}
-.table-clean .next-cell .max-tag {
-  color: var(--success);
-  font-weight: 800;
-  font-size: 10px;
-  letter-spacing: 0.3px;
-}
-
-/* ============ FILTER BAR ============ */
-.filter-bar {
-  display: flex;
-  gap: 6px;
-  margin: 0 0 14px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.filter-bar::-webkit-scrollbar { display: none; }
-.filter-btn {
-  padding: 7px 14px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-.filter-btn.active {
-  background: var(--text-1);
-  color: var(--bg);
-  border-color: var(--text-1);
-  font-weight: 700;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.15);
-}
-
-/* ============ SUGGESTION ============ */
-.suggestion-item {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.suggestion-item:last-child { margin-bottom: 0; }
-.sugg-left h4 {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-1);
-  letter-spacing: -0.01em;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.sugg-left p {
-  font-size: 12px;
-  margin-top: 4px;
-  color: var(--text-3);
-}
-.sugg-points {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--success);
-  white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
-  letter-spacing: -0.025em;
-}
-.suggestion-item.sugg-del  { border-left: 3px solid var(--giao); }
-.suggestion-item.sugg-pick { border-left: 3px solid var(--lay); }
-.suggestion-item.sugg-ret  { border-left: 3px solid var(--hoan); }
-.sugg-type-badge {
-  font-size: 9.5px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid;
-  display: inline-block;
-}
-.sugg-type-del  { background: var(--giao-soft); border-color: var(--giao-bd); color: var(--giao); }
-.sugg-type-pick { background: var(--lay-soft);  border-color: var(--lay-bd);  color: var(--lay); }
-.sugg-type-ret  { background: var(--hoan-soft); border-color: var(--hoan-bd); color: var(--hoan); }
-
-/* ============ HISTORY ENTRY ============ */
-.history-entry {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.history-entry:last-child { margin-bottom: 0; }
-.hist-badge-tag {
-  font-size: 9.5px;
-  font-weight: 800;
-  padding: 3px 8px;
-  border-radius: 4px;
-  margin-right: 6px;
-  border: 1px solid;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-.tag-delivery { background: var(--giao-soft); border-color: var(--giao-bd); color: var(--giao); }
-.tag-pickup   { background: var(--lay-soft);  border-color: var(--lay-bd);  color: var(--lay); }
-.tag-return   { background: var(--hoan-soft); border-color: var(--hoan-bd); color: var(--hoan); }
-.hist-meta {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-1);
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.hist-meta span {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.hist-detail {
-  font-size: 11.5px;
-  color: var(--text-3);
-  margin-top: 5px;
-  word-break: break-word;
-}
-.hist-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.hist-btn {
-  border: 1px solid;
-  cursor: pointer;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 11.5px;
-  font-weight: 700;
-  font-family: inherit;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-.hist-edit-btn {
-  border-color: var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-}
-.hist-edit-btn:hover { border-color: var(--info); color: var(--info); }
-.hist-del-btn {
-  border-color: var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-}
-.hist-del-btn:hover { border-color: var(--danger); color: var(--danger); }
-
-/* ============ MODAL ============ */
-.modal-shade {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-  z-index: 100;
-}
-.modal-shade.active { display: flex; }
-.modal-box {
-  background: var(--surface);
-  width: 100%;
-  max-width: 500px;
-  border-radius: 20px 20px 0 0;
-  border: 1px solid var(--border);
-  border-bottom: none;
-  box-shadow: var(--sh-lg);
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.modal-box-head {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.modal-box-head h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-1);
-  letter-spacing: -0.015em;
-}
-.modal-close-btn {
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--r-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-.modal-close-btn:hover { background: var(--surface-2); color: var(--text-1); }
-.modal-back-btn {
-  background: var(--info-bg);
-  border: 1px solid var(--info-bd);
-  color: var(--info);
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  margin-right: auto;
-}
-.modal-body {
-  padding: 16px 20px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1;
-}
-
-.modal-tabs {
-  display: flex;
-  background: var(--surface-2);
-  border-radius: var(--r-sm);
-  padding: 3px;
-  gap: 4px;
-  margin-bottom: 14px;
-  border: 1px solid var(--border);
-}
-.modal-tab-btn {
-  flex: 1;
-  padding: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  font-family: inherit;
-  border: none;
-  background: transparent;
-  color: var(--text-3);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.modal-tab-btn.active.tab-del  { background: var(--giao-soft); color: var(--giao); }
-.modal-tab-btn.active.tab-pick { background: var(--lay-soft);  color: var(--lay); }
-.modal-tab-btn.active.tab-ret  { background: var(--hoan-soft); color: var(--hoan); }
-
-.modal-section-card {
-  border-radius: var(--r-md);
-  padding: 14px;
-  margin-bottom: 12px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-.modal-section-card.card-del  { border-left: 3px solid var(--giao); }
-.modal-section-card.card-pick { border-left: 3px solid var(--lay); }
-.modal-section-card.card-ret  { border-left: 3px solid var(--hoan); }
-
-.weights-horizontal-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-.weight-input-item { position: relative; }
-.weight-input-item label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-2);
-  margin-bottom: 4px;
-}
-.form-label {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  margin-bottom: 4px;
-}
-.input-control {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  font-size: 15px;
-  font-family: inherit;
-  font-weight: 600;
-  outline: none;
-  background: var(--surface);
-  color: var(--text-1);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.input-control:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-.input-control.conf-high { border-left: 4px solid var(--success) !important; }
-.input-control.conf-mid  { border-left: 4px solid var(--warning) !important; background: var(--warning-bg); }
-.input-control.conf-low  { border-left: 4px solid var(--danger) !important;  background: var(--danger-bg); }
-
-.conf-badge {
-  position: absolute;
-  top: 0; right: 0;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transform: translateY(-2px);
-  z-index: 2;
-}
-.conf-badge.high { background: var(--success); color: #fff; }
-.conf-badge.mid  { background: var(--warning); color: #fff; }
-.conf-badge.low  { background: var(--danger);  color: #fff; }
-
-.modal-box-foot {
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-/* ============ MENU MODAL ============ */
-.menu-modal-box { max-width: 500px; }
-.menu-body { padding: 8px 8px 20px; }
-
-.menu-section-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-3);
-  padding: 16px 12px 6px;
-}
-.menu-section-label:first-child { padding-top: 8px; }
-
-.menu-item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-  border-radius: var(--r-md);
-  transition: background 0.15s;
-  color: var(--text-1);
-}
-.menu-item:hover { background: var(--surface-2); }
-.menu-item:active { background: var(--border); }
-
-.menu-icon {
-  width: 42px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border-radius: 11px;
-  flex-shrink: 0;
-  color: var(--text-2);
-}
-.menu-icon svg { width: 20px; height: 20px; }
-.menu-icon-heart { color: var(--danger); }
-
-.menu-text { flex: 1; min-width: 0; }
-.menu-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-1);
-}
-.menu-sub {
-  font-size: 11.5px;
-  color: var(--text-3);
-  margin-top: 2px;
-}
-
-/* ============ GUIDE MODAL ============ */
-.guide-modal-box { max-width: 500px; }
-.guide-body { padding: 8px 20px 20px; }
-
-.guide-section {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border);
-}
-.guide-section:last-child { border-bottom: none; }
-
-.guide-h {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text-1);
-  margin-bottom: 10px;
-  letter-spacing: -0.01em;
-}
-
-.guide-list {
-  padding-left: 20px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.7;
-}
-.guide-list li { margin-bottom: 4px; }
-.guide-list b { color: var(--text-1); font-weight: 700; }
-
-.guide-p {
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.6;
-  margin-bottom: 6px;
-}
-.guide-p:last-child { margin-bottom: 0; }
-.guide-p b { color: var(--text-1); font-weight: 700; }
-
-.guide-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.guide-card:last-child { margin-bottom: 0; }
-.guide-card-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-1);
-  margin-bottom: 4px;
-}
-.guide-card p {
-  font-size: 11.5px;
-  color: var(--text-2);
-  line-height: 1.55;
-  margin: 0;
-}
-.guide-card b { color: var(--text-1); font-weight: 700; }
-
-.guide-note {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--text-2);
-  line-height: 1.55;
-}
-.guide-note b { color: var(--accent); font-weight: 700; }
-
-/* ============ SETTINGS MODAL ============ */
-.settings-section-title {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: var(--text-1);
-}
-.settings-hint {
-  font-size: 11.5px;
-  color: var(--text-3);
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-.settings-label {
-  display: block;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-2);
-  margin-bottom: 4px;
-}
-.settings-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  margin-top: 14px;
-  cursor: pointer;
-  color: var(--text-2);
-}
-.settings-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 14px;
-}
-.settings-hr {
-  margin: 20px 0;
-  border: none;
-  border-top: 1px solid var(--border);
-}
-.settings-guide {
-  font-size: 11.5px;
-  color: var(--text-3);
-  padding-left: 18px;
-  line-height: 1.7;
-  margin: 0;
-}
-.settings-guide code {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
-  background: var(--surface-2);
-  padding: 1px 5px;
-  border-radius: 4px;
-  color: var(--text-2);
-}
-
-/* ============ CLOUD STATUS ============ */
-.cloud-status {
-  padding: 8px 12px;
-  border-radius: var(--r-sm);
-  font-size: 11px;
-  font-weight: 600;
-  text-align: center;
-  margin-top: 10px;
-  border: 1px solid;
-}
-.cloud-status.ok   { background: var(--success-bg); color: var(--success); border-color: var(--success-bd); }
-.cloud-status.err  { background: var(--danger-bg);  color: var(--danger);  border-color: var(--danger-bd); }
-.cloud-status.idle { background: var(--surface-2);  color: var(--text-3);  border-color: var(--border); }
-
-/* ============ UNDO BANNER ============ */
-.undo-banner {
-  position: fixed;
-  bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%) translateY(120px);
-  background: var(--text-1);
-  color: var(--bg);
-  border-radius: var(--r-md);
-  box-shadow: var(--sh-lg);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  z-index: 150;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  max-width: 90%;
-  font-size: 13px;
-  font-weight: 500;
-  pointer-events: none;
-}
-[data-theme="dark"] .undo-banner {
-  background: var(--surface-2);
-  color: var(--text-1);
-  border: 1px solid var(--border);
-}
-.undo-banner.active {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-.undo-btn {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  padding: 7px 14px;
-  border-radius: var(--r-sm);
-  font-size: 12px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.undo-btn:active { transform: scale(0.94); }
-
-/* ============ OCR LOADING ============ */
-#ocrLoadingOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.78);
-  backdrop-filter: blur(8px);
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  color: #fff;
-  text-align: center;
-  padding: 20px;
-}
-#ocrLoadingOverlay[style*="flex"] { display: flex; }
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.2);
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 14px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.ocr-title {
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-.ocr-desc { font-size: 12px; opacity: 0.85; }
-
-/* ============ OCR PREVIEW ============ */
-.ocr-preview-box {
-  margin-top: 14px;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--accent-border);
-  background: var(--accent-soft);
-}
-.ocr-preview-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.ocr-hide-btn {
-  cursor: pointer;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--surface);
-  font-size: 10px;
-  font-weight: 600;
-}
-.ocr-preview-img {
-  width: 100%;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
-  display: block;
-  cursor: zoom-in;
-}
-
-/* ============ OCR LIGHTBOX ============ */
-#ocrLightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.95);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 300;
-  padding: 16px;
-}
-#ocrLightbox.active { display: flex; }
-#ocrLightbox img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  cursor: zoom-out;
-}
-#ocrLightbox .close-lb {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0));
-  right: 12px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  border: none;
-  font-size: 22px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* ============ BATCH OCR ============ */
-#batchList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.batch-item {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  align-items: center;
-}
-.batch-item.error {
-  border-color: var(--danger-bd);
-  background: var(--danger-bg);
-}
-.batch-thumb {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--r-sm);
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-}
-.batch-info { flex: 1; min-width: 0; }
-.batch-title {
-  font-size: 12.5px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 3px;
-  flex-wrap: wrap;
-  color: var(--text-1);
-}
-.batch-meta {
-  font-size: 10.5px;
-  color: var(--text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.batch-total {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--success);
-  margin-top: 3px;
-}
-.batch-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex-shrink: 0;
-}
-.batch-btn {
-  padding: 6px 10px;
-  border-radius: var(--r-sm);
-  font-size: 11px;
-  font-weight: 600;
-  font-family: inherit;
-  border: 1px solid;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-.batch-btn:active { transform: scale(0.96); }
-.batch-btn-import  { background: var(--info-bg);    border-color: var(--info-bd);    color: var(--info); }
-.batch-btn-remove  { background: var(--danger-bg);  border-color: var(--danger-bd);  color: var(--danger); }
-.batch-btn-compare { background: var(--warning-bg); border-color: var(--warning-bd); color: var(--warning); font-weight: 700; }
-
-/* ============ COFFEE / DONATE ============ */
-.coffee-modal-box {
-  max-width: 400px;
-  border-radius: var(--r-lg);
-  margin: auto 16px;
-}
-.donate-heart {
-  font-size: 56px;
-  text-align: center;
-  margin-bottom: 12px;
-  line-height: 1;
-}
-.donate-text {
-  font-size: 13px;
-  color: var(--text-2);
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-.bank-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 20px;
-  text-align: center;
-}
-.bank-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-3);
-  letter-spacing: 1.2px;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-}
-.bank-stk {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-1);
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.bank-name {
-  font-size: 12px;
-  color: var(--text-3);
-  margin-bottom: 4px;
-}
-
-/* ============ TOAST ============ */
-.app-toast {
-  position: fixed;
-  bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%) translateY(150px);
-  background: var(--text-1);
-  color: var(--bg);
-  padding: 12px 20px;
-  border-radius: var(--r-md);
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
-  z-index: 250;
-  opacity: 0;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  max-width: 90%;
-  box-shadow: var(--sh-lg);
-  text-align: center;
-  line-height: 1.4;
-}
-.app-toast.active {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-.app-toast.success { background: var(--success); color: #fff; }
-.app-toast.error   { background: var(--danger);  color: #fff; }
-.app-toast.warning { background: var(--warning); color: #fff; }
-
-/* ============ RESPONSIVE ============ */
-@media (min-width: 640px) {
-  .bottom-nav { border-radius: 16px 16px 0 0; }
-}
-
-@media (max-width: 360px) {
-  .hero { padding: 18px; }
-  .hero-value { font-size: 36px; }
-  .hero-sm .hero-value { font-size: 28px; }
-  .hero-metric-value { font-size: 14px; }
-  .hero-metric-label { font-size: 9.5px; }
-  .hero-empty-title { font-size: 16px; }
-  .hero-empty-sub { font-size: 12px; }
-  .btn-cta-ocr, .btn-cta-manual {
-    padding: 10px 10px;
-    font-size: 12px;
-  }
-  .btn-cta-ocr svg, .btn-cta-manual svg { width: 14px; height: 14px; }
-
-  .tile { padding: 14px 8px 12px; }
-  .tile-primary { font-size: 21px; }
-  .tile-val { font-size: 18px; }
-
-  .rank-pill-group { gap: 4px; }
-  .rank-pill {
-    font-size: 10px;
-    padding: 10px 2px;
-    letter-spacing: -0.02em;
-  }
-
-  .fab-icon { width: 44px; height: 44px; }
-  .fab-icon svg { width: 22px; height: 22px; }
-  .nav-label { font-size: 10px; }
-
-  .table-clean th { font-size: 9px; padding: 10px 5px; }
-  .table-clean td { font-size: 11.5px; padding: 11px 5px; }
-  .table-clean th:first-child, .table-clean td:first-child { padding-left: 14px; }
-  .table-clean th:last-child,  .table-clean td:last-child  { padding-right: 14px; }
-  .table-clean .need-cell .need-num,
-  .table-clean .gain-cell .gain-num { font-size: 11px; }
-
-  .region-pill { padding: 10px 8px; font-size: 11.5px; }
-  .region-pill span:last-child { font-size: 9.5px; }
-
-  /* v46: period bar thu gọn trên mobile nhỏ */
-  .period-nav-btn { width: 36px; height: 36px; font-size: 20px; }
-  .period-label { font-size: 13px; padding: 9px 12px; }
-  .period-mode-btn { padding: 6px 12px; font-size: 12px; }
-  .go-latest-btn { padding: 6px 10px; font-size: 11px; }
-  .go-latest-btn svg { width: 13px; height: 13px; }
-  .period-mode-row { gap: 6px; margin-bottom: 8px; }
-  .period-nav-row { gap: 6px; }
-
-  .legend-pct { font-size: 12.5px; }
-  .legend-orders { font-size: 10px; }
-
-  .income-summary { padding: 16px !important; }
-  .income-summary-value { font-size: 14px; }
-  .income-summary-title { font-size: 14px; }
-
-  .ratio-empty { padding: 16px 12px; font-size: 11.5px; }
-}
-
-/* ============ REDUCED MOTION ============ */
-@media (prefers-reduced-motion: reduce) {
-  .fab-icon { animation: none !important; }
-  .ratio-seg,
-  .income-progress-fill,
-  .nav-icon,
-  .hero,
-  .undo-banner,
-  .app-toast,
-  .modal-box {
-    transition: none !important;
-    animation: none !important;
-  }
-}
-
-/* =============================================================
-   v49: HERO + TILES GỘP + LABEL GỌN + CLAMP
-   ============================================================= */
-
-/* --- Fix clamp cho hero value (chống tràn số dài) --- */
-.hero-value {
-  font-size: clamp(28px, 8vw, 38px) !important;
-}
-.hero-sm .hero-value {
-  font-size: clamp(22px, 6.5vw, 32px) !important;
-}
-
-/* --- Hero tiles (thay cho tile-grid riêng) --- */
-.hero-tiles {
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.hero-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-.hero-tile-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: var(--text-3);
-  opacity: 0.9;
-}
-.hero-tile-value {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: var(--text-1);
-  font-family: 'JetBrains Mono', monospace;
-  transition: opacity 0.2s, color 0.2s;
-}
-.hero-tile-value.is-zero {
-  color: var(--text-3);
-  opacity: 0.5;
-}
-.hero-tile-giao .hero-tile-value { color: var(--giao); }
-.hero-tile-lay  .hero-tile-value { color: var(--lay); }
-.hero-tile-hoan .hero-tile-value { color: var(--hoan); }
-.hero-tile-giao .hero-tile-value.is-zero,
-.hero-tile-lay  .hero-tile-value.is-zero,
-.hero-tile-hoan .hero-tile-value.is-zero {
-  color: var(--text-3);
-}
-
-/* --- Rank inline row --- */
-.card-rank {
-  padding: 12px 16px !important;
-}
-.rank-inline-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.rank-inline-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: var(--text-3);
-  flex-shrink: 0;
-}
-.rank-pill-group-inline {
-  display: grid !important;
-  grid-template-columns: repeat(5, 1fr) !important;
-  gap: 4px !important;
-  flex: 1;
-  min-width: 0;
-}
-.rank-pill-group-inline .rank-pill {
-  padding: 8px 3px !important;
-  font-size: 10.5px !important;
-  letter-spacing: -0.02em !important;
-}
-
-/* --- Ratio inline legend --- */
-.card-ratio {
-  padding: 14px 16px !important;
-}
-.card-head-ratio {
-  margin-bottom: 10px !important;
-}
-.card-ratio .ratio-bar {
-  height: 10px !important;
-  margin-bottom: 10px !important;
-}
-.ratio-legend-inline {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-size: 12px;
-  color: var(--text-2);
-  flex-wrap: wrap;
-}
-.legend-inline-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-}
-.legend-inline-item b {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
-  color: var(--text-1);
-  letter-spacing: -0.02em;
-}
-.legend-inline-sep {
-  color: var(--text-3);
-  font-weight: 500;
-}
-
-/* --- Hero value row (value + toggle) --- */
-.hero-row-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.hero-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 11px;
-  border-radius: 999px;
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-3);
-  font-size: 11px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: -0.005em;
-}
-.hero-toggle-btn svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-.hero-toggle-btn:active {
-  transform: scale(0.96);
-  background: var(--surface-2);
-}
-@media (hover: hover) {
-  .hero-toggle-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-}
-
-/* --- Hero metrics wrap --- */
-.hero-metrics-wrap {
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  margin-top: 0;
-  transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.22s ease,
-              margin-top 0.28s ease;
-}
-.hero-metrics-wrap.expanded {
-  max-height: 200px;
-  opacity: 1;
-  margin-top: 12px;
-}
-.hero-metrics-wrap .hero-metrics {
-  margin-top: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-/* --- Header card v47 override (nếu chưa apply) --- */
-.header-wrapper {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: var(--bg);
-  padding: 12px 16px 8px;
-  padding-top: calc(12px + env(safe-area-inset-top, 0px));
-  max-width: 600px;
-  margin: 0 auto;
-}
-.header-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 14px 14px 12px;
-  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.06);
-}
-[data-theme="dark"] .header-card {
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.35);
-}
-.header-row-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.header-icon-btn {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  color: var(--text-1);
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.header-icon-btn svg { width: 20px; height: 20px; }
-.header-icon-btn:active {
-  transform: scale(0.94);
-  background: var(--border);
-}
-@media (hover: hover) {
-  .header-icon-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-}
-.header-row-nav {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.period-mode-group {
-  display: inline-flex;
-  background: var(--surface-2);
-  border-radius: 999px;
-  padding: 3px;
-  border: 1px solid var(--border);
-  gap: 2px;
-}
-.period-mode-btn {
-  padding: 7px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  border-radius: 999px;
-  border: none;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
-  transition: all 0.15s;
-  -webkit-tap-highlight-color: transparent;
-  letter-spacing: -0.005em;
-  white-space: nowrap;
-}
-.period-mode-btn.active {
-  background: var(--text-1);
-  color: var(--bg);
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
-}
-[data-theme="dark"] .period-mode-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
-.period-mode-btn:active { transform: scale(0.97); }
-.period-nav-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-  padding: 0;
-  font-family: inherit;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-.period-nav-btn:active:not(:disabled) { transform: scale(0.92); }
-.period-nav-btn:disabled,
-.period-nav-btn.disabled {
-  opacity: 0.32;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-.period-label {
-  flex: 1;
-  min-width: 0;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-1);
-  font-size: 14px;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: -0.015em;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-tap-highlight-color: transparent;
-}
-.period-label:active { transform: scale(0.98); }
-
-@media (hover: hover) {
-  .period-nav-btn:hover:not(:disabled) {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .period-label:hover {
-    background: var(--accent-soft);
-    border-color: var(--accent-border);
-    color: var(--accent);
-  }
-}
-
-/* --- Responsive nhỏ (SE) --- */
-@media (max-width: 360px) {
-  .header-wrapper {
-    padding: 10px 12px 6px;
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  }
-  .header-card {
-    padding: 12px 12px 10px;
-    border-radius: 18px;
-  }
-  .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-  .header-icon-btn svg { width: 18px; height: 18px; }
-  .header-row-top { gap: 8px; margin-bottom: 10px; }
-  .period-mode-btn { padding: 6px 12px; font-size: 12px; }
-  .period-nav-btn { width: 36px; height: 36px; font-size: 20px; }
-  .period-label { font-size: 13px; padding: 9px 12px; }
-
-  .hero-tiles { gap: 6px; }
-  .hero-tile-value { font-size: 20px; }
-  .hero-tile-label { font-size: 9.5px; }
-
-  .rank-inline-label { font-size: 9.5px; }
-  .rank-pill-group-inline .rank-pill { font-size: 10px !important; padding: 7px 2px !important; }
-
-  .hero-toggle-btn { padding: 5px 9px; font-size: 10.5px; }
-  .hero-toggle-btn svg { width: 12px; height: 12px; }
-}
-
-/* --- Reduced motion --- */
-@media (prefers-reduced-motion: reduce) {
-  .hero-metrics-wrap { transition: none !important; }
-}
-
-/* =============================================================
-   v50: HEADER 1 HÀNG — bỏ toggle Ngày
-   ============================================================= */
-
-/* Row gộp 5 phần tử ngang */
-.header-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Card padding gọn hơn (1 hàng) */
-.header-card {
-  padding: 10px 12px !important;
-}
-
-/* Label vẫn flex 1 */
-.header-row .period-label {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 12px;
-  font-size: 13.5px;
-}
-
-/* Nav buttons trong hàng gọn */
-.header-row .period-nav-btn {
-  width: 38px;
-  height: 38px;
-  font-size: 20px;
-}
-
-/* Icon buttons trong hàng gọn */
-.header-row .header-icon-btn {
-  width: 38px;
-  height: 38px;
-}
-
-/* Responsive iPhone SE */
-@media (max-width: 360px) {
-  .header-row {
-    gap: 6px;
-  }
-  .header-row .header-icon-btn,
-  .header-row .period-nav-btn {
-    width: 34px;
-    height: 34px;
-  }
-  .header-row .header-icon-btn svg {
-    width: 17px;
-    height: 17px;
-  }
-  .header-row .period-nav-btn {
-    font-size: 18px;
-  }
-  .header-row .period-label {
-    font-size: 12.5px;
-    padding: 8px 10px;
-  }
-  .header-card {
-    padding: 9px 10px !important;
-  }
-}
-
-/* =============================================================
-   v50.3: HEADER CLUSTER — 3 nhóm visual
-   ============================================================= */
-
-/* Row chứa 3 nhóm */
-.header-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Card padding gọn */
-.header-card {
-  padding: 10px 12px !important;
-}
-
-/* Icon buttons 2 bên (☰ và 🕰) */
-.header-row .header-icon-btn {
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-}
-
-/* ===== Period cluster (nhóm giữa) ===== */
-.period-cluster {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 2px;
-  gap: 0;
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-@media (hover: hover) {
-  .period-cluster:hover {
-    border-color: var(--accent-border);
-  }
-}
-
-/* Nút mũi tên ‹ › */
-.period-arrow-btn {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-2);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 999px;
-  transition: all 0.15s;
-  padding: 0;
-  font-family: inherit;
-  -webkit-tap-highlight-color: transparent;
-}
-.period-arrow-btn:active:not(:disabled) {
-  transform: scale(0.9);
-  background: var(--surface-2);
-}
-.period-arrow-btn:disabled,
-.period-arrow-btn.disabled {
-  opacity: 0.28;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-@media (hover: hover) {
-  .period-arrow-btn:hover:not(:disabled) {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-}
-
-/* Label ở giữa — không border, không bg (đã có cluster rồi) */
-.period-cluster .period-label {
-  flex: 1;
-  min-width: 0;
-  padding: 8px 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-1);
-  font-size: 13.5px;
-  font-weight: 700;
-  font-family: inherit;
-  letter-spacing: -0.015em;
-  cursor: pointer;
-  transition: color 0.15s;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-tap-highlight-color: transparent;
-  border-radius: 999px;
-}
-.period-cluster .period-label:active {
-  background: var(--surface-2);
-}
-@media (hover: hover) {
-  .period-cluster .period-label:hover {
-    color: var(--accent);
-    background: var(--accent-soft);
-  }
-}
-
-/* Responsive nhỏ (iPhone SE) */
-@media (max-width: 360px) {
-  .header-row {
-    gap: 8px;
-  }
-  .header-row .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-  .header-row .header-icon-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-  .period-arrow-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
-  .period-cluster .period-label {
-    font-size: 12.5px;
-    padding: 7px 4px;
-  }
-  .header-card {
-    padding: 9px 10px !important;
-  }
-}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#f8fafc">
+<meta name="description" content="Theo dõi sản lượng giao/lấy/hoàn và tính điểm SPX">
+<title>Theo Dõi Sản Lượng & Điểm SPX</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjM4IiBmaWxsPSIjZmY1NzIyIi8+PHRleHQgeD0iOTYiIHk9IjExNSIgZm9udC1zaXplPSI4OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmaWxsPSIjZmZmIiBmb250LXdlaWdodD0iYm9sZCI+U1BYPC90ZXh0Pjwvc3ZnPg==">
+<meta name="apple-mobile-web-app-title" content="SPX Tracker">
+<link rel="stylesheet" href="./css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+<!-- ============ FLOATING HEADER v50.3 ============ -->
+<div class="header-wrapper">
+  <div class="header-card">
+    <div class="header-row">
+      <button class="header-icon-btn" onclick="openMenuModal()" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="period-cluster">
+        <button class="period-arrow-btn" id="periodPrev" onclick="periodPrev()" aria-label="Tháng trước">‹</button>
+        <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
+        <button class="period-arrow-btn" id="periodNext" onclick="periodNext()" aria-label="Tháng sau">›</button>
+      </div>
+
+      <button class="header-icon-btn" onclick="goToLatest()" aria-label="Mới nhất" title="Mới nhất">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 15 15"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+  <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="layout-shell">
+  <div class="content-area">
+
+    <!-- ===== TAB TỔNG QUAN ===== -->
+    <div class="tab-panel active" id="tab-overview">
+      <main class="app-container">
+
+        <section class="hero" id="overviewHero">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Điểm tích lũy</span>
+            <span class="hero-context" id="heroContext"></span>
+          </div>
+
+          <div class="hero-data" id="heroData">
+            <div class="hero-row-main">
+              <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+              <button type="button" class="hero-toggle-btn" onclick="toggleHeroMetrics()" aria-label="Chi tiết">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span id="heroToggleText">Chi tiết</span>
+              </button>
+            </div>
+
+            <div class="hero-metrics-wrap" id="heroMetricsWrap">
+              <div class="hero-metrics" id="heroMetrics">
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroBase">0</div>
+                  <div class="hero-metric-label">Gốc</div>
+                </div>
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroBonus">+0</div>
+                  <div class="hero-metric-label">Thưởng</div>
+                </div>
+                <div class="hero-metric">
+                  <div class="hero-metric-value" id="heroIncome">+0</div>
+                  <div class="hero-metric-label">Thu nhập</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-tiles" id="heroTiles">
+              <div class="hero-tile hero-tile-giao">
+                <span class="hero-tile-label">Giao</span>
+                <span class="hero-tile-value" id="heroTileDel">0</span>
+              </div>
+              <div class="hero-tile hero-tile-lay">
+                <span class="hero-tile-label">Lấy</span>
+                <span class="hero-tile-value" id="heroTilePick">0</span>
+              </div>
+              <div class="hero-tile hero-tile-hoan">
+                <span class="hero-tile-label">Hoàn</span>
+                <span class="hero-tile-value" id="heroTileRet">0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero-empty" id="heroEmpty">
+            <div class="hero-empty-title">Bắt đầu theo dõi</div>
+            <div class="hero-empty-sub">Nhập sản lượng để tính điểm tích lũy</div>
+            <div class="hero-empty-cta">
+              <button type="button" class="btn-cta-ocr" onclick="document.getElementById('ocrFileInput').click()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                  <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                  <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                  <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span>Quét ảnh</span>
+              </button>
+              <button type="button" class="btn-cta-manual" onclick="openAddModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                <span>Nhập tay</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-rank">
+          <div class="rank-inline-row">
+            <span class="rank-inline-label">Hạng</span>
+            <div class="rank-pill-group rank-pill-group-inline">
+              <button class="rank-pill" data-rank="dong"      onclick="setRankTier('dong', 0.10, this)">Đồng</button>
+              <button class="rank-pill" data-rank="bac"       onclick="setRankTier('bac', 0.15, this)">Bạc</button>
+              <button class="rank-pill" data-rank="vang"      onclick="setRankTier('vang', 0.20, this)">Vàng</button>
+              <button class="rank-pill" data-rank="bach_kim"  onclick="setRankTier('bach_kim', 0.22, this)">B.Kim</button>
+              <button class="rank-pill" data-rank="kim_cuong" onclick="setRankTier('kim_cuong', 0.26, this)">K.Cương</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-ratio">
+          <div class="card-head-inline card-head-ratio">
+            <span class="card-label">Phân bổ</span>
+          </div>
+
+          <div id="ratioContent">
+            <div class="ratio-bar" id="ratioBar">
+              <div class="ratio-seg ratio-seg-del"  id="ratioBarDel"  style="width:33.3%"></div>
+              <div class="ratio-seg ratio-seg-pick" id="ratioBarPick" style="width:33.3%"></div>
+              <div class="ratio-seg ratio-seg-ret"  id="ratioBarRet"  style="width:33.4%"></div>
+            </div>
+            <div class="ratio-legend ratio-legend-inline">
+              <span class="legend-inline-item"><span class="dot dot-giao"></span><b id="ratioPctDel">0%</b></span>
+              <span class="legend-inline-sep">·</span>
+              <span class="legend-inline-item"><span class="dot dot-lay"></span><b id="ratioPctPick">0%</b></span>
+              <span class="legend-inline-sep">·</span>
+              <span class="legend-inline-item"><span class="dot dot-hoan"></span><b id="ratioPctRet">0%</b></span>
+            </div>
+          </div>
+
+          <div class="ratio-empty" id="ratioEmpty" style="display:none">
+            Chưa có đơn nào trong kỳ này
+          </div>
+        </section>
+
+        <details class="card income-section" id="incomeDetails">
+          <summary class="income-summary">
+            <div class="income-summary-left">
+              <span class="income-summary-title">
+                Thu nhập
+                <button class="info-icon" type="button"
+                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa\n\nĐã tích lũy = Lương 1 công × số công\n\nQuy đổi: Giao + Lấy/6 + Hoàn\n• Miền: ≥60 = 1 công, ≥30 = 0.5 công\n• TP.HCM & HN: ≥80 = 1 công, ≥40 = 0.5 công')"
+                        aria-label="Trợ giúp">i</button>
+              </span>
+              <div class="income-days-wrap">
+                <span class="income-summary-days" id="incomeDayCount">0/26 công</span>
+                <div class="income-progress">
+                  <div class="income-progress-fill" id="incomeProgressFill"></div>
+                </div>
+              </div>
+            </div>
+            <div class="income-summary-right">
+              <span class="income-summary-value" id="incomeTotalDisplay">+0 Điểm</span>
+              <span class="income-chevron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+            </div>
+          </summary>
+
+          <div class="income-content">
+            <div class="income-row income-row-region">
+              <span class="income-row-label">Khu vực tính công</span>
+              <div class="region-pill-group">
+                <button type="button" class="region-pill" data-region="mien" onclick="changeRegion('mien', this)">
+                  <span>Miền</span><span>60/30</span>
+                </button>
+                <button type="button" class="region-pill" data-region="hcm_hn" onclick="changeRegion('hcm_hn', this)">
+                  <span>TP.HCM · HN</span><span>80/40</span>
+                </button>
+              </div>
+            </div>
+            <div class="income-row">
+              <span class="income-row-label">LCB</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="salaryBaseInput" value="0" min="0" oninput="saveSalaryConfig()" onchange="saveSalaryConfig()">
+                <span class="income-unit">đ/tháng</span>
+              </div>
+            </div>
+            <div class="income-row">
+              <span class="income-row-label">Bưu cục</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="manualBuuCucInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()">
+                <span class="income-unit">đ/tháng</span>
+              </div>
+            </div>
+            <div class="income-row">
+              <span class="income-row-label">Tài xế</span>
+              <div class="income-row-input">
+                <input type="number" inputmode="numeric" id="manualTaiXeInput" value="0" min="0" oninput="saveManualPoints()" onchange="saveManualPoints()">
+                <span class="income-unit">đ/tháng</span>
+              </div>
+            </div>
+            <div class="income-summary-box">
+              <div class="income-summary-line">
+                <span>Lương 1 công</span>
+                <span id="incomePerDayText">0 Điểm/công</span>
+              </div>
+              <div class="income-summary-line total">
+                <span>Đã tích lũy</span>
+                <b id="incomeTotalDisplayInner">+0 Điểm</b>
+              </div>
+            </div>
+            <button class="btn btn-primary income-save-btn" onclick="forceSaveConfig()">Lưu cấu hình</button>
+          </div>
+        </details>
+
+        <section class="card" id="opportunityCard">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Cơ hội tăng điểm</h2>
+              <p class="card-sub">Số đơn cần thêm để đạt mốc tiếp theo</p>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="setOverviewFilter('all', this)">Tất cả</button>
+            <button class="filter-btn" onclick="setOverviewFilter('del', this)">Giao</button>
+            <button class="filter-btn" onclick="setOverviewFilter('pick', this)">Lấy</button>
+            <button class="filter-btn" onclick="setOverviewFilter('ret', this)">Hoàn</button>
+          </div>
+          <div id="overviewMilestoneList"></div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- ===== TAB GIAO ===== -->
+    <div class="tab-panel" id="tab-delivery">
+      <main class="app-container">
+        <section class="hero hero-sm hero-giao">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Giao</span>
+            <span class="hero-pill" id="delTotalOrders">0 đơn</span>
+          </div>
+          <div class="hero-value" id="delTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+        </section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                  <th class="th-right">Được</th>
+                </tr>
+              </thead>
+              <tbody id="delTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ===== TAB LẤY ===== -->
+    <div class="tab-panel" id="tab-pickup">
+      <main class="app-container">
+        <section class="hero hero-sm hero-lay">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Lấy</span>
+            <span class="hero-pill" id="pickTotalOrders">0 đơn</span>
+          </div>
+          <div class="hero-value" id="pickTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+        </section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                  <th class="th-right">Được</th>
+                </tr>
+              </thead>
+              <tbody id="pickTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ===== TAB HOÀN ===== -->
+    <div class="tab-panel" id="tab-return">
+      <main class="app-container">
+        <section class="hero hero-sm hero-hoan">
+          <div class="hero-top">
+            <span class="hero-eyebrow">Hoàn</span>
+            <span class="hero-pill" id="retTotalOrders">0 đơn</span>
+          </div>
+          <div class="hero-value" id="retTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
+        </section>
+        <section class="card card-flush">
+          <div class="card-head-pad">
+            <h2 class="card-title">Phân bổ & mục tiêu</h2>
+          </div>
+          <div class="table-scroll table-clean">
+            <table>
+              <thead>
+                <tr>
+                  <th>KG</th>
+                  <th>SL</th>
+                  <th>Mốc</th>
+                  <th>Điểm</th>
+                  <th class="th-right">Cần</th>
+                  <th class="th-right">Được</th>
+                </tr>
+              </thead>
+              <tbody id="retTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ===== TAB NHẬT KÝ ===== -->
+    <div class="tab-panel" id="tab-history">
+      <main class="app-container">
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Nhật ký</h2>
+              <p class="card-sub" id="histCountNote">0 bản ghi</p>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <button class="filter-btn active" onclick="setHistFilter('all', this)">Tất cả</button>
+            <button class="filter-btn" onclick="setHistFilter('delivery', this)">Giao</button>
+            <button class="filter-btn" onclick="setHistFilter('pickup', this)">Lấy</button>
+            <button class="filter-btn" onclick="setHistFilter('return', this)">Hoàn</button>
+          </div>
+          <div id="historyEntries"></div>
+        </section>
+      </main>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ BOTTOM NAV ============ -->
+<aside class="bottom-nav">
+  <button class="nav-btn active" data-tab="overview" onclick="switchMainTab('overview', this)" aria-label="Tổng quan">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+    </svg>
+    <span class="nav-label">T.Quan</span>
+  </button>
+
+  <button class="nav-btn" data-tab="delivery" onclick="switchMainTab('delivery', this)" aria-label="Giao">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M1 3h15v13H1z"/>
+      <path d="M16 8h4l3 3v5h-7V8z"/>
+      <circle cx="5.5" cy="18.5" r="2.5"/>
+      <circle cx="18.5" cy="18.5" r="2.5"/>
+    </svg>
+    <span class="nav-label">Giao</span>
+  </button>
+
+  <button class="nav-btn-fab" onclick="document.getElementById('ocrFileInput').click()" aria-label="Quét ảnh">
+    <span class="fab-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    </span>
+  </button>
+
+  <button class="nav-btn" data-tab="pickup" onclick="switchMainTab('pickup', this)" aria-label="Lấy">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+    </svg>
+    <span class="nav-label">Lấy</span>
+  </button>
+
+  <button class="nav-btn" data-tab="return" onclick="switchMainTab('return', this)" aria-label="Hoàn">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16.5 9.4 7.5 4.21"/>
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+      <line x1="12" y1="22.08" x2="12" y2="12"/>
+    </svg>
+    <span class="nav-label">Hoàn</span>
+  </button>
+</aside>
+
+<input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleOcrImage(event)">
+
+<!-- ============ MENU MODAL ============ -->
+<div class="modal-shade" id="menuModal" onclick="if(event.target===this)closeMenuModal()">
+  <div class="modal-box menu-modal-box">
+    <div class="modal-box-head">
+      <h3>Menu</h3>
+      <button class="modal-close-btn" onclick="closeMenuModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body menu-body">
+
+      <div class="menu-section-label">Cài đặt</div>
+      <button class="menu-item" onclick="toggleThemeFromMenu()">
+        <span class="menu-icon" id="menuThemeIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title" id="menuThemeTitle">Chế độ tối</div>
+          <div class="menu-sub" id="menuThemeSub">Chuyển sang giao diện tối</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openSettingsModal()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Backup & Cloud</div>
+          <div class="menu-sub">Đồng bộ Gist · JSON · Dọn trùng</div>
+        </div>
+      </button>
+
+      <div class="menu-section-label">Dữ liệu</div>
+      <button class="menu-item" onclick="closeMenuModal();openAddModal()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Nhập sản lượng</div>
+          <div class="menu-sub">Nhập tay theo 8 dải khối lượng</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openHistoryTab()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3h7v7H3z"/>
+            <path d="M14 3h7v7h-7z"/>
+            <path d="M14 14h7v7h-7z"/>
+            <path d="M3 14h7v7H3z"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Nhật ký</div>
+          <div class="menu-sub">Xem, sửa, xoá bản ghi đã lưu</div>
+        </div>
+      </button>
+
+      <div class="menu-section-label">Khác</div>
+      <button class="menu-item" onclick="closeMenuModal();openGuideModal()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Hướng dẫn sử dụng</div>
+          <div class="menu-sub">Cách dùng app, mẹo nhanh</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="closeMenuModal();openCoffeeModal()">
+        <span class="menu-icon menu-icon-heart">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21s-7.5-4.8-10-10c-1.4-3 0-7 4-7 2 0 3.5 1 4 2.5.5-1.5 2-2.5 4-2.5 4 0 5.4 4 4 7-2.5 5.2-10 10-10 10z"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Ủng hộ tác giả</div>
+          <div class="menu-sub">Viettinbank · Cảm ơn bạn!</div>
+        </div>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============ GUIDE MODAL ============ -->
+<div class="modal-shade" id="guideModal" onclick="if(event.target===this)closeGuideModal()">
+  <div class="modal-box guide-modal-box">
+    <div class="modal-box-head">
+      <h3>Hướng dẫn sử dụng</h3>
+      <button class="modal-close-btn" onclick="closeGuideModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body guide-body">
+
+      <section class="guide-section">
+        <h4 class="guide-h">🚀 Bắt đầu nhanh</h4>
+        <ol class="guide-list">
+          <li>Nhấn nút <b>Quét 📷</b> giữa bottom nav để chụp/quét ảnh</li>
+          <li>Hoặc menu <b>☰ → Nhập sản lượng</b> để nhập tay</li>
+          <li>Mở <b>Thu nhập</b> → chọn khu vực + nhập LCB, bưu cục, tài xế</li>
+        </ol>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">📅 Chọn kỳ xem</h4>
+        <ul class="guide-list">
+          <li>Dùng <b>‹ ›</b> để chuyển tháng</li>
+          <li>Nhấn <b>label ở giữa</b> để mở bộ chọn tháng</li>
+          <li><b>🕰</b> (góc phải) — nhảy về tháng có dữ liệu gần nhất</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">📝 Nhập sản lượng</h4>
+        <div class="guide-card">
+          <div class="guide-card-title">📷 Quét ảnh (nhanh)</div>
+          <p>Chụp màn hình SPX → Nhấn <b>Quét</b> → Chọn ảnh → App tự động OCR và lưu.</p>
+        </div>
+        <div class="guide-card">
+          <div class="guide-card-title">✏️ Nhập tay</div>
+          <p>Menu ☰ → <b>Nhập sản lượng</b> → Chọn ngày + nhập 8 dải khối lượng → Lưu.</p>
+        </div>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">📊 Đọc dữ liệu</h4>
+        <ul class="guide-list">
+          <li><b>T.Quan</b> — Tổng điểm, 3 loại đơn, cơ hội tăng điểm</li>
+          <li><b>Giao / Lấy / Hoàn</b> — Bảng chi tiết 8 dải khối lượng</li>
+          <li><b>Nhật ký</b> — Xem/sửa/xoá bản ghi (trong menu ☰)</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">🎖️ Hạng thưởng</h4>
+        <p class="guide-p"><b>Nhấn nhanh</b> vào pill để chọn hạng — <b>Nhấn giữ 0.5s</b> để bỏ chọn.</p>
+        <p class="guide-p">Hạng cao → thưởng % nhiều hơn (Đồng +10% → K.Cương +26%).</p>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">💰 Thu nhập</h4>
+        <ul class="guide-list">
+          <li><b>Khu vực</b> — Chọn Miền hoặc TP.HCM &amp; Hà Nội</li>
+          <li><b>LCB</b> — Lương cơ bản</li>
+          <li><b>Bưu cục</b> — Phụ cấp bưu cục</li>
+          <li><b>Tài xế</b> — Phụ cấp tài xế</li>
+        </ul>
+        <div class="guide-note">
+          <b>Công thức quy đổi:</b><br>
+          Đơn tính công = Giao + Lấy/6 + Hoàn<br><br>
+          <b>Ngưỡng công theo khu vực:</b><br>
+          • Miền Bắc/Trung/Nam: ≥60 = 1 công · ≥30 = 0.5 công<br>
+          • TP.HCM &amp; Hà Nội: ≥80 = 1 công · ≥40 = 0.5 công<br><br>
+          <b>Số ngày tối đa:</b> Tháng 2 = 24, còn lại 26<br>
+          <b>Lương 1 công</b> = (LCB + Bưu cục + Tài xế) / số ngày tối đa
+        </div>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">☁️ Backup</h4>
+        <p class="guide-p">Menu ☰ → <b>Backup & Cloud</b> → Dán GitHub Token + Gist ID.</p>
+        <p class="guide-p">Bật <b>Tự động backup</b> để đồng bộ Cloud sau mỗi thay đổi.</p>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">⚙️ Khác</h4>
+        <ul class="guide-list">
+          <li><b>Đổi theme</b> — Menu ☰ → Chế độ tối / sáng</li>
+          <li><b>Hoàn tác</b> — Nhấn banner "Hoàn tác" (hiện 5s sau khi sửa/xóa)</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
+        <h4 class="guide-h">❓ Lỗi thường gặp</h4>
+        <div class="guide-card">
+          <div class="guide-card-title">OCR đọc sai</div>
+          <p>Chụp lại ảnh rõ nét hơn. Màu viền ô: <b>xanh</b>=OK, <b>vàng</b>=cần check, <b>đỏ</b>=sửa tay.</p>
+        </div>
+        <div class="guide-card">
+          <div class="guide-card-title">App không cập nhật</div>
+          <p>Đóng hẳn tab (không chỉ back) → mở lại. Nếu vẫn cũ, xoá cache Chrome.</p>
+        </div>
+        <div class="guide-card">
+          <div class="guide-card-title">Mất dữ liệu</div>
+          <p>Mở Backup & Cloud → <b>⬇️ Khôi phục từ Cloud</b>.</p>
+        </div>
+      </section>
+
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn btn-primary" onclick="closeGuideModal()" style="width:100%">Đã hiểu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ENTRY MODAL ============ -->
+<div class="modal-shade" id="entryModal">
+  <div class="modal-box">
+    <div class="modal-box-head">
+      <button class="modal-back-btn" id="backToBatchBtn" onclick="backToBatch()" style="display:none">← Quay lại</button>
+      <h3 id="modalTitle" style="flex:1;text-align:center;">Nhập sản lượng ngày</h3>
+      <button class="modal-close-btn" onclick="closeModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editEntryId" value="">
+      <input type="hidden" id="editEntryType" value="">
+      <div style="margin-bottom:14px;max-width:180px">
+        <label class="form-label">Ngày ghi nhận</label>
+        <input type="date" id="inputDate" class="input-control">
+      </div>
+      <div class="modal-tabs" id="modalSubTabGroup">
+        <button type="button" class="modal-tab-btn active tab-del" id="subtab-btn-del" onclick="switchModalSubTab('del')">Giao</button>
+        <button type="button" class="modal-tab-btn tab-pick" id="subtab-btn-pick" onclick="switchModalSubTab('pick')">Lấy</button>
+        <button type="button" class="modal-tab-btn tab-ret" id="subtab-btn-ret" onclick="switchModalSubTab('ret')">Hoàn</button>
+      </div>
+      <div class="modal-section-card card-del modal-subtab-pane" id="pane-del">
+        <div class="weights-horizontal-grid">
+          <div class="weight-input-item"><label>&gt;0 - 2 kg</label><input type="number" inputmode="numeric" id="del_inp_0_2" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;2 - 4 kg</label><input type="number" inputmode="numeric" id="del_inp_2_4" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;4 - 6 kg</label><input type="number" inputmode="numeric" id="del_inp_4_6" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;6 - 8 kg</label><input type="number" inputmode="numeric" id="del_inp_6_8" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;8 - 10 kg</label><input type="number" inputmode="numeric" id="del_inp_8_10" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;10 - 12 kg</label><input type="number" inputmode="numeric" id="del_inp_10_12" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;12 - 15 kg</label><input type="number" inputmode="numeric" id="del_inp_12_15" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;15 kg</label><input type="number" inputmode="numeric" id="del_inp_over_15" class="input-control auto-clear" value="0" min="0"></div>
+        </div>
+      </div>
+      <div class="modal-section-card card-pick modal-subtab-pane" id="pane-pick" style="display:none">
+        <div class="weights-horizontal-grid">
+          <div class="weight-input-item"><label>&gt;0 - 2 kg</label><input type="number" inputmode="numeric" id="pick_inp_0_2" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;2 - 4 kg</label><input type="number" inputmode="numeric" id="pick_inp_2_4" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;4 - 6 kg</label><input type="number" inputmode="numeric" id="pick_inp_4_6" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;6 - 8 kg</label><input type="number" inputmode="numeric" id="pick_inp_6_8" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;8 - 10 kg</label><input type="number" inputmode="numeric" id="pick_inp_8_10" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;10 - 12 kg</label><input type="number" inputmode="numeric" id="pick_inp_10_12" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;12 - 15 kg</label><input type="number" inputmode="numeric" id="pick_inp_12_15" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;15 kg</label><input type="number" inputmode="numeric" id="pick_inp_over_15" class="input-control auto-clear" value="0" min="0"></div>
+        </div>
+      </div>
+      <div class="modal-section-card card-ret modal-subtab-pane" id="pane-ret" style="display:none">
+        <div class="weights-horizontal-grid">
+          <div class="weight-input-item"><label>&gt;0 - 2 kg</label><input type="number" inputmode="numeric" id="ret_inp_0_2" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;2 - 4 kg</label><input type="number" inputmode="numeric" id="ret_inp_2_4" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;4 - 6 kg</label><input type="number" inputmode="numeric" id="ret_inp_4_6" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;6 - 8 kg</label><input type="number" inputmode="numeric" id="ret_inp_6_8" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;8 - 10 kg</label><input type="number" inputmode="numeric" id="ret_inp_8_10" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;10 - 12 kg</label><input type="number" inputmode="numeric" id="ret_inp_10_12" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;12 - 15 kg</label><input type="number" inputmode="numeric" id="ret_inp_12_15" class="input-control auto-clear" value="0" min="0"></div>
+          <div class="weight-input-item"><label>&gt;15 kg</label><input type="number" inputmode="numeric" id="ret_inp_over_15" class="input-control auto-clear" value="0" min="0"></div>
+        </div>
+      </div>
+      <div class="ocr-preview-box" id="ocrPreviewBox" style="display:none">
+        <div class="ocr-preview-label">
+          <span>Ảnh gốc — đối chiếu số</span>
+          <span class="ocr-hide-btn" onclick="document.getElementById('ocrPreviewBox').style.display='none'">Ẩn</span>
+        </div>
+        <img class="ocr-preview-img" id="ocrPreviewImg" alt="Ảnh đã quét" onclick="openOcrLightbox()">
+        <pre id="ocrDebugText" style="background:#0d1117;color:#3fb950;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.5;padding:10px;margin-top:10px;border-radius:6px;max-height:250px;overflow:auto;white-space:pre-wrap;word-break:break-all;border:1px solid #30363d"></pre>
+      </div>
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveRecord()">Lưu dữ liệu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BATCH OCR MODAL ============ -->
+<div class="modal-shade" id="batchOcrModal">
+  <div class="modal-box">
+    <div class="modal-box-head">
+      <h3>Kết quả quét (<span id="batchCount">0</span>)</h3>
+      <button class="modal-close-btn" onclick="closeBatchOcrModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="batchList"></div>
+    </div>
+    <div class="modal-box-foot" style="justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <button class="btn btn-ocr" onclick="appendBatchFiles()">📷 Quét thêm</button>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn" onclick="closeBatchOcrModal()">Đóng</button>
+        <button class="btn btn-primary" onclick="saveBatchAll()">Lưu tất cả</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-shade" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
+  <div class="modal-box">
+    <div class="modal-box-head">
+      <h3>Backup & Quản lý</h3>
+      <button class="modal-close-btn" onclick="closeSettingsModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <div class="settings-section-title">☁️ Cloud Backup (GitHub Gist)</div>
+      <p class="settings-hint">Tự động lưu lên Cloud — reset máy không mất dữ liệu.</p>
+
+      <label class="settings-label">GitHub Token</label>
+      <input type="password" id="ghTokenInput" class="input-control" placeholder="ghp_..." style="font-family:'JetBrains Mono',monospace;font-size:12px">
+
+      <label class="settings-label" style="margin-top:12px">Gist ID</label>
+      <input type="text" id="gistIdInput" class="input-control" placeholder="Tự động sau lần backup đầu" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+
+      <label class="settings-checkbox">
+        <input type="checkbox" id="autoBackupToggle" style="width:auto;margin:0">
+        <span>Tự động backup sau mỗi thay đổi</span>
+      </label>
+
+      <div class="settings-row">
+        <button class="btn" onclick="testCloudConnection()" style="flex:1">🔌 Kiểm tra</button>
+        <button class="btn btn-primary" onclick="pushToCloud()" style="flex:1">☁️ Backup</button>
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn" onclick="pullFromCloud()" style="width:100%">⬇️ Khôi phục từ Cloud</button>
+      </div>
+
+      <div class="cloud-status idle" id="cloudStatus">Chưa cấu hình</div>
+
+      <hr class="settings-hr">
+
+      <div class="settings-section-title">📁 Sao lưu cục bộ</div>
+      <p class="settings-hint">Export/Import dữ liệu dạng file JSON.</p>
+
+      <div class="settings-row">
+        <button class="btn" id="copyJsonBtn" onclick="copyDataJson()" style="flex:1">📋 Chép</button>
+        <button class="btn" onclick="openPasteJsonModal()" style="flex:1">📝 Dán</button>
+      </div>
+      <div class="settings-row" style="margin-top:8px">
+        <button class="btn" onclick="exportData()" style="flex:1">💾 Lưu file</button>
+        <button class="btn" onclick="document.getElementById('importFileInput').click()" style="flex:1">📥 Nạp file</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" onchange="importData(event)">
+      </div>
+      <div style="margin-top:8px">
+        <button class="btn" onclick="restoreFromVault()" style="width:100%">🔄 Phục hồi tự động</button>
+      </div>
+
+      <hr class="settings-hr">
+
+      <div class="settings-section-title">🧹 Công cụ</div>
+      <p class="settings-hint">Tìm và xóa các bản ghi trùng lặp (cùng ngày + cùng số liệu).</p>
+      <button class="btn" onclick="cleanupDuplicates()" style="width:100%;background:var(--warning-bg);border-color:var(--warning-bd);color:var(--warning);font-weight:600">
+        Dọn bản ghi trùng lặp
+      </button>
+
+      <hr class="settings-hr">
+
+      <div class="settings-section-title" style="color:var(--danger)">⚠️ Vùng nguy hiểm</div>
+      <p class="settings-hint">Xóa toàn bộ dữ liệu sản lượng đã nhập. <b style="color:var(--danger)">Không thể khôi phục!</b></p>
+      <button class="btn" onclick="clearAllHistory()" style="width:100%;background:var(--danger-bg);border-color:var(--danger-bd);color:var(--danger);font-weight:600">
+        Xóa toàn bộ nhật ký
+      </button>
+
+      <hr class="settings-hr">
+
+      <div class="settings-section-title">📖 Hướng dẫn lấy Token</div>
+      <ol class="settings-guide">
+        <li>Vào <b>github.com/settings/tokens</b></li>
+        <li>Bấm <b>Generate new token (classic)</b></li>
+        <li>Note: <code>spx-backup</code> · Expiration: <code>No expiration</code></li>
+        <li>Scope: tích <b>gist</b> · Bấm <b>Generate</b></li>
+        <li>Copy token → paste vào ô trên</li>
+      </ol>
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn btn-primary" onclick="closeSettingsModal()" style="width:100%">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PASTE JSON MODAL ============ -->
+<div class="modal-shade" id="pasteJsonModal" onclick="if(event.target===this)closePasteJsonModal()">
+  <div class="modal-box coffee-modal-box">
+    <div class="modal-box-head">
+      <h3>Dán chuỗi JSON</h3>
+      <button class="modal-close-btn" onclick="closePasteJsonModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--text-2);margin-bottom:10px">Dán mã JSON đã sao chép:</p>
+      <textarea id="jsonPasteInput" rows="8" class="input-control" style="font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical" placeholder='{"delivery":[...], "pickup":[...], "return":[...]}'></textarea>
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn" onclick="closePasteJsonModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="confirmImportJsonString()">Khôi phục</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DONATE MODAL ============ -->
+<div class="modal-shade" id="coffeeModal" onclick="if(event.target===this)closeCoffeeModal()">
+  <div class="modal-box coffee-modal-box">
+    <div class="modal-box-head">
+      <h3>Ủng hộ tác giả</h3>
+      <button class="modal-close-btn" onclick="closeCoffeeModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="donate-heart">❤️</div>
+      <p class="donate-text">
+        Nếu app này giúp ích cho công việc của bạn,<br>
+        hãy ủng hộ tác giả một chút nhé!
+      </p>
+
+      <div class="bank-card">
+        <div class="bank-label">VIETTINBANK</div>
+        <div class="bank-stk" id="bankSTK">106879606835</div>
+        <div class="bank-name">Chủ TK: LINH</div>
+        <button class="btn btn-primary" id="copyBankBtn" onclick="copyBankNumber()" style="width:100%;margin-top:16px;font-weight:600;padding:12px">
+          📋 Sao chép số tài khoản
+        </button>
+      </div>
+    </div>
+    <div class="modal-box-foot">
+      <button class="btn" onclick="closeCoffeeModal()" style="width:100%">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ UNDO BANNER ============ -->
+<div id="undoBanner" class="undo-banner">
+  <span id="undoMsg" style="flex:1">Đã thực hiện thay đổi</span>
+  <button class="undo-btn" onclick="undoLast()">Hoàn tác</button>
+</div>
+
+<!-- ============ OCR LOADING ============ -->
+<div id="ocrLoadingOverlay">
+  <div class="spinner"></div>
+  <div class="ocr-title" id="ocrStatusTitle">Đang quét ảnh...</div>
+  <div class="ocr-desc" id="ocrStatusDesc">Vui lòng chờ trong giây lát</div>
+</div>
+
+<!-- ============ OCR LIGHTBOX ============ -->
+<div id="ocrLightbox" onclick="closeOcrLightbox()">
+  <button class="close-lb" onclick="closeOcrLightbox()" aria-label="Đóng">✕</button>
+  <img id="ocrLightboxImg" alt="Ảnh phóng to">
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="appToast" class="app-toast"></div>
+
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
