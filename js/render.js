@@ -7,17 +7,14 @@ const NEED_HIGHLIGHT = 'color:#dc2626;font-size:1.35em;font-weight:900;letter-sp
 
 let _lastDataHash = null;
 
-// ===== Ngưỡng công theo khu vực =====
 function getRegionThresholds(region) {
   if (region === 'hcm_hn') return { full: 80, half: 40 };
   return { full: 60, half: 30 };
 }
 
-// ===== v46: Số ngày tối đa — lấy theo tháng đang xem =====
 function getSalaryDaysForPeriod() {
   let monthStr;
   if (state.periodMode === 'day') {
-    // Lấy tháng từ currentDate
     monthStr = (state.currentDate || getTodayIso()).slice(0, 7);
   } else {
     monthStr = state.currentMonth || getCurrentMonthIso();
@@ -26,7 +23,6 @@ function getSalaryDaysForPeriod() {
   return month === 2 ? 24 : 26;
 }
 
-// ===== Tính công (quy đổi 6 lấy = 1 giao = 1 hoàn) =====
 function getWorkDaysByPeriod() {
   const dailyByType = {};
   ['delivery', 'pickup', 'return'].forEach(type => {
@@ -51,9 +47,6 @@ function getWorkDaysByPeriod() {
   return workDays;
 }
 
-// ===== Hero context label v46 =====
-// month → "Tháng 10/2026"
-// day   → "T2, 02/10/2026"
 function updateHeroContextLabel() {
   const el = document.getElementById('heroContext');
   if (!el) return;
@@ -65,12 +58,12 @@ function updateHeroContextLabel() {
     el.innerText = `${wd}, ${d}/${m}/${y}`;
   } else {
     const cm = state.currentMonth || getCurrentMonthIso();
-    const [y, m] = cm.split('-');
-    el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
+    const m = parseInt(cm.split('-')[1], 10);
+    el.innerText = `Tháng ${m}`;
   }
 }
 
-// ===== ROW bảng 6 cột =====
+// ===== v49: renderRow 6 cột =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
@@ -115,7 +108,6 @@ function buildOverviewSuggestion(type, label, orders, tier) {
 }
 
 function _updateAllViews() {
-  // Aggregate theo mode + month + date
   const { agg, total } = aggregateWeights(
     state.appData,
     state.periodMode,
@@ -177,7 +169,7 @@ function _updateAllViews() {
   const totalOrders = total.del + total.pick + total.ret;
   const isEmpty = totalOrders === 0;
 
-  // ===== HERO v46 =====
+  // ===== HERO =====
   const heroEl       = document.getElementById('overviewHero');
   const heroDataEl   = document.getElementById('heroData');
   const heroEmptyEl  = document.getElementById('heroEmpty');
@@ -198,6 +190,50 @@ function _updateAllViews() {
   }
 
   updateHeroContextLabel();
+
+  // ===== v49: HERO TILES =====
+  const heroTileDelEl  = document.getElementById('heroTileDel');
+  const heroTilePickEl = document.getElementById('heroTilePick');
+  const heroTileRetEl  = document.getElementById('heroTileRet');
+
+  if (heroTileDelEl) {
+    heroTileDelEl.innerText = total.del === 0 ? '0' : _fmt(total.del);
+    heroTileDelEl.classList.toggle('is-zero', total.del === 0);
+  }
+  if (heroTilePickEl) {
+    heroTilePickEl.innerText = total.pick === 0 ? '0' : _fmt(total.pick);
+    heroTilePickEl.classList.toggle('is-zero', total.pick === 0);
+  }
+  if (heroTileRetEl) {
+    heroTileRetEl.innerText = total.ret === 0 ? '0' : _fmt(total.ret);
+    heroTileRetEl.classList.toggle('is-zero', total.ret === 0);
+  }
+
+  // Legacy tiles (nếu vẫn còn DOM cũ)
+  const miniDelOrdersEl  = document.getElementById('miniDelOrders');
+  const miniDelPointsEl  = document.getElementById('miniDelPoints');
+  const miniPickOrdersEl = document.getElementById('miniPickOrders');
+  const miniPickPointsEl = document.getElementById('miniPickPoints');
+  const miniRetOrdersEl  = document.getElementById('miniRetOrders');
+  const miniRetPointsEl  = document.getElementById('miniRetPoints');
+
+  if (miniDelOrdersEl)  miniDelOrdersEl.innerText  = _fmt(total.del);
+  if (miniDelPointsEl)  miniDelPointsEl.innerText  = _fmt(delPts);
+  if (miniPickOrdersEl) miniPickOrdersEl.innerText = _fmt(total.pick);
+  if (miniPickPointsEl) miniPickPointsEl.innerText = _fmt(pickPts);
+  if (miniRetOrdersEl)  miniRetOrdersEl.innerText  = _fmt(total.ret);
+  if (miniRetPointsEl)  miniRetPointsEl.innerText  = _fmt(retPts);
+
+  // Hero tab chi tiết
+  document.getElementById('delTotalPoints').innerHTML =
+    `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
+  document.getElementById('pickTotalPoints').innerHTML =
+    `${_fmt(pickPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('pickTotalOrders').innerText = `${_fmt(total.pick)} đơn`;
+  document.getElementById('retTotalPoints').innerHTML =
+    `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
+  document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
 
   // ===== RATIO BAR =====
   const ratioContentEl = document.getElementById('ratioContent');
@@ -243,41 +279,6 @@ function _updateAllViews() {
   if (ordersDelEl)  ordersDelEl.innerText  = _fmt(total.del);
   if (ordersPickEl) ordersPickEl.innerText = _fmt(total.pick);
   if (ordersRetEl)  ordersRetEl.innerText  = _fmt(total.ret);
-
-  // ===== TILES =====
-  const miniDelOrdersEl  = document.getElementById('miniDelOrders');
-  const miniDelPointsEl  = document.getElementById('miniDelPoints');
-  const miniPickOrdersEl = document.getElementById('miniPickOrders');
-  const miniPickPointsEl = document.getElementById('miniPickPoints');
-  const miniRetOrdersEl  = document.getElementById('miniRetOrders');
-  const miniRetPointsEl  = document.getElementById('miniRetPoints');
-
-  if (miniDelOrdersEl) {
-    miniDelOrdersEl.innerText = total.del === 0 ? '—' : _fmt(total.del);
-    miniDelOrdersEl.classList.toggle('is-zero', total.del === 0);
-  }
-  if (miniDelPointsEl)  miniDelPointsEl.innerText  = _fmt(delPts);
-  if (miniPickOrdersEl) {
-    miniPickOrdersEl.innerText = total.pick === 0 ? '—' : _fmt(total.pick);
-    miniPickOrdersEl.classList.toggle('is-zero', total.pick === 0);
-  }
-  if (miniPickPointsEl) miniPickPointsEl.innerText = _fmt(pickPts);
-  if (miniRetOrdersEl) {
-    miniRetOrdersEl.innerText = total.ret === 0 ? '—' : _fmt(total.ret);
-    miniRetOrdersEl.classList.toggle('is-zero', total.ret === 0);
-  }
-  if (miniRetPointsEl)  miniRetPointsEl.innerText  = _fmt(retPts);
-
-  // Hero tab chi tiết
-  document.getElementById('delTotalPoints').innerHTML =
-    `${_fmt(delPts)} <span class="hero-value-unit">Điểm</span>`;
-  document.getElementById('delTotalOrders').innerText = `${_fmt(total.del)} đơn`;
-  document.getElementById('pickTotalPoints').innerHTML =
-    `${_fmt(pickPts)} <span class="hero-value-unit">Điểm</span>`;
-  document.getElementById('pickTotalOrders').innerText = `${_fmt(total.pick)} đơn`;
-  document.getElementById('retTotalPoints').innerHTML =
-    `${_fmt(retPts)} <span class="hero-value-unit">Điểm</span>`;
-  document.getElementById('retTotalOrders').innerText = `${_fmt(total.ret)} đơn`;
 
   // ===== Income UI =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
