@@ -206,7 +206,6 @@ function getRangeKey(minV, maxV) {
 }
 
 // v43.5: identify dải bằng MIN (an toàn hơn, không phụ thuộc max)
-// Vì SPX hiển thị dải cuối max = 999999 (không phải 999)
 function identifyRangeKey(minV, maxV) {
   for (const d of RANGE_DEFS) {
     if (d.min === minV && d.max === maxV) return d.key;
@@ -222,12 +221,7 @@ function identifyRangeKey(minV, maxV) {
   return null;
 }
 
-// ==================== PARSE v43.5 ====================
-// PRIMARY: parse theo cặp (range, N Đơn hàng)
-//   — Tìm tất cả "N Đơn hàng", lấy range gần nhất phía trước
-//   — Identify dải bằng MIN (bỏ qua max, vì max dải cuối = 999999)
-//   — Catch được cả dải over_15 và các dải có 1 đơn
-// FALLBACK: range-based cũ (giữ nguyên)
+// ==================== PARSE v43.5e ====================
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
@@ -240,7 +234,7 @@ function parseOcrText(cleanText) {
   if (!Number.isFinite(expectedTotal)) expectedTotal = null;
 
   // ============================================================
-  // PRIMARY v43.5: parse theo "N Đơn hàng" + range ngay trước
+  // PRIMARY v43.5e: parse theo "N Đơn hàng" + range ngay trước
   // ============================================================
   const orderLineRegex = /(\d{1,6})\s*(?:Đ[ơo]n\s*h[àaả]n?g|Don\s*hang)/gi;
   const orderMatches = [...text.matchAll(orderLineRegex)];
@@ -252,7 +246,8 @@ function parseOcrText(cleanText) {
     const count = parseInt(om[1], 10);
     if (!Number.isFinite(count) || count <= 0 || count > 99999) continue;
 
-    const beforeText = text.slice(Math.max(0, om.index - 120), om.index);
+    // v43.5e: lookback 300 ký tự (was 120)
+    const beforeText = text.slice(Math.max(0, om.index - 300), om.index);
 
     if (/(?:T[oôổ]ng|Tong)\s*$/i.test(beforeText)) continue;
 
@@ -274,7 +269,8 @@ function parseOcrText(cleanText) {
 
   if (matchedCount >= 1) {
     const sumPrimary = Object.values(primaryWeights).reduce((a, b) => a + b, 0);
-    const okTotal = expectedTotal === null || sumPrimary === expectedTotal;
+    // v43.5e: tolerance ±2 (was exact match)
+    const okTotal = expectedTotal === null || Math.abs(sumPrimary - expectedTotal) <= 2;
 
     if (okTotal) {
       Object.keys(primaryWeights).forEach(k => {
