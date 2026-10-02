@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from './config.js';
-import { generateId } from './utils.js';
+import { generateId, getCurrentMonthIso } from './utils.js';
 
 export const state = {
   appData: { delivery: [], pickup: [], return: [] },
@@ -8,11 +8,12 @@ export const state = {
   manualPoints: { buuCuc: 0, taiXe: 0 },
   manualSalary: 0,
   salaryDays: 26,
-  region: 'mien',   // 'mien' | 'hcm_hn'
+  region: 'mien',                // 'mien' | 'hcm_hn'
   activeTab: 'overview',
   histFilter: 'all',
   overviewFilter: 'all',
-  periodFilter: 'all',
+  periodFilter: 'month',         // v42: mặc định là 'month' (thay vì 'all')
+  currentMonth: getCurrentMonthIso(), // v42: "2026-10"
   lastOcrImageDataUrl: '',
   isOcrScan: false
 };
@@ -56,6 +57,14 @@ export function loadState() {
   // Khu vực tính công
   const reg = localStorage.getItem('spx_region');
   state.region = (reg === 'hcm_hn' || reg === 'mien') ? reg : 'mien';
+
+  // v42: Tháng đang xem
+  const savedMonth = localStorage.getItem('spx_current_month');
+  if (savedMonth && /^\d{4}-\d{2}$/.test(savedMonth)) {
+    state.currentMonth = savedMonth;
+  } else {
+    state.currentMonth = getCurrentMonthIso();
+  }
 }
 
 export function persistData() {
@@ -68,4 +77,9 @@ export function persistSettings() {
   localStorage.setItem(STORAGE_KEYS.rank,     state.rankBonus);
   localStorage.setItem(STORAGE_KEYS.rankName, state.rankName);
   localStorage.setItem('spx_region', state.region);
+}
+
+// v42: Lưu tháng đang xem
+export function persistCurrentMonth() {
+  localStorage.setItem('spx_current_month', state.currentMonth);
 }
