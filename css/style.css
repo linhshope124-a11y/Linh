@@ -1,6 +1,6 @@
 /* =============================================================
-   SPX Tracker v43.1 — Professional Redesign + Empty States
-   Nút Quét 48px · Region selector · Month Picker
+   SPX Tracker v46 — Period Mode Toggle (Tháng / Ngày)
+   Nút Quét 48px · Region selector · Latest
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
@@ -286,34 +286,98 @@ body {
 .btn-ocr { background: var(--info); border-color: var(--info); color: #fff; }
 .btn-ocr:hover { filter: brightness(0.95); }
 
-/* ============ PERIOD BAR ============ */
+/* ============ PERIOD BAR v46 ============ */
 .period-bar {
   max-width: 600px;
   margin: 14px auto 4px;
   padding: 0 16px;
 }
-.period-row {
+
+/* Hàng 1: mode toggle + Latest */
+.period-mode-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
-.month-nav {
+.period-mode-group {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+.period-mode-btn {
+  padding: 7px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+.period-mode-btn.active {
+  background: var(--text-1);
+  color: var(--bg);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+}
+[data-theme="dark"] .period-mode-btn.active {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.period-mode-btn:active { transform: scale(0.97); }
+
+.go-latest-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+.go-latest-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.go-latest-btn:active {
+  transform: scale(0.97);
+  background: var(--surface-2);
+}
+
+/* Hàng 2: nav ‹ label › */
+.period-nav-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 0;
+  gap: 8px;
 }
-.month-nav-btn {
-  width: 34px;
-  height: 34px;
+.period-nav-btn {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-2);
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 500;
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -325,24 +389,22 @@ body {
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
-.month-nav-btn:active:not(:disabled) {
-  transform: scale(0.9);
-}
-.month-nav-btn:disabled,
-.month-nav-btn.disabled {
+.period-nav-btn:active:not(:disabled) { transform: scale(0.92); }
+.period-nav-btn:disabled,
+.period-nav-btn.disabled {
   opacity: 0.32;
   cursor: not-allowed;
   pointer-events: none;
 }
-.month-nav-label {
+.period-label {
   flex: 1;
   min-width: 0;
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-1);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   font-family: inherit;
   letter-spacing: -0.015em;
@@ -354,48 +416,17 @@ body {
   text-overflow: ellipsis;
   -webkit-tap-highlight-color: transparent;
 }
-.month-nav-label:active {
-  transform: scale(0.98);
-}
-.period-toggle {
-  padding: 8px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-2);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.18s;
-  letter-spacing: -0.005em;
-  -webkit-tap-highlight-color: transparent;
-  flex-shrink: 0;
-}
-.period-toggle.active {
-  background: var(--text-1);
-  color: var(--bg);
-  border-color: var(--text-1);
-  font-weight: 700;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
-}
-[data-theme="dark"] .period-toggle.active {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-}
-.period-toggle:active { transform: scale(0.97); }
+.period-label:active { transform: scale(0.98); }
 
 @media (hover: hover) {
-  .month-nav-btn:hover:not(:disabled) {
-    background: var(--surface-2);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-  .month-nav-label:hover {
+  .go-latest-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .period-nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .period-label:hover {
     background: var(--accent-soft);
     border-color: var(--accent-border);
     color: var(--accent);
   }
+  .period-mode-btn:not(.active):hover { background: var(--border); }
 }
 
 /* ============ LAYOUT ============ */
@@ -430,6 +461,7 @@ body {
 [data-theme="dark"] .bottom-nav {
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.45);
 }
+
 .nav-btn {
   width: 100%;
   padding: 8px 2px;
@@ -602,7 +634,7 @@ body {
 }
 .info-icon:active { transform: scale(0.9); }
 
-/* ============ HERO v43.1 ============ */
+/* ============ HERO ============ */
 .hero {
   position: relative;
   padding: 20px;
@@ -625,7 +657,6 @@ body {
     var(--accent) 100%);
   opacity: 0.9;
 }
-/* v43.1: ẩn vạch cam khi hero empty */
 .hero.no-data::before { display: none; }
 
 .hero-sm {
@@ -666,7 +697,6 @@ body {
   letter-spacing: 0.1px;
 }
 
-/* Data state */
 .hero-data { display: block; }
 .hero-value {
   font-size: 42px;
@@ -715,7 +745,7 @@ body {
   letter-spacing: 0.6px;
 }
 
-/* Empty state v43.1 */
+/* Empty state */
 .hero-empty { display: none; }
 .hero-empty-title {
   font-size: 18px;
@@ -765,16 +795,13 @@ body {
   border-color: var(--border);
   color: var(--text-1);
 }
-.btn-cta-manual:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
+.btn-cta-manual:hover { border-color: var(--accent); color: var(--accent); }
 .btn-cta-ocr:active,
 .btn-cta-manual:active { transform: scale(0.97); }
 .btn-cta-ocr svg,
 .btn-cta-manual svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-/* Hero variants (tab Giao/Lấy/Hoàn) */
+/* Hero variants */
 .hero-giao { border-color: var(--giao-bd); }
 .hero-lay  { border-color: var(--lay-bd); }
 .hero-hoan { border-color: var(--hoan-bd); }
@@ -782,7 +809,7 @@ body {
 .hero-lay  .hero-eyebrow { color: var(--lay); }
 .hero-hoan .hero-eyebrow { color: var(--hoan); }
 
-/* ============ TILES v43 ============ */
+/* ============ TILES ============ */
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -819,9 +846,8 @@ body {
   color: var(--text-1);
   font-family: 'JetBrains Mono', monospace;
 }
-/* v43.1: số 0 hiển thị dash mờ */
 .tile-primary.is-zero {
-  color: var(--text-3);
+  color: var(--text-3) !important;
   font-size: 22px;
   opacity: 0.55;
 }
@@ -851,7 +877,6 @@ body {
 .tile-giao .tile-secondary span { color: var(--giao); }
 .tile-lay  .tile-secondary span { color: var(--lay); }
 .tile-hoan .tile-secondary span { color: var(--hoan); }
-/* Giữ màu mờ khi zero */
 .tile-primary.is-zero { color: var(--text-3) !important; }
 
 /* Legacy tile-val */
@@ -873,7 +898,7 @@ body {
 .tile-lay  .tile-val { color: var(--lay); }
 .tile-hoan .tile-val { color: var(--hoan); }
 
-/* ============ RANK PILLS v43.1 — fix K.Cương ============ */
+/* ============ RANK PILLS ============ */
 .rank-pill-group {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -967,7 +992,7 @@ body {
 .region-pill.active span:last-child { opacity: 0.85; }
 .region-pill:active { transform: scale(0.97); }
 
-/* ============ RATIO BAR v43.1 ============ */
+/* ============ RATIO BAR ============ */
 .ratio-bar {
   height: 12px;
   background: var(--surface-2);
@@ -1033,7 +1058,6 @@ body {
 .dot-lay  { background: var(--lay); }
 .dot-hoan { background: var(--hoan); }
 
-/* v43.1: Empty state cho ratio */
 .ratio-empty {
   text-align: center;
   padding: 20px 12px;
@@ -1043,7 +1067,7 @@ body {
   line-height: 1.5;
 }
 
-/* ============ INCOME v43 ============ */
+/* ============ INCOME ============ */
 details.income-section { padding: 0; overflow: hidden; }
 details.income-section > summary {
   list-style: none;
@@ -1289,6 +1313,34 @@ details.income-section[open] .income-chevron {
 .table-clean .next-cell .gain-num { color: var(--success); font-weight: 700; }
 .table-clean .next-cell .zero-dash { color: var(--text-3); font-weight: 400; }
 .table-clean .next-cell .arrow { color: var(--text-3); font-weight: 500; }
+
+/* v43.3: cột Cần / Được */
+.table-clean .need-cell,
+.table-clean .gain-cell {
+  padding-left: 4px;
+  padding-right: 4px;
+  text-align: right;
+}
+.table-clean .need-cell .need-num {
+  color: var(--danger);
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: -0.02em;
+}
+.table-clean .gain-cell .gain-num {
+  color: var(--success);
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: -0.02em;
+}
+.table-clean .next-cell .max-tag {
+  color: var(--success);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
 
 /* ============ FILTER BAR ============ */
 .filter-bar {
@@ -2139,7 +2191,6 @@ details.income-section[open] .income-chevron {
   .tile-primary { font-size: 21px; }
   .tile-val { font-size: 18px; }
 
-  /* Rank pills — fix K.Cương không bị cắt trên màn hình nhỏ */
   .rank-pill-group { gap: 4px; }
   .rank-pill {
     font-size: 10px;
@@ -2155,13 +2206,20 @@ details.income-section[open] .income-chevron {
   .table-clean td { font-size: 11.5px; padding: 11px 5px; }
   .table-clean th:first-child, .table-clean td:first-child { padding-left: 14px; }
   .table-clean th:last-child,  .table-clean td:last-child  { padding-right: 14px; }
+  .table-clean .need-cell .need-num,
+  .table-clean .gain-cell .gain-num { font-size: 11px; }
 
   .region-pill { padding: 10px 8px; font-size: 11.5px; }
   .region-pill span:last-child { font-size: 9.5px; }
 
-  .month-nav-label { font-size: 12px; padding: 7px 10px; }
-  .month-nav-btn { width: 32px; height: 32px; font-size: 16px; }
-  .period-toggle { padding: 7px 12px; font-size: 12px; }
+  /* v46: period bar thu gọn trên mobile nhỏ */
+  .period-nav-btn { width: 36px; height: 36px; font-size: 20px; }
+  .period-label { font-size: 13px; padding: 9px 12px; }
+  .period-mode-btn { padding: 6px 12px; font-size: 12px; }
+  .go-latest-btn { padding: 6px 10px; font-size: 11px; }
+  .go-latest-btn svg { width: 13px; height: 13px; }
+  .period-mode-row { gap: 6px; margin-bottom: 8px; }
+  .period-nav-row { gap: 6px; }
 
   .legend-pct { font-size: 12.5px; }
   .legend-orders { font-size: 10px; }
@@ -2180,7 +2238,6 @@ details.income-section[open] .income-chevron {
   .income-progress-fill,
   .nav-icon,
   .hero,
-  .month-nav,
   .undo-banner,
   .app-toast,
   .modal-box {
