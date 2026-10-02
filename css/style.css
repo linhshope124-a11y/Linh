@@ -1651,13 +1651,11 @@ details.income-section[open] .income-chevron { transform: rotate(180deg); }
   transform: scale(0.97);
 }
 
-/* Nút period-btn mới (Tháng / Hôm nay) — responsive */
 .period-btn[data-period] {
   min-width: 64px;
   text-align: center;
 }
 
-/* Responsive mobile nhỏ */
 @media (max-width: 360px) {
   .month-nav-btn {
     width: 30px;
