@@ -1,6 +1,6 @@
 import { state, persistSettings } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
-import { getTodayIso } from './utils.js';
+import { getTodayIso, getCurrentMonthIso, formatMonthLabel } from './utils.js';
 import { toggleTheme } from './theme.js';
 
 // ================ TABS ================
@@ -60,10 +60,35 @@ export function setOverviewFilter(filter, el) {
   });
 }
 
+/**
+ * v42: Chỉ nhận 'month' hoặc 'today'.
+ * Backward compat: nếu nhận key cũ ('all', 'this_month', 'last_month') → quy đổi.
+ */
 export function setPeriodFilter(period, el) {
+  // Backward compat
+  if (period === 'all' || period === 'this_month' || period === 'last_month') {
+    period = 'month';
+  }
+  if (period !== 'month' && period !== 'today') {
+    period = 'month';
+  }
+
   state.periodFilter = period;
-  el.parentElement.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+
+  // Update nút active
+  if (el && el.parentElement) {
+    el.parentElement.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    document.querySelectorAll('.period-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.period === period);
+    });
+  }
+
+  // v42: Cập nhật month nav (ẩn/hiện + label)
+  updateMonthNavUI();
+
+  // Đổi filter → quay về overview tab để user thấy kết quả
   updateAllViews();
 }
 
@@ -73,6 +98,59 @@ export function setHistFilter(filter, btn) {
   if (bar) bar.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderHistory();
+}
+
+// ================ v42: MONTH NAV UI ================
+/**
+ * Cập nhật:
+ * - Label tháng (id=monthNavLabel) → "Tháng 10/2026"
+ * - Disable nút › nếu đang ở tháng hiện tại
+ * - Ẩn/hiện month-nav theo periodFilter
+ */
+export function updateMonthNavUI() {
+  const nav = document.getElementById('monthNav');
+  const label = document.getElementById('monthNavLabel');
+  const btnNext = document.getElementById('monthNavNext');
+  const btnPrev = document.getElementById('monthNavPrev');
+  if (!nav || !label) return;
+
+  // Ẩn month-nav khi period = today
+  if (state.periodFilter === 'today') {
+    nav.style.display = 'none';
+    return;
+  }
+  nav.style.display = 'flex';
+
+  // Label
+  label.innerText = formatMonthLabel(state.currentMonth);
+
+  // Nút › — disable nếu đang ở tháng hiện tại
+  const nowMonth = getCurrentMonthIso();
+  if (btnNext) {
+    if (state.currentMonth >= nowMonth) {
+      btnNext.disabled = true;
+      btnNext.classList.add('disabled');
+    } else {
+      btnNext.disabled = false;
+      btnNext.classList.remove('disabled');
+    }
+  }
+
+  // Nút ‹ — disable nếu ở 2020-01 (giới hạn dưới)
+  if (btnPrev) {
+    if (state.currentMonth <= '2020-01') {
+      btnPrev.disabled = true;
+      btnPrev.classList.add('disabled');
+    } else {
+      btnPrev.disabled = false;
+      btnPrev.classList.remove('disabled');
+    }
+  }
+
+  // Đồng bộ nút period-btn active (nếu bị gọi khi state đổi từ ngoài)
+  document.querySelectorAll('.period-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.period === state.periodFilter);
+  });
 }
 
 // ================ RANK ================
@@ -150,7 +228,6 @@ export function initRankUI() {
 }
 
 // ================ REGION ================
-// Chỉ set active class từ state — KHÔNG attach listener (dùng inline onclick)
 export function initRegionUI() {
   document.querySelectorAll('.region-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.region === state.region);
