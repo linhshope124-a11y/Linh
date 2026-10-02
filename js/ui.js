@@ -1,7 +1,22 @@
-import { state, persistSettings } from './state.js';
+import { state, persistSettings, persistPeriodState } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
-import { getTodayIso, getCurrentMonthIso, formatMonthLabel } from './utils.js';
+import { getTodayIso, getCurrentMonthIso } from './utils.js';
 import { toggleTheme } from './theme.js';
+
+// ================ HELPERS ================
+function formatDateLabel(isoDate) {
+  if (!isoDate || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return '';
+  const [y, m, d] = isoDate.split('-');
+  const dt = new Date(isoDate + 'T00:00:00');
+  const wd = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][dt.getDay()];
+  return `${wd}, ${d}/${m}/${y}`;
+}
+
+function formatMonthLabel(isoMonth) {
+  if (!isoMonth || !/^\d{4}-\d{2}$/.test(isoMonth)) return '';
+  const [y, m] = isoMonth.split('-');
+  return `Tháng ${parseInt(m, 10)}/${y}`;
+}
 
 // ================ TABS ================
 export function switchMainTab(tabId, el) {
@@ -60,43 +75,6 @@ export function setOverviewFilter(filter, el) {
   });
 }
 
-/**
- * v43: Toggle giữa Tháng / Hôm nay
- * Gọi từ period-toggle button
- */
-export function togglePeriod() {
-  state.periodFilter = state.periodFilter === 'today' ? 'month' : 'today';
-  updatePeriodToggleUI();
-  updateMonthNavUI();
-  updateHeroContext();
-  updateAllViews();
-}
-
-/**
- * v43: Update trạng thái active của nút toggle
- */
-export function updatePeriodToggleUI() {
-  const btn = document.getElementById('periodToggle');
-  if (!btn) return;
-  const isToday = state.periodFilter === 'today';
-  btn.classList.toggle('active', isToday);
-  btn.innerText = isToday ? 'Bỏ lọc' : 'Hôm nay';
-}
-
-/**
- * v43: Update context label trên hero
- * "Tháng 10/2026" hoặc "Hôm nay"
- */
-export function updateHeroContext() {
-  const el = document.getElementById('heroContext');
-  if (!el) return;
-  if (state.periodFilter === 'today') {
-    el.innerText = 'Hôm nay';
-  } else {
-    el.innerText = formatMonthLabel(state.currentMonth);
-  }
-}
-
 export function setHistFilter(filter, btn) {
   state.histFilter = filter;
   const bar = btn.closest('.filter-bar');
@@ -105,51 +83,183 @@ export function setHistFilter(filter, btn) {
   renderHistory();
 }
 
-// ================ v43: MONTH NAV UI ================
+// ================ v46: PERIOD BAR ================
+
 /**
- * Cập nhật:
- * - Label tháng (id=monthNavLabel) → "Tháng 10/2026"
- * - Disable nút › nếu đang ở tháng hiện tại
- * - Ẩn/hiện month-nav theo periodFilter
+ * Toggle mode Tháng / Ngày
  */
-export function updateMonthNavUI() {
-  const nav = document.getElementById('monthNav');
-  const label = document.getElementById('monthNavLabel');
-  const btnNext = document.getElementById('monthNavNext');
-  const btnPrev = document.getElementById('monthNavPrev');
-  if (!nav || !label) return;
+export function setPeriodMode(mode, el) {
+  if (mode !== 'month' && mode !== 'day') return;
+  if (state.periodMode === mode) return;
 
-  // Ẩn month-nav khi period = today
-  if (state.periodFilter === 'today') {
-    nav.style.display = 'none';
-    return;
+  state.periodMode = mode;
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
+
+/**
+ * Nút ‹ — lùi 1 tháng hoặc 1 ngày
+ */
+export function periodPrev() {
+  if (state.periodMode === 'day') {
+    const [y, m, d] = state.currentDate.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() - 1);
+    if (dt.getFullYear() < 2020) return;
+    state.currentDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  } else {
+    const [y, m] = state.currentMonth.split('-').map(Number);
+    let newY = y, newM = m - 1;
+    if (newM < 1) { newM = 12; newY--; }
+    if (newY < 2020) return;
+    state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
   }
-  nav.style.display = 'flex';
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
 
-  // Label
-  label.innerText = formatMonthLabel(state.currentMonth);
-
-  // Nút › — disable nếu đang ở tháng hiện tại
+/**
+ * Nút › — tiến 1 tháng hoặc 1 ngày
+ */
+export function periodNext() {
+  const today = getTodayIso();
   const nowMonth = getCurrentMonthIso();
-  if (btnNext) {
-    if (state.currentMonth >= nowMonth) {
-      btnNext.disabled = true;
-      btnNext.classList.add('disabled');
-    } else {
-      btnNext.disabled = false;
-      btnNext.classList.remove('disabled');
-    }
+
+  if (state.periodMode === 'day') {
+    if (state.currentDate >= today) return;
+    const [y, m, d] = state.currentDate.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + 1);
+    state.currentDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  } else {
+    if (state.currentMonth >= nowMonth) return;
+    const [y, m] = state.currentMonth.split('-').map(Number);
+    let newY = y, newM = m + 1;
+    if (newM > 12) { newM = 1; newY++; }
+    state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
+  }
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
+
+/**
+ * Tap label — mở native picker tương ứng mode
+ */
+export function openPeriodPicker() {
+  if (state.periodMode === 'day') {
+    const p = document.getElementById('dayPickerInput');
+    if (!p) return;
+    p.value = state.currentDate;
+    if (typeof p.showPicker === 'function') {
+      try { p.showPicker(); } catch { p.click(); }
+    } else p.click();
+  } else {
+    const p = document.getElementById('monthPickerInput');
+    if (!p) return;
+    p.value = state.currentMonth;
+    if (typeof p.showPicker === 'function') {
+      try { p.showPicker(); } catch { p.click(); }
+    } else p.click();
+  }
+}
+
+/**
+ * Jump tới tháng cụ thể (từ month picker)
+ */
+export function jumpToMonth(value) {
+  if (!value || !/^\d{4}-\d{2}$/.test(value)) return;
+  const nowMonth = getCurrentMonthIso();
+  state.currentMonth = value > nowMonth ? nowMonth : value;
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
+
+/**
+ * Jump tới ngày cụ thể (từ day picker)
+ */
+export function jumpToDate(value) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+  const today = getTodayIso();
+  state.currentDate = value > today ? today : value;
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
+
+/**
+ * Nút "Mới nhất" — nhảy tới ngày record gần nhất có data
+ * Không có record → nhảy về hôm qua (SPX chốt số trễ)
+ */
+export function goToLatest() {
+  const allDates = [
+    ...state.appData.delivery.map(r => r.date),
+    ...state.appData.pickup.map(r => r.date),
+    ...state.appData.return.map(r => r.date)
+  ].filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d));
+
+  let targetDate;
+  if (allDates.length > 0) {
+    allDates.sort();
+    targetDate = allDates[allDates.length - 1];
+  } else {
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    targetDate = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
   }
 
-  // Nút ‹ — disable nếu ở 2020-01 (giới hạn dưới)
-  if (btnPrev) {
-    if (state.currentMonth <= '2020-01') {
-      btnPrev.disabled = true;
-      btnPrev.classList.add('disabled');
-    } else {
-      btnPrev.disabled = false;
-      btnPrev.classList.remove('disabled');
-    }
+  if (state.periodMode === 'day') {
+    state.currentDate = targetDate;
+  } else {
+    state.currentMonth = targetDate.slice(0, 7);
+  }
+  persistPeriodState();
+  updatePeriodBarUI();
+  updateAllViews();
+}
+
+/**
+ * Cập nhật label + disable nút ‹ › + sync toggle
+ */
+export function updatePeriodBarUI() {
+  const label = document.getElementById('periodLabel');
+  const prevBtn = document.getElementById('periodPrev');
+  const nextBtn = document.getElementById('periodNext');
+  if (!label) return;
+
+  // 1. Mode toggle active state
+  document.querySelectorAll('.period-mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === state.periodMode);
+  });
+
+  // 2. Label
+  if (state.periodMode === 'day') {
+    label.innerText = formatDateLabel(state.currentDate);
+  } else {
+    label.innerText = formatMonthLabel(state.currentMonth);
+  }
+
+  // 3. Prev disable
+  if (prevBtn) {
+    const atLowerBound = state.periodMode === 'day'
+      ? state.currentDate <= '2020-01-01'
+      : state.currentMonth <= '2020-01';
+    prevBtn.disabled = atLowerBound;
+    prevBtn.classList.toggle('disabled', atLowerBound);
+  }
+
+  // 4. Next disable
+  if (nextBtn) {
+    const today = getTodayIso();
+    const nowMonth = getCurrentMonthIso();
+    const atUpperBound = state.periodMode === 'day'
+      ? state.currentDate >= today
+      : state.currentMonth >= nowMonth;
+    nextBtn.disabled = atUpperBound;
+    nextBtn.classList.toggle('disabled', atUpperBound);
   }
 }
 
@@ -234,7 +344,7 @@ export function initRegionUI() {
   });
 }
 
-// ================ THEME (từ menu) ================
+// ================ THEME ================
 export function toggleThemeFromMenu() {
   toggleTheme();
   updateMenuThemeUI();
