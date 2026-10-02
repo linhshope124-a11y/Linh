@@ -25,23 +25,36 @@
       <line x1="3" y1="18" x2="21" y2="18"/>
     </svg>
   </button>
-
   <div class="brand">SPX Tracker</div>
-
   <span aria-hidden="true"></span>
 </header>
 
-<!-- ============ PERIOD BAR ============ -->
+<!-- ============ PERIOD BAR v46 ============ -->
 <div class="period-bar">
-  <div class="period-row">
-    <div class="month-nav" id="monthNav">
-      <button class="month-nav-btn" id="monthNavPrev" onclick="prevMonth()" aria-label="Tháng trước">‹</button>
-      <button class="month-nav-label" id="monthNavLabel" onclick="openMonthPicker()" aria-label="Chọn tháng">Tháng 10/2026</button>
-      <button class="month-nav-btn" id="monthNavNext" onclick="nextMonth()" aria-label="Tháng sau">›</button>
+  <!-- Hàng 1: mode toggle + latest -->
+  <div class="period-mode-row">
+    <div class="period-mode-group">
+      <button class="period-mode-btn active" data-mode="month" onclick="setPeriodMode('month', this)">Tháng</button>
+      <button class="period-mode-btn" data-mode="day" onclick="setPeriodMode('day', this)">Ngày</button>
     </div>
-    <button class="period-toggle" id="periodToggle" onclick="togglePeriod()">Hôm nay</button>
+    <button class="go-latest-btn" id="goLatestBtn" onclick="goToLatest()" aria-label="Ngày mới nhất">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
+        <polyline points="12 7 12 12 15 15"/>
+      </svg>
+      <span>Mới nhất</span>
+    </button>
   </div>
+
+  <!-- Hàng 2: nav -->
+  <div class="period-nav-row">
+    <button class="period-nav-btn" id="periodPrev" onclick="periodPrev()" aria-label="Trước">‹</button>
+    <button class="period-label" id="periodLabel" onclick="openPeriodPicker()">Tháng 10/2026</button>
+    <button class="period-nav-btn" id="periodNext" onclick="periodNext()" aria-label="Sau">›</button>
+  </div>
+
   <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
+  <input type="date" id="dayPickerInput" style="display:none" onchange="jumpToDate(this.value)">
 </div>
 
 <!-- ============ MAIN ============ -->
@@ -572,9 +585,10 @@
       <section class="guide-section">
         <h4 class="guide-h">📅 Chọn kỳ xem</h4>
         <ul class="guide-list">
-          <li><b>Tháng</b> — Xem theo tháng, dùng <b>‹ ›</b> để chuyển tháng</li>
-          <li>Nhấn <b>Tháng 10/2026</b> để mở bộ chọn tháng</li>
-          <li><b>Hôm nay</b> — Nhấn toggle bên phải để xem sản lượng hôm nay</li>
+          <li><b>Tháng</b> — Xem tổng theo tháng (mặc định)</li>
+          <li><b>Ngày</b> — Xem chi tiết 1 ngày</li>
+          <li>Nhấn <b>label</b> ở giữa để mở bộ chọn ngày/tháng</li>
+          <li><b>Mới nhất</b> — Nhảy về ngày gần nhất có dữ liệu</li>
         </ul>
       </section>
 
