@@ -31,17 +31,15 @@
   <span aria-hidden="true"></span>
 </header>
 
-<!-- ============ PERIOD BAR (v42: Tháng / Hôm nay) ============ -->
+<!-- ============ PERIOD BAR — v43 gộp 1 hàng ============ -->
 <div class="period-bar">
-  <div class="period-buttons">
-    <button class="period-btn active" data-period="month" onclick="setPeriodFilter('month', this)">Tháng</button>
-    <button class="period-btn" data-period="today" onclick="setPeriodFilter('today', this)">Hôm nay</button>
-  </div>
-
-  <div class="month-nav" id="monthNav">
-    <button class="month-nav-btn" id="monthNavPrev" onclick="prevMonth()" aria-label="Tháng trước">‹</button>
-    <button class="month-nav-label" id="monthNavLabel" onclick="openMonthPicker()" aria-label="Chọn tháng">Tháng 10/2026</button>
-    <button class="month-nav-btn" id="monthNavNext" onclick="nextMonth()" aria-label="Tháng sau">›</button>
+  <div class="period-row">
+    <div class="month-nav" id="monthNav">
+      <button class="month-nav-btn" id="monthNavPrev" onclick="prevMonth()" aria-label="Tháng trước">‹</button>
+      <button class="month-nav-label" id="monthNavLabel" onclick="openMonthPicker()" aria-label="Chọn tháng">Tháng 10/2026</button>
+      <button class="month-nav-btn" id="monthNavNext" onclick="nextMonth()" aria-label="Tháng sau">›</button>
+    </div>
+    <button class="period-toggle" id="periodToggle" onclick="togglePeriod()">Hôm nay</button>
   </div>
   <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
 </div>
@@ -54,30 +52,48 @@
     <div class="tab-panel active" id="tab-overview">
       <main class="app-container">
 
+        <!-- HERO v43 — 3 metrics cột -->
         <section class="hero">
           <div class="hero-top">
-            <span class="hero-eyebrow">Tổng điểm tích lũy</span>
-            <span class="hero-pill" id="overallTotalOrders">0 đơn</span>
+            <span class="hero-eyebrow">Điểm tích lũy</span>
+            <span class="hero-context" id="heroContext">Tháng 10/2026</span>
           </div>
           <div class="hero-value" id="overallTotalPoints">0 <span class="hero-value-unit">Điểm</span></div>
-          <div class="hero-sub" id="rankBonusDetailText">Gốc 0 · Thưởng +0 · TN +0</div>
+          <div class="hero-metrics" id="heroMetrics">
+            <div class="hero-metric">
+              <div class="hero-metric-value" id="heroBase">0</div>
+              <div class="hero-metric-label">Gốc</div>
+            </div>
+            <div class="hero-metric">
+              <div class="hero-metric-value" id="heroBonus">+0</div>
+              <div class="hero-metric-label">Thưởng</div>
+            </div>
+            <div class="hero-metric">
+              <div class="hero-metric-value" id="heroIncome">+0</div>
+              <div class="hero-metric-label">Thu nhập</div>
+            </div>
+          </div>
         </section>
 
+        <!-- TILES v43 — số đơn là primary -->
         <section class="tile-grid">
           <div class="tile tile-giao">
             <div class="tile-label">Giao</div>
-            <div class="tile-val" id="miniDelPoints">0</div>
-            <div class="tile-foot"><b id="miniDelOrders">0</b> đơn</div>
+            <div class="tile-primary" id="miniDelOrders">0</div>
+            <div class="tile-primary-unit">đơn</div>
+            <div class="tile-secondary"><span id="miniDelPoints">0</span> điểm</div>
           </div>
           <div class="tile tile-lay">
             <div class="tile-label">Lấy</div>
-            <div class="tile-val" id="miniPickPoints">0</div>
-            <div class="tile-foot"><b id="miniPickOrders">0</b> đơn</div>
+            <div class="tile-primary" id="miniPickOrders">0</div>
+            <div class="tile-primary-unit">đơn</div>
+            <div class="tile-secondary"><span id="miniPickPoints">0</span> điểm</div>
           </div>
           <div class="tile tile-hoan">
             <div class="tile-label">Hoàn</div>
-            <div class="tile-val" id="miniRetPoints">0</div>
-            <div class="tile-foot"><b id="miniRetOrders">0</b> đơn</div>
+            <div class="tile-primary" id="miniRetOrders">0</div>
+            <div class="tile-primary-unit">đơn</div>
+            <div class="tile-secondary"><span id="miniRetPoints">0</span> điểm</div>
           </div>
         </section>
 
@@ -110,9 +126,21 @@
             <div class="ratio-seg ratio-seg-ret"  id="ratioBarRet"  style="width:33.4%"></div>
           </div>
           <div class="ratio-legend">
-            <span class="legend-item"><span class="dot dot-giao"></span>Giao <b id="ratioPctDel">0%</b></span>
-            <span class="legend-item"><span class="dot dot-lay"></span>Lấy <b id="ratioPctPick">0%</b></span>
-            <span class="legend-item"><span class="dot dot-hoan"></span>Hoàn <b id="ratioPctRet">0%</b></span>
+            <div class="legend-col">
+              <span class="legend-item"><span class="dot dot-giao"></span>Giao</span>
+              <span class="legend-pct" id="ratioPctDel">0%</span>
+              <span class="legend-orders"><b id="ratioOrdersDel">0</b> đơn</span>
+            </div>
+            <div class="legend-col">
+              <span class="legend-item"><span class="dot dot-lay"></span>Lấy</span>
+              <span class="legend-pct" id="ratioPctPick">0%</span>
+              <span class="legend-orders"><b id="ratioOrdersPick">0</b> đơn</span>
+            </div>
+            <div class="legend-col">
+              <span class="legend-item"><span class="dot dot-hoan"></span>Hoàn</span>
+              <span class="legend-pct" id="ratioPctRet">0%</span>
+              <span class="legend-orders"><b id="ratioOrdersRet">0</b> đơn</span>
+            </div>
           </div>
         </section>
 
@@ -125,7 +153,12 @@
                         onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa\n\nĐã tích lũy = Lương 1 công × số công\n\nQuy đổi: Giao + Lấy/6 + Hoàn\n• Miền: ≥60 = 1 công, ≥30 = 0.5 công\n• TP.HCM & HN: ≥80 = 1 công, ≥40 = 0.5 công')"
                         aria-label="Trợ giúp">i</button>
               </span>
-              <span class="income-summary-days" id="incomeDayCount">0/26 công</span>
+              <div class="income-days-wrap">
+                <span class="income-summary-days" id="incomeDayCount">0/26 công</span>
+                <div class="income-progress">
+                  <div class="income-progress-fill" id="incomeProgressFill"></div>
+                </div>
+              </div>
             </div>
             <div class="income-summary-right">
               <span class="income-summary-value" id="incomeTotalDisplay">+0 Điểm</span>
@@ -506,7 +539,7 @@
         <ul class="guide-list">
           <li><b>Tháng</b> — Xem theo tháng, dùng <b>‹ ›</b> để chuyển tháng</li>
           <li>Nhấn <b>Tháng 10/2026</b> để mở bộ chọn tháng</li>
-          <li><b>Hôm nay</b> — Chỉ xem sản lượng hôm nay</li>
+          <li><b>Hôm nay</b> — Nhấn toggle bên phải để xem sản lượng hôm nay</li>
         </ul>
       </section>
 
