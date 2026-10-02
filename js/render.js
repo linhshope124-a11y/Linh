@@ -50,38 +50,44 @@ function getWorkDaysByPeriod(period, region, currentMonth) {
 }
 
 // ===== Hero context label v43.1 =====
-// period=month → rỗng (vì period bar đã có label)
-// period=today → "Hôm nay"
 function updateHeroContextLabel() {
   const el = document.getElementById('heroContext');
   if (!el) return;
   el.innerText = state.periodFilter === 'today' ? 'Hôm nay' : '';
 }
 
-// ===== ROW bảng 5 cột =====
+// ===== ROW bảng 6 cột (v43.3) =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
+  // Cột ĐIỂM (điểm hiện tại đạt được với SL này)
   const ptsText = tier.matched.pt === 0
     ? '<span class="zero-dash">—</span>'
     : _fmt(tier.matched.pt);
 
-  let nextText;
+  // Cột CẦN (số đơn cần thêm để lên mốc tiếp)
+  // Cột ĐƯỢC (số điểm sẽ gain khi lên mốc tiếp)
+  let needText, gainText;
+
   if (orders <= 0) {
-    nextText = '<span class="zero-dash">—</span>';
+    needText = '<span class="zero-dash">—</span>';
+    gainText = '<span class="zero-dash">—</span>';
   } else if (!tier.next || !isFinite(tier.matched.maxA)) {
-    nextText = '<span style="color:var(--success);font-weight:700">MAX</span>';
+    needText = '<span class="max-tag">MAX</span>';
+    gainText = '<span class="zero-dash">—</span>';
   } else {
     const need = tier.matched.maxA - orders;
     const gain = tier.next.pt - tier.matched.pt;
-    nextText = `<span class="need-num">+${_fmt(need)}</span><span class="arrow"> → </span><span class="gain-num">+${_fmt(gain)} điểm</span>`;
+    needText = `<span class="need-num">+${_fmt(need)}</span>`;
+    gainText = `<span class="gain-num">+${_fmt(gain)}</span>`;
   }
 
   return `<td class="weight-name">${shortLabel}</td>
     <td class="order-num ${typeClass} ${orders === 0 ? 'zero' : ''}">${_fmt(orders)}</td>
     <td class="range-cell">${tier.matched.range}</td>
     <td class="points-badge ${orders === 0 ? 'zero' : ''}">${ptsText}</td>
-    <td class="next-cell">${nextText}</td>`;
+    <td class="next-cell need-cell">${needText}</td>
+    <td class="next-cell gain-cell">${gainText}</td>`;
 }
 
 function buildOverviewSuggestion(type, label, orders, tier) {
@@ -172,7 +178,6 @@ function _updateAllViews() {
     if (heroIncomeEl) heroIncomeEl.innerText = '+' + _fmt(incomeAccumulated);
   }
 
-  // Update hero context (rỗng khi month, "Hôm nay" khi today)
   updateHeroContextLabel();
 
   // ===== RATIO BAR v43.1 =====
