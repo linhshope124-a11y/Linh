@@ -61,35 +61,40 @@ export function setOverviewFilter(filter, el) {
 }
 
 /**
- * v42: Chỉ nhận 'month' hoặc 'today'.
- * Backward compat: nếu nhận key cũ ('all', 'this_month', 'last_month') → quy đổi.
+ * v43: Toggle giữa Tháng / Hôm nay
+ * Gọi từ period-toggle button
  */
-export function setPeriodFilter(period, el) {
-  // Backward compat
-  if (period === 'all' || period === 'this_month' || period === 'last_month') {
-    period = 'month';
-  }
-  if (period !== 'month' && period !== 'today') {
-    period = 'month';
-  }
-
-  state.periodFilter = period;
-
-  // Update nút active
-  if (el && el.parentElement) {
-    el.parentElement.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-  } else {
-    document.querySelectorAll('.period-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.period === period);
-    });
-  }
-
-  // v42: Cập nhật month nav (ẩn/hiện + label)
+export function togglePeriod() {
+  state.periodFilter = state.periodFilter === 'today' ? 'month' : 'today';
+  updatePeriodToggleUI();
   updateMonthNavUI();
-
-  // Đổi filter → quay về overview tab để user thấy kết quả
+  updateHeroContext();
   updateAllViews();
+}
+
+/**
+ * v43: Update trạng thái active của nút toggle
+ */
+export function updatePeriodToggleUI() {
+  const btn = document.getElementById('periodToggle');
+  if (!btn) return;
+  const isToday = state.periodFilter === 'today';
+  btn.classList.toggle('active', isToday);
+  btn.innerText = isToday ? 'Bỏ lọc' : 'Hôm nay';
+}
+
+/**
+ * v43: Update context label trên hero
+ * "Tháng 10/2026" hoặc "Hôm nay"
+ */
+export function updateHeroContext() {
+  const el = document.getElementById('heroContext');
+  if (!el) return;
+  if (state.periodFilter === 'today') {
+    el.innerText = 'Hôm nay';
+  } else {
+    el.innerText = formatMonthLabel(state.currentMonth);
+  }
 }
 
 export function setHistFilter(filter, btn) {
@@ -100,7 +105,7 @@ export function setHistFilter(filter, btn) {
   renderHistory();
 }
 
-// ================ v42: MONTH NAV UI ================
+// ================ v43: MONTH NAV UI ================
 /**
  * Cập nhật:
  * - Label tháng (id=monthNavLabel) → "Tháng 10/2026"
@@ -146,11 +151,6 @@ export function updateMonthNavUI() {
       btnPrev.classList.remove('disabled');
     }
   }
-
-  // Đồng bộ nút period-btn active (nếu bị gọi khi state đổi từ ngoài)
-  document.querySelectorAll('.period-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.period === state.periodFilter);
-  });
 }
 
 // ================ RANK ================
