@@ -197,15 +197,6 @@ const RANGE_DEFS = [
   { key: 'over_15', min: 15, max: 999 }
 ];
 
-function getRangeKey(minV, maxV) {
-  for (const d of RANGE_DEFS) {
-    if (d.min === minV && d.max === maxV) return d.key;
-  }
-  if (minV === 15 && maxV > 15) return 'over_15';
-  return null;
-}
-
-// v43.5: identify dải bằng MIN (an toàn hơn, không phụ thuộc max)
 function identifyRangeKey(minV, maxV) {
   for (const d of RANGE_DEFS) {
     if (d.min === minV && d.max === maxV) return d.key;
@@ -221,75 +212,22 @@ function identifyRangeKey(minV, maxV) {
   return null;
 }
 
-// ==================== PARSE v43.5e ====================
+// ==================== PARSE v43.5g ====================
+// Distance matching 2 chiều (before/after/closest) + normalize ¡
+// Bỏ primary "by-range-and-count" vì OCR có thể đảo thứ tự range/count
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
-  const text = cleanText.replace(/[–—]/g, '-').replace(/,/g, '.');
+  const text = cleanText
+    .replace(/[–—]/g, '-')
+    .replace(/,/g, '.')
+    .replace(/¡/g, '1');
 
-  // ===== Expected total (Tổng X đơn hàng) =====
   const totalRegex = /T[oôổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
   let expectedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
   if (!Number.isFinite(expectedTotal)) expectedTotal = null;
 
-  // ============================================================
-  // PRIMARY v43.5e: parse theo "N Đơn hàng" + range ngay trước
-  // ============================================================
-  const orderLineRegex = /(\d{1,6})\s*(?:Đ[ơo]n\s*h[àaả]n?g|Don\s*hang)/gi;
-  const orderMatches = [...text.matchAll(orderLineRegex)];
-
-  const primaryWeights = {};
-  let matchedCount = 0;
-
-  for (const om of orderMatches) {
-    const count = parseInt(om[1], 10);
-    if (!Number.isFinite(count) || count <= 0 || count > 99999) continue;
-
-    // v43.5e: lookback 300 ký tự (was 120)
-    const beforeText = text.slice(Math.max(0, om.index - 300), om.index);
-
-    if (/(?:T[oôổ]ng|Tong)\s*$/i.test(beforeText)) continue;
-
-    const rangeMatches = [...beforeText.matchAll(
-      /(\d{1,2})(?:[.,]\d{1,3})?\s*[-–~]\s*(\d{1,6})(?:[.,]\d{1,3})?/g
-    )];
-    if (rangeMatches.length === 0) continue;
-
-    const lastRange = rangeMatches[rangeMatches.length - 1];
-    const minV = parseInt(lastRange[1], 10);
-    const maxV = parseInt(lastRange[2], 10);
-
-    const key = identifyRangeKey(minV, maxV);
-    if (!key) continue;
-
-    primaryWeights[key] = count;
-    matchedCount++;
-  }
-
-  if (matchedCount >= 1) {
-    const sumPrimary = Object.values(primaryWeights).reduce((a, b) => a + b, 0);
-    // v43.5e: tolerance ±2 (was exact match)
-    const okTotal = expectedTotal === null || Math.abs(sumPrimary - expectedTotal) <= 2;
-
-    if (okTotal) {
-      Object.keys(primaryWeights).forEach(k => {
-        weights[k] = primaryWeights[k];
-        confidences[k] = 95;
-      });
-      return {
-        weights,
-        confidences,
-        expectedTotal,
-        totalFound: sumPrimary,
-        mode: 'by-range-and-count'
-      };
-    }
-  }
-
-  // ============================================================
-  // FALLBACK: range-based cũ
-  // ============================================================
   const rangeRegex = /(\d{1,3})(?:[.,]\d{1,3})?\s*[-–~]\s*(\d{1,6})(?:[.,]\d{1,3})?/g;
   const ranges = [];
   let m;
@@ -297,9 +235,7 @@ function parseOcrText(cleanText) {
     const minV = parseInt(m[1], 10);
     const maxV = parseInt(m[2], 10);
     const key = identifyRangeKey(minV, maxV);
-    if (key) {
-      ranges.push({ key, pos: m.index, endPos: m.index + m[0].length });
-    }
+    if (key) ranges.push({ key, pos: m.index, endPos: m.index + m[0].length });
   }
   ranges.sort((a, b) => a.pos - b.pos);
 
@@ -320,11 +256,6 @@ function parseOcrText(cleanText) {
   }
   nums.sort((a, b) => a.pos - b.pos);
 
-  const orderedResult = {};
-  for (let i = 0; i < ranges.length && i < nums.length; i++) {
-    orderedResult[ranges[i].key] = nums[i].value;
-  }
-
   function distanceMatch(mode) {
     const result = {};
     const used = new Set();
@@ -340,7 +271,10 @@ function parseOcrText(cleanText) {
           if (n.pos < r.endPos) return;
           dist = n.pos - r.endPos;
         } else {
-          dist = Math.abs(n.pos - r.pos);
+          dist = Math.min(
+            Math.abs(n.pos - r.pos),
+            Math.abs(n.endPos - r.endPos)
+          );
         }
         if (dist < bestDist && dist < 800) {
           bestDist = dist;
@@ -352,40 +286,45 @@ function parseOcrText(cleanText) {
     return result;
   }
 
+  const orderedResult = {};
+  for (let i = 0; i < ranges.length && i < nums.length; i++) {
+    orderedResult[ranges[i].key] = nums[i].value;
+  }
+
   const sumOf = r => Object.values(r).reduce((a, b) => a + b, 0);
   const countOf = r => Object.keys(r).length;
 
-  let bestResult = orderedResult;
-  let bestMode = 'ordered';
+  const mClosest = distanceMatch('closest');
+  const mBefore  = distanceMatch('before');
+  const mAfter   = distanceMatch('after');
 
-  if (expectedTotal !== null) {
-    const diffOrdered = Math.abs(sumOf(orderedResult) - expectedTotal);
-    if (diffOrdered > 0) {
-      const mBefore = distanceMatch('before');
-      const mAfter  = distanceMatch('after');
-      const mClosest = distanceMatch('closest');
-      const candidates = [
-        { name: 'ordered', res: orderedResult, diff: diffOrdered, cnt: countOf(orderedResult) },
-        { name: 'before',  res: mBefore,       diff: Math.abs(sumOf(mBefore) - expectedTotal),  cnt: countOf(mBefore) },
-        { name: 'after',   res: mAfter,        diff: Math.abs(sumOf(mAfter) - expectedTotal),   cnt: countOf(mAfter) },
-        { name: 'closest', res: mClosest,      diff: Math.abs(sumOf(mClosest) - expectedTotal), cnt: countOf(mClosest) }
-      ];
-      candidates.sort((a, b) => {
-        if (a.diff !== b.diff) return a.diff - b.diff;
-        return b.cnt - a.cnt;
-      });
-      bestResult = candidates[0].res;
-      bestMode = candidates[0].name;
-    }
-  }
+  const candidates = [
+    { name: 'ordered', res: orderedResult, cnt: countOf(orderedResult) },
+    { name: 'closest', res: mClosest,      cnt: countOf(mClosest) },
+    { name: 'before',  res: mBefore,       cnt: countOf(mBefore) },
+    { name: 'after',   res: mAfter,        cnt: countOf(mAfter) }
+  ];
 
-  Object.keys(bestResult).forEach(k => {
-    weights[k] = bestResult[k];
-    confidences[k] = 88;
+  candidates.forEach(c => {
+    c.diff = expectedTotal !== null ? Math.abs(sumOf(c.res) - expectedTotal) : 0;
+  });
+  candidates.sort((a, b) => {
+    if (a.diff !== b.diff) return a.diff - b.diff;
+    return b.cnt - a.cnt;
+  });
+
+  const best = candidates[0];
+  let baseConf = 88;
+  if (best.diff === 0) baseConf = 95;
+  else if (best.diff <= 2) baseConf = 92;
+
+  Object.keys(best.res).forEach(k => {
+    weights[k] = best.res[k];
+    confidences[k] = baseConf;
   });
 
   const totalFound = Object.values(weights).reduce((a, b) => a + b, 0);
-  return { weights, confidences, expectedTotal, totalFound, mode: bestMode };
+  return { weights, confidences, expectedTotal, totalFound, mode: best.name };
 }
 
 // ==================== EXTRACT DATE ====================
@@ -642,7 +581,6 @@ export function fillModalFromResult(batchItem) {
   state.lastOcrImageDataUrl = r.fullDataUrl || '';
   state.isOcrScan = true;
 
-  // v43.5-DEBUG: hiển thị text OCR thô
   const debugEl = document.getElementById('ocrDebugText');
   if (debugEl) {
     const modeStr = r.mode ? `[mode: ${r.mode}]` : '';
