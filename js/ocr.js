@@ -213,7 +213,6 @@ function identifyRangeKey(minV, maxV) {
 }
 
 // ==================== PARSE v43.5g ====================
-// Distance matching 2 chiều (before/after/closest) + normalize ký tự lạ
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
@@ -419,7 +418,17 @@ function getTypeLabel(r) {
        : r.detectedColorType === 'pick' ? 'Lấy' : 'Hoàn';
 }
 
-// v45: tryAutoSave không showToast — caller quyết định thông báo
+// v45.1: kiểm tra record trùng hoàn toàn (date + weights)
+function findExactDuplicate(r) {
+  const type = getTypeFromResult(r);
+  const weights = buildWeights(r);
+  return state.appData[type].find(rec =>
+    rec.date === r.parsedDate &&
+    WEIGHT_KEYS.every(k => (parseInt(rec.weights[k], 10) || 0) === (parseInt(weights[k], 10) || 0))
+  ) || null;
+}
+
+// v45.1: auto-save chỉ khi chính xác (không check duplicate — caller làm)
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -431,19 +440,12 @@ function tryAutoSave(r) {
 
   const type = getTypeFromResult(r);
   const weights = buildWeights(r);
-
-  const existing = state.appData[type].find(rec =>
-    rec.date === r.parsedDate &&
-    WEIGHT_KEYS.every(k => (parseInt(rec.weights[k], 10) || 0) === (parseInt(weights[k], 10) || 0))
-  );
-  if (existing) return false;
-
   state.appData[type].unshift({ id: generateId(), date: r.parsedDate, weights });
   updateAllViews();
   return true;
 }
 
-// ==================== MAIN v45 ====================
+// ==================== MAIN v45.1 ====================
 export async function handleOcrImage(event) {
   const files = Array.from(event.target.files || []);
   event.target.value = '';
@@ -459,79 +461,107 @@ export async function handleOcrImage(event) {
     const newResults = await processFiles(files);
     overlay.style.display = 'none';
 
-    // Phân loại: chính xác → auto-save | lệch/lỗi → cần check
+    // Phân loại 3 nhóm
     const autoSaved = [];
-    const needAttention = [];
+    const duplicates = [];   // v45.1: ảnh trùng — không lưu, không mở modal
+    const needAttention = []; // ảnh lệch / lỗi — cần user check
 
     for (const item of newResults) {
       if (item.error) {
         needAttention.push(item);
         continue;
       }
-      if (tryAutoSave(item.result)) {
+      const r = item.result;
+
+      // Ưu tiên check trùng trước
+      if (findExactDuplicate(r)) {
+        duplicates.push(item);
+        continue;
+      }
+
+      if (tryAutoSave(r)) {
         autoSaved.push(item);
       } else {
         needAttention.push(item);
       }
     }
 
-    // ===== Case 1: Tất cả đều chính xác → không mở modal =====
-    if (needAttention.length === 0) {
+    // ===== Case A: Có ảnh cần check → xử lý như cũ =====
+    if (needAttention.length > 0) {
+      if (wasAppend) {
+        batchResults.push(...needAttention);
+        renderBatchList();
+        document.getElementById('batchOcrModal').classList.add('active');
+        showSummaryToast(autoSaved.length, duplicates.length, needAttention.length);
+        return;
+      }
+
+      // Quét 1 ảnh
+      if (files.length === 1) {
+        const item = newResults[0];
+        if (item.error) {
+          showToast('Không đọc được ảnh: ' + item.error, 'error', 3000);
+          return;
+        }
+        fillModalFromResult(item);
+        return;
+      }
+
+      // Quét nhiều ảnh → mở batch modal với các ảnh cần check
+      batchResults = needAttention;
+      openBatchOcrModal();
+      showSummaryToast(autoSaved.length, duplicates.length, needAttention.length, 400);
+      return;
+    }
+
+    // ===== Case B: Không có ảnh cần check =====
+    if (files.length === 1) {
+      const item = newResults[0];
+      const r = item.result;
+      if (duplicates.length === 1) {
+        showToast(
+          `Ảnh đã tồn tại — ${getTypeLabel(r)} ${formatDateDisplay(r.parsedDate)}: ${r.totalFound} đơn`,
+          'warning', 2500
+        );
+        return;
+      }
       if (autoSaved.length === 1) {
-        const r = autoSaved[0].result;
         showToast(
           `Đã tự động lưu ${getTypeLabel(r)} ${formatDateDisplay(r.parsedDate)}: ${r.totalFound} đơn`,
           'success', 2500
         );
-      } else if (autoSaved.length > 1) {
-        const totalOrders = autoSaved.reduce((s, i) => s + i.result.totalFound, 0);
-        showToast(`Đã tự động lưu ${autoSaved.length} ảnh (${totalOrders} đơn)`, 'success', 2500);
       }
       return;
     }
 
-    // ===== Case 2: Có ảnh cần check =====
-    if (wasAppend) {
-      batchResults.push(...needAttention);
-      renderBatchList();
-      document.getElementById('batchOcrModal').classList.add('active');
-      if (autoSaved.length > 0) {
-        showToast(
-          `Tự động lưu ${autoSaved.length}, còn ${needAttention.length} cần check`,
-          'warning', 3000
-        );
-      }
-      return;
-    }
-
-    // Quét 1 ảnh
-    if (files.length === 1) {
-      const item = newResults[0];
-      if (item.error) {
-        showToast('Không đọc được ảnh: ' + item.error, 'error', 3000);
-        return;
-      }
-      fillModalFromResult(item);
-      return;
-    }
-
-    // Quét nhiều ảnh → mở batch modal với các ảnh cần check
-    batchResults = needAttention;
-    openBatchOcrModal();
-
-    if (autoSaved.length > 0) {
-      setTimeout(() => {
-        showToast(
-          `Tự động lưu ${autoSaved.length}, còn ${needAttention.length} cần check`,
-          'warning', 3500
-        );
-      }, 400);
+    // Nhiều ảnh — tổng hợp thông báo
+    if (autoSaved.length > 0 || duplicates.length > 0) {
+      showSummaryToast(autoSaved.length, duplicates.length, 0);
     }
   } catch (err) {
     console.error(err);
     overlay.style.display = 'none';
     showToast('Lỗi khi quét ảnh', 'error', 3000);
   }
+}
+
+// v45.1: helper tạo toast tổng hợp
+function showSummaryToast(saved, dup, need, delayMs = 0) {
+  const parts = [];
+  if (saved > 0) parts.push(`Đã lưu ${saved}`);
+  if (dup > 0)   parts.push(`bỏ qua ${dup} trùng`);
+  if (need > 0)  parts.push(`${need} cần check`);
+
+  if (parts.length === 0) return;
+
+  let type = 'success';
+  if (need > 0) type = 'warning';
+  else if (dup > 0 && saved === 0) type = 'warning';
+
+  const msg = parts.join(', ');
+  const fire = () => showToast(msg, type, 3000);
+  if (delayMs > 0) setTimeout(fire, delayMs);
+  else fire();
 }
 
 async function processFiles(files) {
