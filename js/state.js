@@ -1,5 +1,5 @@
 import { STORAGE_KEYS } from './config.js';
-import { generateId, getCurrentMonthIso } from './utils.js';
+import { generateId, getCurrentMonthIso, getTodayIso } from './utils.js';
 
 export const state = {
   appData: { delivery: [], pickup: [], return: [] },
@@ -8,12 +8,17 @@ export const state = {
   manualPoints: { buuCuc: 0, taiXe: 0 },
   manualSalary: 0,
   salaryDays: 26,
-  region: 'mien',                // 'mien' | 'hcm_hn'
+  region: 'mien',
+
   activeTab: 'overview',
   histFilter: 'all',
   overviewFilter: 'all',
-  periodFilter: 'month',         // v42: mặc định là 'month' (thay vì 'all')
-  currentMonth: getCurrentMonthIso(), // v42: "2026-10"
+
+  // v46: Chế độ xem — 'month' hoặc 'day'
+  periodMode: 'month',
+  currentMonth: getCurrentMonthIso(),
+  currentDate: getTodayIso(),
+
   lastOcrImageDataUrl: '',
   isOcrScan: false
 };
@@ -54,16 +59,27 @@ export function loadState() {
   state.manualSalary = parseFloat(localStorage.getItem('spx_manual_salary')) || 0;
   state.salaryDays = 26;
 
-  // Khu vực tính công
   const reg = localStorage.getItem('spx_region');
   state.region = (reg === 'hcm_hn' || reg === 'mien') ? reg : 'mien';
 
-  // v42: Tháng đang xem
+  // v46: period mode
+  const savedMode = localStorage.getItem('spx_period_mode');
+  state.periodMode = (savedMode === 'day' || savedMode === 'month') ? savedMode : 'month';
+
+  // currentMonth
   const savedMonth = localStorage.getItem('spx_current_month');
   if (savedMonth && /^\d{4}-\d{2}$/.test(savedMonth)) {
     state.currentMonth = savedMonth;
   } else {
     state.currentMonth = getCurrentMonthIso();
+  }
+
+  // currentDate
+  const savedDate = localStorage.getItem('spx_current_date');
+  if (savedDate && /^\d{4}-\d{2}-\d{2}$/.test(savedDate)) {
+    state.currentDate = savedDate;
+  } else {
+    state.currentDate = getTodayIso();
   }
 }
 
@@ -79,7 +95,14 @@ export function persistSettings() {
   localStorage.setItem('spx_region', state.region);
 }
 
-// v42: Lưu tháng đang xem
-export function persistCurrentMonth() {
+// v46: persist period state (mode + month + date)
+export function persistPeriodState() {
+  localStorage.setItem('spx_period_mode',  state.periodMode);
   localStorage.setItem('spx_current_month', state.currentMonth);
+  localStorage.setItem('spx_current_date',  state.currentDate);
+}
+
+// Backward compat — hàm cũ vẫn gọi được
+export function persistCurrentMonth() {
+  persistPeriodState();
 }
