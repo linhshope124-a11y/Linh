@@ -31,14 +31,19 @@
   <span aria-hidden="true"></span>
 </header>
 
-<!-- ============ PERIOD BAR ============ -->
+<!-- ============ PERIOD BAR (v42: Tháng / Hôm nay) ============ -->
 <div class="period-bar">
   <div class="period-buttons">
-    <button class="period-btn active" onclick="setPeriodFilter('all', this)">Tất cả</button>
-    <button class="period-btn" onclick="setPeriodFilter('this_month', this)">Tháng này</button>
-    <button class="period-btn" onclick="setPeriodFilter('last_month', this)">Tháng trước</button>
-    <button class="period-btn" onclick="setPeriodFilter('today', this)">Hôm nay</button>
+    <button class="period-btn active" data-period="month" onclick="setPeriodFilter('month', this)">Tháng</button>
+    <button class="period-btn" data-period="today" onclick="setPeriodFilter('today', this)">Hôm nay</button>
   </div>
+
+  <div class="month-nav" id="monthNav">
+    <button class="month-nav-btn" id="monthNavPrev" onclick="prevMonth()" aria-label="Tháng trước">‹</button>
+    <button class="month-nav-label" id="monthNavLabel" onclick="openMonthPicker()" aria-label="Chọn tháng">Tháng 10/2026</button>
+    <button class="month-nav-btn" id="monthNavNext" onclick="nextMonth()" aria-label="Tháng sau">›</button>
+  </div>
+  <input type="month" id="monthPickerInput" style="display:none" onchange="jumpToMonth(this.value)">
 </div>
 
 <!-- ============ MAIN ============ -->
@@ -497,6 +502,15 @@
       </section>
 
       <section class="guide-section">
+        <h4 class="guide-h">📅 Chọn kỳ xem</h4>
+        <ul class="guide-list">
+          <li><b>Tháng</b> — Xem theo tháng, dùng <b>‹ ›</b> để chuyển tháng</li>
+          <li>Nhấn <b>Tháng 10/2026</b> để mở bộ chọn tháng</li>
+          <li><b>Hôm nay</b> — Chỉ xem sản lượng hôm nay</li>
+        </ul>
+      </section>
+
+      <section class="guide-section">
         <h4 class="guide-h">📝 Nhập sản lượng</h4>
         <div class="guide-card">
           <div class="guide-card-title">📷 Quét ảnh (nhanh)</div>
@@ -552,7 +566,6 @@
         <h4 class="guide-h">⚙️ Khác</h4>
         <ul class="guide-list">
           <li><b>Đổi theme</b> — Menu ☰ → Chế độ tối / sáng</li>
-          <li><b>Lọc kỳ</b> — Tất cả / Tháng này / Tháng trước / Hôm nay</li>
           <li><b>Hoàn tác</b> — Nhấn banner "Hoàn tác" (hiện 5s sau khi sửa/xóa)</li>
         </ul>
       </section>
