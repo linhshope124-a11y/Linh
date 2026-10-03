@@ -1,9 +1,34 @@
-import { state, persistSalaryByMonth } from './state.js';
+import {
+  state,
+  persistData,
+  persistSalaryByMonth,
+  persistRankByMonth
+} from './state.js';
 import { APP_VERSION, STORAGE_KEYS, WEIGHT_KEYS } from './config.js';
 import { getTodayIso } from './utils.js';
 import { updateAllViews } from './render.js';
-import { initRankUI, initRegionUI } from './ui.js';
+import { initRankUI, initRegionUI, showToast } from './ui.js';
 
+// ==================== HELPERS ====================
+function weightsEqual(a, b) {
+  return WEIGHT_KEYS.every(k => (parseInt(a[k], 10) || 0) === (parseInt(b[k], 10) || 0));
+}
+
+function dedupeList(list) {
+  const seen = new Set();
+  return list.filter(r => {
+    const key = r.date + '|' + WEIGHT_KEYS.map(k => parseInt(r.weights?.[k], 10) || 0).join('_');
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function totalRecords(data) {
+  return (data.delivery?.length || 0) + (data.pickup?.length || 0) + (data.return?.length || 0);
+}
+
+// ==================== COPY / PASTE JSON ====================
 export function copyDataJson() {
   const jsonStr = JSON.stringify(state.appData, null, 2);
   const btn = document.getElementById('copyJsonBtn');
@@ -31,22 +56,13 @@ export function openPasteJsonModal()  {
 }
 export function closePasteJsonModal() { document.getElementById('pasteJsonModal').classList.remove('active'); }
 
-function weightsEqual(a, b) {
-  return WEIGHT_KEYS.every(k => (parseInt(a[k], 10) || 0) === (parseInt(b[k], 10) || 0));
-}
-
-// Dọn trùng lặp trong 1 mảng records
-function dedupeList(list) {
-  const seen = new Set();
-  return list.filter(r => {
-    const key = r.date + '|' + WEIGHT_KEYS.map(k => parseInt(r.weights?.[k], 10) || 0).join('_');
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
-function applyImportedPayload(parsed) {
+// ==================== APPLY IMPORT ====================
+/**
+ * v50.8.0: Áp dụng payload import với 2 chế độ:
+ *   - overwrite: GHI ĐÈ (xóa hết cũ, thay bằng file)
+ *   - merge:     THÊM VÀO (giữ cũ, thêm mới, skip trùng)
+ */
+function applyImportedPayload(parsed, mode = 'overwrite') {
   let importedData = null, importedSettings = null;
   if (parsed?.data && (parsed.data.delivery || parsed.data.pickup || parsed.data.return)) {
     importedData = parsed.data; importedSettings = parsed.settings || null;
@@ -54,37 +70,68 @@ function applyImportedPayload(parsed) {
     importedData = parsed;
   } else return { success: false };
 
-  // DỌN TRÙNG LẶP tự động khi import
-  const originalDel  = importedData.delivery || [];
-  const originalPick = importedData.pickup   || [];
-  const originalRet  = importedData.return   || [];
+  // Chuẩn hóa dữ liệu từ file
+  const newDel  = dedupeList(importedData.delivery || []);
+  const newPick = dedupeList(importedData.pickup   || []);
+  const newRet  = dedupeList(importedData.return   || []);
 
-  const dedupedDel  = dedupeList(originalDel);
-  const dedupedPick = dedupeList(originalPick);
-  const dedupedRet  = dedupeList(originalRet);
+  let removedCount = 0;
+  let addedCount = 0;
 
-  const removedCount = (originalDel.length  - dedupedDel.length)
-                     + (originalPick.length - dedupedPick.length)
-                     + (originalRet.length  - dedupedRet.length);
+  if (mode === 'overwrite') {
+    // === GHI ĐÈ ===
+    const oldTotal = totalRecords(state.appData);
+    state.appData = {
+      delivery: newDel,
+      pickup:   newPick,
+      return:   newRet
+    };
+    addedCount = totalRecords(state.appData);
+    removedCount = 0; // Ghi đè → không đếm trùng
+    console.log(`[Import] OVERWRITE: ${oldTotal} → ${addedCount} bản ghi`);
+  } else {
+    // === MERGE (THÊM VÀO) ===
+    // Skip bản ghi trùng (date + weights) giữa cũ và mới
+    const mergeList = (oldList, newList) => {
+      const merged = [...oldList];
+      let added = 0;
+      newList.forEach(r => {
+        const dup = oldList.find(o => o.date === r.date && weightsEqual(o.weights, r.weights));
+        if (dup) return; // Skip trùng
+        merged.push(r);
+        added++;
+      });
+      return { list: merged, added };
+    };
 
-  state.appData = {
-    delivery: dedupedDel,
-    pickup:   dedupedPick,
-    return:   dedupedRet
-  };
+    const m1 = mergeList(state.appData.delivery, newDel);
+    const m2 = mergeList(state.appData.pickup,   newPick);
+    const m3 = mergeList(state.appData.return,   newRet);
+
+    state.appData = {
+      delivery: m1.list,
+      pickup:   m2.list,
+      return:   m3.list
+    };
+    addedCount = m1.added + m2.added + m3.added;
+    const newTotal = totalRecords({ delivery: newDel, pickup: newPick, return: newRet });
+    removedCount = newTotal - addedCount; // Số bản ghi bị skip vì trùng
+    console.log(`[Import] MERGE: thêm ${addedCount}, skip ${removedCount} trùng`);
+  }
 
   localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.appData));
   localStorage.setItem(STORAGE_KEYS.vault,   JSON.stringify(state.appData));
 
+  // ===== Settings =====
   if (importedSettings) {
-    if (typeof importedSettings.rankName === 'string') {
-      state.rankName = importedSettings.rankName;
-      localStorage.setItem(STORAGE_KEYS.rankName, state.rankName);
+    // Region
+    if (typeof importedSettings.region === 'string' &&
+        (importedSettings.region === 'mien' || importedSettings.region === 'hcm_hn')) {
+      state.region = importedSettings.region;
+      localStorage.setItem('spx_region', state.region);
     }
-    if (Number.isFinite(importedSettings.rankBonus)) {
-      state.rankBonus = importedSettings.rankBonus;
-      localStorage.setItem(STORAGE_KEYS.rank, state.rankBonus);
-    }
+
+    // Theme
     if (typeof importedSettings.theme === 'string') {
       localStorage.setItem(STORAGE_KEYS.theme, importedSettings.theme);
       document.documentElement.setAttribute('data-theme', importedSettings.theme);
@@ -94,17 +141,52 @@ function applyImportedPayload(parsed) {
 
     // ===== v50.4: salaryByMonth =====
     if (importedSettings.salaryByMonth && typeof importedSettings.salaryByMonth === 'object') {
-      state.salaryByMonth = importedSettings.salaryByMonth;
+      if (mode === 'overwrite') {
+        state.salaryByMonth = importedSettings.salaryByMonth;
+      } else {
+        // Merge: không ghi đè tháng đã có
+        Object.keys(importedSettings.salaryByMonth).forEach(m => {
+          if (!state.salaryByMonth[m]) {
+            state.salaryByMonth[m] = importedSettings.salaryByMonth[m];
+          }
+        });
+      }
       persistSalaryByMonth();
     } else {
-      // Legacy: manualSalary + manualPoints → migrate vào tháng hiện tại
+      // Legacy: manualSalary + manualPoints
       const legacySalary = Number(importedSettings.manualSalary) || 0;
       const legacyBuuCuc = importedSettings.manualPoints?.buuCuc || 0;
       const legacyTaiXe  = importedSettings.manualPoints?.taiXe  || 0;
       if (legacySalary > 0 || legacyBuuCuc > 0 || legacyTaiXe > 0) {
         const m = state.currentMonth || new Date().toISOString().slice(0, 7);
-        state.salaryByMonth[m] = { base: legacySalary, buuCuc: legacyBuuCuc, taiXe: legacyTaiXe };
-        persistSalaryByMonth();
+        if (!state.salaryByMonth[m]) {
+          state.salaryByMonth[m] = { base: legacySalary, buuCuc: legacyBuuCuc, taiXe: legacyTaiXe };
+          persistSalaryByMonth();
+        }
+      }
+    }
+
+    // ===== v50.8.0: rankByMonth =====
+    if (importedSettings.rankByMonth && typeof importedSettings.rankByMonth === 'object') {
+      if (mode === 'overwrite') {
+        state.rankByMonth = importedSettings.rankByMonth;
+      } else {
+        Object.keys(importedSettings.rankByMonth).forEach(m => {
+          if (!state.rankByMonth[m]) {
+            state.rankByMonth[m] = importedSettings.rankByMonth[m];
+          }
+        });
+      }
+      persistRankByMonth();
+    } else if (typeof importedSettings.rankName === 'string' && importedSettings.rankName !== 'none') {
+      // Legacy: rankName + rankBonus (global)
+      const m = state.currentMonth || new Date().toISOString().slice(0, 7);
+      if (!state.rankByMonth[m]) {
+        state.rankByMonth[m] = {
+          name: importedSettings.rankName,
+          bonus: Number(importedSettings.rankBonus) || 0
+        };
+        persistRankByMonth();
       }
     }
 
@@ -112,50 +194,79 @@ function applyImportedPayload(parsed) {
       state.salaryDays = importedSettings.salaryDays;
       localStorage.setItem('spx_salary_days', state.salaryDays);
     }
-
-    // Region (nếu file có)
-    if (typeof importedSettings.region === 'string' &&
-        (importedSettings.region === 'mien' || importedSettings.region === 'hcm_hn')) {
-      state.region = importedSettings.region;
-      localStorage.setItem('spx_region', state.region);
-    }
-
-    initRankUI();
-    initRegionUI();
   }
 
-  return { success: true, removedCount };
+  persistData();
+  return { success: true, addedCount, removedCount, mode };
 }
 
-export function confirmImportJsonString() {
+/**
+ * v50.8.0: Kiểm tra app đang có dữ liệu → hỏi user muốn GHI ĐÈ hay THÊM VÀO.
+ * @returns {Promise<string|null>} 'overwrite' | 'merge' | null (user hủy)
+ */
+function askImportMode() {
+  const currentTotal = totalRecords(state.appData);
+  if (currentTotal === 0) return Promise.resolve('overwrite'); // App trống → ghi đè luôn
+
+  const msg =
+    `⚠️ App đang có ${currentTotal} bản ghi.\n\n` +
+    `Bạn muốn:\n\n` +
+    `• OK → GHI ĐÈ\n` +
+    `  Xóa hết data cũ, thay bằng file\n\n` +
+    `• Cancel → THÊM VÀO\n` +
+    `  Giữ data cũ + thêm mới (skip trùng)`;
+
+  // confirm() chỉ có 2 nút OK/Cancel
+  const ok = window.confirm(msg);
+  return Promise.resolve(ok ? 'overwrite' : 'merge');
+}
+
+// ==================== IMPORT (paste JSON) ====================
+export async function confirmImportJsonString() {
   const text = document.getElementById('jsonPasteInput').value.trim();
   if (!text) { alert('Vui lòng dán chuỗi JSON!'); return; }
+
+  let parsed;
   try {
-    const parsed = JSON.parse(text);
-    const result = applyImportedPayload(parsed);
-    if (result.success) {
-      updateAllViews();
-      closePasteJsonModal();
-      let msg = '✅ Khôi phục dữ liệu thành công!';
-      if (result.removedCount > 0) {
-        msg += `\n\n🧹 Đã tự động bỏ qua ${result.removedCount} bản ghi trùng lặp.`;
-      }
-      alert(msg);
-    } else alert('Chuỗi JSON không đúng định dạng!');
-  } catch { alert('Dữ liệu JSON không hợp lệ!'); }
+    parsed = JSON.parse(text);
+  } catch {
+    alert('Dữ liệu JSON không hợp lệ!');
+    return;
+  }
+
+  const mode = await askImportMode();
+  if (!mode) return;
+
+  const result = applyImportedPayload(parsed, mode);
+  if (!result.success) {
+    alert('Chuỗi JSON không đúng định dạng!');
+    return;
+  }
+
+  updateAllViews();
+  initRankUI();
+  initRegionUI();
+  closePasteJsonModal();
+
+  const msg = mode === 'overwrite'
+    ? `✅ Đã GHI ĐÈ: ${result.addedCount} bản ghi mới`
+    : `✅ Đã THÊM VÀO: +${result.addedCount} bản ghi` +
+      (result.removedCount > 0 ? `\n🧹 Bỏ qua ${result.removedCount} bản ghi trùng` : '');
+  alert(msg);
 }
 
+// ==================== EXPORT ====================
 export function exportData() {
   const payload = {
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     settings: {
-      rankName: state.rankName,
-      rankBonus: state.rankBonus,
-      theme: localStorage.getItem(STORAGE_KEYS.theme) || 'light',
-      salaryByMonth: state.salaryByMonth,   // ← v50.4
-      salaryDays: state.salaryDays,
-      region: state.region
+      // v50.8.0
+      rankByMonth:  state.rankByMonth,
+      salaryByMonth: state.salaryByMonth,
+      salaryDays:   state.salaryDays,
+      region:       state.region,
+      theme:        localStorage.getItem(STORAGE_KEYS.theme) || 'light'
     },
     data: state.appData
   };
@@ -166,28 +277,47 @@ export function exportData() {
   document.body.appendChild(a); a.click(); a.remove();
 }
 
-export function importData(event) {
+// ==================== IMPORT FILE ====================
+export async function importData(event) {
   const file = event.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
-  reader.onload = e => {
+  reader.onload = async e => {
+    let parsed;
     try {
-      const parsed = JSON.parse(e.target.result);
-      const result = applyImportedPayload(parsed);
-      if (result.success) {
-        updateAllViews();
-        let msg = '✅ Khôi phục dữ liệu thành công!';
-        if (result.removedCount > 0) {
-          msg += `\n\n🧹 Đã tự động bỏ qua ${result.removedCount} bản ghi trùng lặp.`;
-        }
-        alert(msg);
-      } else alert('File sao lưu không đúng định dạng!');
-    } catch { alert('Không đọc được file sao lưu!'); }
+      parsed = JSON.parse(e.target.result);
+    } catch {
+      alert('Không đọc được file sao lưu!');
+      event.target.value = '';
+      return;
+    }
+
+    const mode = await askImportMode();
+    if (!mode) { event.target.value = ''; return; }
+
+    const result = applyImportedPayload(parsed, mode);
+    if (!result.success) {
+      alert('File sao lưu không đúng định dạng!');
+      event.target.value = '';
+      return;
+    }
+
+    updateAllViews();
+    initRankUI();
+    initRegionUI();
+
+    const msg = mode === 'overwrite'
+      ? `✅ Đã GHI ĐÈ: ${result.addedCount} bản ghi mới`
+      : `✅ Đã THÊM VÀO: +${result.addedCount} bản ghi` +
+        (result.removedCount > 0 ? `\n🧹 Bỏ qua ${result.removedCount} bản ghi trùng` : '');
+    alert(msg);
   };
   reader.readAsText(file);
   event.target.value = '';
 }
 
+// ==================== RESTORE FROM VAULT ====================
 export function restoreFromVault() {
   const vault = JSON.parse(localStorage.getItem(STORAGE_KEYS.vault));
   const hasData = vault && (
