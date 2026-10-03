@@ -7,6 +7,7 @@ import {
   initRegionUI,
   setPeriodMode, periodPrev, periodNext, openPeriodPicker,
   jumpToMonth, jumpToDate, goToLatest, updatePeriodBarUI,
+  syncRankUIForCurrentMonth,
   openAddModal, openEditModal, closeModal,
   openMenuModal, closeMenuModal,
   openHistoryTab,
@@ -135,7 +136,6 @@ async function registerSW() {
     swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
     console.log('[PWA] SW registered:', swRegistration.scope);
 
-    // Lắng nghe SW mới
     swRegistration.addEventListener('updatefound', () => {
       const newWorker = swRegistration.installing;
       if (!newWorker) return;
@@ -148,7 +148,6 @@ async function registerSW() {
       });
     });
 
-    // Lắng nghe message từ SW (khi SW mới activate xong)
     navigator.serviceWorker.addEventListener('message', e => {
       if (e.data && e.data.type === 'SW_UPDATED') {
         console.log('[PWA] SW updated → reloading...');
@@ -176,11 +175,9 @@ async function checkVersion() {
 
     if (serverVersion !== currentAppVersion) {
       console.log('[Update] New version found:', serverVersion, '(current:', currentAppVersion + ')');
-      // Force SW check update
       if (swRegistration) {
         try { await swRegistration.update(); } catch {}
       }
-      // Nếu SW đã waiting sẵn → hiện banner luôn
       if (swRegistration && swRegistration.waiting) {
         waitingWorker = swRegistration.waiting;
       }
@@ -209,22 +206,18 @@ function hideUpdateBanner() {
 async function applyUpdate() {
   hideUpdateBanner();
   try {
-    // Lấy worker đang waiting
     const worker = waitingWorker
       || (swRegistration && swRegistration.waiting)
       || (swRegistration && swRegistration.installing);
 
     if (worker) {
-      // Gửi lệnh skipWaiting → SW mới activate → notify client → reload
       worker.postMessage({ type: 'SKIP_WAITING' });
-      // Fallback: nếu sau 2.5s chưa reload → ép reload
       setTimeout(() => {
         if (document.visibilityState === 'visible') {
           window.location.reload();
         }
       }, 2500);
     } else {
-      // Không có SW chờ → reload trực tiếp
       window.location.reload();
     }
   } catch (e) {
@@ -239,6 +232,7 @@ Object.assign(window, {
   toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setHistFilter,
   setRankTier,
+  syncRankUIForCurrentMonth,   // v50.8.0
 
   // v50.7.2: Auto-update
   applyUpdate,
@@ -336,10 +330,7 @@ Object.assign(window, {
   initRankUI();
   initRegionUI();
 
-  // v46: đồng bộ period bar theo state đã load
   updatePeriodBarUI();
-
-  // v48: đồng bộ hero expand state
   _initHeroExpandState();
 
   attachAutoClearInputs();
@@ -348,6 +339,6 @@ Object.assign(window, {
 
   // v50.7.2: Auto-update system
   registerSW();
-  setTimeout(checkVersion, 2000);              // Lần đầu sau 2s
-  setInterval(checkVersion, 5 * 60 * 1000);    // Sau đó mỗi 5 phút
+  setTimeout(checkVersion, 2000);
+  setInterval(checkVersion, 5 * 60 * 1000);
 })();
