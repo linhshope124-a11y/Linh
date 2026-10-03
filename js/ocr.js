@@ -432,7 +432,7 @@ function findExactDuplicate(r) {
   ) || null;
 }
 
-// ==================== v50.6: VALIDATE PHÂN BỐ ====================
+// ==================== v50.7.1: VALIDATE PHÂN BỐ ====================
 function validateDistribution(weights) {
   const w = {
     '0_2':    parseInt(weights['0_2'], 10)   || 0,
@@ -455,14 +455,14 @@ function validateDistribution(weights) {
     warnings.push(`Dải 0-2 chỉ ${Math.round(w['0_2']/total*100)}% (thường ≥50%)`);
     suspects.add('0_2');
   }
-  // Rule 2: 0-2 ≥ 2-4
-  if (w['0_2'] < w['2_4']) {
-    warnings.push('Dải 2-4 nhiều hơn dải 0-2');
+  // Rule 2 (v50.7.1: nới lỏng): chỉ cảnh báo nếu 2-4 ≥ 10 đơn VÀ 2-4 gấp > 3× dải 0-2
+  if (w['2_4'] >= 10 && w['0_2'] < w['2_4'] * 0.33) {
+    warnings.push('Dải 2-4 nhiều bất thường so với dải 0-2');
     suspects.add('0_2'); suspects.add('2_4');
   }
-  // Rule 3: 2-4 ≥ 4-6
-  if (w['2_4'] < w['4_6']) {
-    warnings.push('Dải 4-6 nhiều hơn dải 2-4');
+  // Rule 3 (v50.7.1: nới lỏng): chỉ cảnh báo nếu 4-6 ≥ 5 đơn VÀ 4-6 gấp > 3× dải 2-4
+  if (w['4_6'] >= 5 && w['2_4'] < w['4_6'] * 0.33) {
+    warnings.push('Dải 4-6 nhiều bất thường so với dải 2-4');
     suspects.add('2_4'); suspects.add('4_6');
   }
   // Rule 4: max ≤ 5× dải 0-2
