@@ -1,4 +1,4 @@
-import { state, persistData, getSalaryConfig, hasSalaryConfig } from './state.js';
+import { state, persistData, getSalaryConfig, hasSalaryConfig, getRankConfig } from './state.js';
 import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
 import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
 import { formatPts, formatDateDisplay, _fmt, getCurrentMonthIso, getTodayIso } from './utils.js';
@@ -51,7 +51,7 @@ function updateHeroContextLabel() {
   el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
 }
 
-// ===== v50.4.1: renderRow 6 cột (thêm "điểm" vào cột ĐƯỢC) =====
+// ===== v49: renderRow 6 cột =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
@@ -136,8 +136,11 @@ function _updateAllViews() {
     ovBox.innerHTML = ovSuggBuf.join('');
   }
 
-  const rawBase   = delPts + pickPts + retPts;
-  const rankBonus = Math.round(rawBase * state.rankBonus);
+  const rawBase = delPts + pickPts + retPts;
+
+  // ===== v50.8.0: Hạng thưởng theo tháng =====
+  const rankCfg   = getRankConfig(state.currentMonth);
+  const rankBonus = Math.round(rawBase * rankCfg.bonus);
 
   // ===== v50.4: Lương theo tháng =====
   const salaryDays  = getSalaryDaysForPeriod();
