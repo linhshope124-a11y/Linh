@@ -27,12 +27,11 @@ function buildPayload() {
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     settings: {
-      // v50.8.0
-      rankByMonth:  state.rankByMonth,
+      rankByMonth:   state.rankByMonth,
       salaryByMonth: state.salaryByMonth,
-      salaryDays:   state.salaryDays,
-      region:       state.region,
-      theme:        localStorage.getItem(STORAGE_KEYS.theme) || 'light'
+      salaryDays:    state.salaryDays,
+      region:        state.region,
+      theme:         localStorage.getItem(STORAGE_KEYS.theme) || 'light'
     },
     data: state.appData
   };
@@ -40,7 +39,10 @@ function buildPayload() {
 
 // ==================== TEST CONNECTION ====================
 export async function testCloudConnection() {
-  const token = document.getElementById('ghTokenInput').value.trim();
+  const input = document.getElementById('ghTokenInput');
+  // v50.8.2: cho phép dùng token đã lưu nếu input trống
+  const token = (input?.value || '').trim() || getToken();
+
   if (!token) { setStatus('❌ Chưa nhập token', 'err'); return; }
   setStatus('⏳ Đang kiểm tra...', 'idle');
   try {
@@ -50,6 +52,9 @@ export async function testCloudConnection() {
     if (!res.ok) throw new Error('Token sai hoặc hết hạn');
     const user = await res.json();
     localStorage.setItem('spx_gh_token', token);
+    // v50.8.2: xóa input sau khi lưu thành công
+    if (input) input.value = '';
+    updateTokenUI();
     setStatus(`✅ OK — ${user.login}`, 'ok');
   } catch (e) {
     setStatus(`❌ ${e.message}`, 'err');
@@ -58,8 +63,17 @@ export async function testCloudConnection() {
 
 // ==================== PUSH TO CLOUD ====================
 export async function pushToCloud() {
-  const token = (document.getElementById('ghTokenInput')?.value.trim()) || getToken();
+  const input = document.getElementById('ghTokenInput');
+  const token = (input?.value || '').trim() || getToken();
+
   if (!token) { setStatus('❌ Chưa có token', 'err'); return; }
+
+  // Nếu user vừa nhập token mới → lưu lại + xóa input
+  if (input?.value?.trim()) {
+    localStorage.setItem('spx_gh_token', input.value.trim());
+    input.value = '';
+    updateTokenUI();
+  }
 
   let gistId = (document.getElementById('gistIdInput')?.value.trim()) || getGistId();
   const payload = buildPayload();
@@ -101,10 +115,9 @@ export async function pushToCloud() {
     }
 
     const gist = await res.json();
-    localStorage.setItem('spx_gh_token', token);
     localStorage.setItem('spx_gist_id', gist.id);
-    const input = document.getElementById('gistIdInput');
-    if (input) input.value = gist.id;
+    const gistInput = document.getElementById('gistIdInput');
+    if (gistInput) gistInput.value = gist.id;
 
     const now = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     localStorage.setItem('spx_last_backup', now);
@@ -116,11 +129,19 @@ export async function pushToCloud() {
 
 // ==================== PULL FROM CLOUD ====================
 export async function pullFromCloud() {
-  const token  = (document.getElementById('ghTokenInput')?.value.trim()) || getToken();
+  const input = document.getElementById('ghTokenInput');
+  const token = (input?.value || '').trim() || getToken();
   const gistId = (document.getElementById('gistIdInput')?.value.trim()) || getGistId();
 
   if (!token || !gistId) { setStatus('❌ Chưa cấu hình token/gist', 'err'); return; }
   if (!confirm('Khôi phục từ Cloud sẽ ÁP DỤNG dữ liệu từ Cloud. Tiếp tục?')) return;
+
+  // Nếu user vừa nhập token mới → lưu
+  if (input?.value?.trim()) {
+    localStorage.setItem('spx_gh_token', input.value.trim());
+    input.value = '';
+    updateTokenUI();
+  }
 
   setStatus('⏳ Đang tải...', 'idle');
   try {
@@ -135,13 +156,13 @@ export async function pullFromCloud() {
     const parsed = JSON.parse(content);
     if (!parsed.data || !parsed.data.delivery) throw new Error('Dữ liệu không hợp lệ');
 
-    // v50.8.0: Hỏi user chọn chế độ (chỉ hỏi nếu app đang có data)
-    const mode = await askImportMode();
-    if (!mode) { setStatus('Đã hủy', 'idle'); return; }
+    const newCount = (parsed.data.delivery?.length || 0)
+                   + (parsed.data.pickup?.length   || 0)
+                   + (parsed.data.return?.length   || 0);
+    const mode = await askImportMode(newCount);
+    if (mode === 'cancel') { setStatus('Đã hủy', 'idle'); return; }
 
-    // Áp dụng payload với mode đã chọn
     const result = applyImportedPayload(parsed, mode);
-
     if (!result.success) throw new Error('Áp dụng dữ liệu thất bại');
 
     persistData();
@@ -152,7 +173,7 @@ export async function pullFromCloud() {
     initRegionUI();
     updateAllViews();
 
-    let doneMsg = mode === 'overwrite'
+    const doneMsg = mode === 'overwrite'
       ? `✅ Đã GHI ĐÈ từ Cloud: ${result.addedCount} bản ghi`
       : `✅ Đã THÊM VÀO từ Cloud: +${result.addedCount} bản ghi` +
         (result.removedCount > 0 ? `\n🧹 Bỏ qua ${result.removedCount} trùng` : '');
@@ -164,18 +185,58 @@ export async function pullFromCloud() {
   }
 }
 
+// ==================== v50.8.2: TOKEN MANAGEMENT ====================
+/**
+ * Cập nhật UI token — hiển thị trạng thái đã lưu/ chưa lưu.
+ * KHÔNG refill token vào input (bảo mật).
+ */
+function updateTokenUI() {
+  const hasToken = Boolean(getToken());
+  const wrapper = document.getElementById('tokenStatusWrap');
+  const savedLabel = document.getElementById('tokenSavedLabel');
+  const clearBtn = document.getElementById('clearTokenBtn');
+
+  if (wrapper) wrapper.style.display = hasToken ? 'flex' : 'none';
+  if (savedLabel) savedLabel.textContent = hasToken ? '✅ Đã lưu token' : '';
+  if (clearBtn) clearBtn.style.display = hasToken ? 'inline-flex' : 'none';
+}
+
+/**
+ * Xóa token đã lưu khỏi localStorage.
+ */
+export function clearCloudToken() {
+  if (!getToken()) return;
+  if (!confirm('Xóa token GitHub đã lưu?\n\nBạn sẽ cần nhập lại token để backup Cloud.')) return;
+
+  localStorage.removeItem('spx_gh_token');
+  const input = document.getElementById('ghTokenInput');
+  if (input) input.value = '';
+  updateTokenUI();
+  setStatus('Đã xóa token', 'idle');
+}
+
 // ==================== INIT CLOUD UI ====================
 export function initCloudUI() {
-  const token = getToken();
   const gistId = getGistId();
   const autoBackup = isAutoBackup();
+  const hasToken = Boolean(getToken());
 
   const tokenInput = document.getElementById('ghTokenInput');
   const gistInput  = document.getElementById('gistIdInput');
   const toggle     = document.getElementById('autoBackupToggle');
 
-  if (tokenInput) tokenInput.value = token;
-  if (gistInput)  gistInput.value  = gistId;
+  // v50.8.2: KHÔNG refill token vào input
+  if (tokenInput) {
+    tokenInput.value = '';
+    if (hasToken) {
+      tokenInput.placeholder = '•••••••• (đã lưu — để trống nếu không đổi)';
+    } else {
+      tokenInput.placeholder = 'ghp_... (dán token mới)';
+    }
+  }
+
+  if (gistInput) gistInput.value = gistId;
+
   if (toggle) {
     toggle.checked = autoBackup;
     toggle.onchange = () => {
@@ -184,9 +245,15 @@ export function initCloudUI() {
     };
   }
 
-  if (!token)       setStatus('Chưa cấu hình — cần tạo token', 'idle');
-  else if (!gistId) setStatus('Đã có token — bấm "Backup ngay"', 'idle');
-  else {
+  // Hiển thị trạng thái token
+  updateTokenUI();
+
+  // Status tổng
+  if (!hasToken) {
+    setStatus('Chưa cấu hình — cần tạo token', 'idle');
+  } else if (!gistId) {
+    setStatus('Đã có token — bấm "Backup" để tạo Gist lần đầu', 'idle');
+  } else {
     const last = localStorage.getItem('spx_last_backup');
     setStatus(last ? `✅ Backup cuối: ${last}` : '✅ Đã cấu hình', 'ok');
   }
