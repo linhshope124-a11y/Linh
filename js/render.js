@@ -51,7 +51,7 @@ function updateHeroContextLabel() {
   el.innerText = `Tháng ${parseInt(m, 10)}/${y}`;
 }
 
-// ===== v49: renderRow 6 cột =====
+// ===== v50.4.1: renderRow 6 cột (thêm "điểm" vào cột ĐƯỢC) =====
 function renderRow(weightLabel, orders, tier, typeClass) {
   const shortLabel = weightLabel.replace(/\s+/g, '').replace('kg', '');
 
@@ -71,7 +71,7 @@ function renderRow(weightLabel, orders, tier, typeClass) {
     const need = tier.matched.maxA - orders;
     const gain = tier.next.pt - tier.matched.pt;
     needText = `<span class="need-num">+${_fmt(need)}</span>`;
-    gainText = `<span class="gain-num">+${_fmt(gain)}</span>`;
+    gainText = `<span class="gain-num">+${_fmt(gain)}</span><span class="gain-unit"> điểm</span>`;
   }
 
   return `<td class="weight-name">${shortLabel}</td>
