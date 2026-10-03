@@ -2403,3 +2403,14 @@ details.income-section[open] .income-chevron {
     animation: none !important;
   }
 }
+
+/* ============ v50.4.1: đơn vị "điểm" cột ĐƯỢC ============ */
+.table-clean .gain-cell .gain-unit {
+  color: var(--text-3);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0;
+  margin-left: 1px;
+  opacity: 0.75;
+}
