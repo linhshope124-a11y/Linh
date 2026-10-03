@@ -1,8 +1,8 @@
-import { state } from './state.js';
+import { state, persistSalaryByMonth } from './state.js';
 import { APP_VERSION, STORAGE_KEYS, WEIGHT_KEYS } from './config.js';
 import { getTodayIso } from './utils.js';
 import { updateAllViews } from './render.js';
-import { initRankUI } from './ui.js';
+import { initRankUI, initRegionUI } from './ui.js';
 
 export function copyDataJson() {
   const jsonStr = JSON.stringify(state.appData, null, 2);
@@ -91,22 +91,37 @@ function applyImportedPayload(parsed) {
       const icon = document.getElementById('themeIcon');
       if (icon) icon.innerText = importedSettings.theme === 'dark' ? '☀️' : '🌙';
     }
-    if (importedSettings.manualPoints) {
-      state.manualPoints = {
-        buuCuc: importedSettings.manualPoints.buuCuc || 0,
-        taiXe:  importedSettings.manualPoints.taiXe  || 0
-      };
-      localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
+
+    // ===== v50.4: salaryByMonth =====
+    if (importedSettings.salaryByMonth && typeof importedSettings.salaryByMonth === 'object') {
+      state.salaryByMonth = importedSettings.salaryByMonth;
+      persistSalaryByMonth();
+    } else {
+      // Legacy: manualSalary + manualPoints → migrate vào tháng hiện tại
+      const legacySalary = Number(importedSettings.manualSalary) || 0;
+      const legacyBuuCuc = importedSettings.manualPoints?.buuCuc || 0;
+      const legacyTaiXe  = importedSettings.manualPoints?.taiXe  || 0;
+      if (legacySalary > 0 || legacyBuuCuc > 0 || legacyTaiXe > 0) {
+        const m = state.currentMonth || new Date().toISOString().slice(0, 7);
+        state.salaryByMonth[m] = { base: legacySalary, buuCuc: legacyBuuCuc, taiXe: legacyTaiXe };
+        persistSalaryByMonth();
+      }
     }
-    if (Number.isFinite(importedSettings.manualSalary)) {
-      state.manualSalary = importedSettings.manualSalary;
-      localStorage.setItem('spx_manual_salary', state.manualSalary);
-    }
+
     if (Number.isFinite(importedSettings.salaryDays)) {
       state.salaryDays = importedSettings.salaryDays;
       localStorage.setItem('spx_salary_days', state.salaryDays);
     }
+
+    // Region (nếu file có)
+    if (typeof importedSettings.region === 'string' &&
+        (importedSettings.region === 'mien' || importedSettings.region === 'hcm_hn')) {
+      state.region = importedSettings.region;
+      localStorage.setItem('spx_region', state.region);
+    }
+
     initRankUI();
+    initRegionUI();
   }
 
   return { success: true, removedCount };
@@ -138,9 +153,9 @@ export function exportData() {
       rankName: state.rankName,
       rankBonus: state.rankBonus,
       theme: localStorage.getItem(STORAGE_KEYS.theme) || 'light',
-      manualPoints: state.manualPoints,
-      manualSalary: state.manualSalary,
-      salaryDays: state.salaryDays
+      salaryByMonth: state.salaryByMonth,   // ← v50.4
+      salaryDays: state.salaryDays,
+      region: state.region
     },
     data: state.appData
   };
