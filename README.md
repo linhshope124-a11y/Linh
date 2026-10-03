@@ -209,28 +209,3 @@ Made with ❤️ for SPX drivers
 ```
 
 ---
-
-## 🎯 Tóm lại — Bạn làm thế nào?
-
-**Nhanh nhất:**
-
-1. **Copy** đoạn trong khối code ở trên ☝️
-2. Mở **github.com/linhshope124-a11y/Linh** trên Chrome
-3. **Add file → Create new file**
-4. Đặt tên: `README.md`
-5. **Paste** nội dung
-6. **Commit new file** ✅
-
-**Xong trong ~1 phút.** Sau đó vào repo → thấy README hiển thị đẹp ngay.
-
----
-
-## ⚠️ Lưu ý
-
-- Tên file **phải viết hoa đúng**: `README.md` (không phải `readme.md`)
-- Đặt ở **thư mục gốc** repo (ngang cấp `index.html`), **KHÔNG** đặt trong `css/` hay `js/`
-- Nếu muốn thêm ảnh sau → tạo thư mục `screenshots/` và upload ảnh vào
-
----
-
-Không làm được bước nào → chụp ảnh màn hình chỗ bị lỗi, tôi chỉ tiếp 🎯
