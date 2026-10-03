@@ -1,4 +1,4 @@
-import { state, persistSettings, persistPeriodState } from './state.js';
+import { state, persistSettings, persistPeriodState, getRankConfig, setRankConfig } from './state.js';
 import { updateAllViews, renderHistory } from './render.js';
 import { getTodayIso, getCurrentMonthIso } from './utils.js';
 import { toggleTheme } from './theme.js';
@@ -104,6 +104,7 @@ export function periodPrev() {
   state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
   persistPeriodState();
   updatePeriodBarUI();
+  syncRankUIForCurrentMonth();   // v50.8.0: cập nhật pill hạng theo tháng mới
   updateAllViews();
 }
 
@@ -116,6 +117,7 @@ export function periodNext() {
   state.currentMonth = `${newY}-${String(newM).padStart(2, '0')}`;
   persistPeriodState();
   updatePeriodBarUI();
+  syncRankUIForCurrentMonth();   // v50.8.0
   updateAllViews();
 }
 
@@ -134,6 +136,7 @@ export function jumpToMonth(value) {
   state.currentMonth = value > nowMonth ? nowMonth : value;
   persistPeriodState();
   updatePeriodBarUI();
+  syncRankUIForCurrentMonth();   // v50.8.0
   updateAllViews();
 }
 
@@ -168,6 +171,7 @@ export function goToLatest() {
   state.currentMonth = targetDate.slice(0, 7);
   persistPeriodState();
   updatePeriodBarUI();
+  syncRankUIForCurrentMonth();   // v50.8.0
   updateAllViews();
 }
 
@@ -194,15 +198,16 @@ export function updatePeriodBarUI() {
   }
 }
 
-// ================ RANK ================
+// ================ v50.8.0: RANK (theo tháng) ================
 export function setRankTier(rankKey, bonusPct, el) {
   if (window.__spxLongPressFired) {
     window.__spxLongPressFired = false;
     return;
   }
-  state.rankBonus = bonusPct;
-  state.rankName  = rankKey;
-  persistSettings();
+
+  // Lưu vào tháng hiện tại
+  setRankConfig(state.currentMonth, { name: rankKey, bonus: bonusPct });
+
   el.parentElement.querySelectorAll('.rank-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   const label = document.getElementById('currentBonusPctLabel');
@@ -211,9 +216,9 @@ export function setRankTier(rankKey, bonusPct, el) {
 }
 
 function resetRankToNone() {
-  state.rankBonus = 0;
-  state.rankName  = 'none';
-  persistSettings();
+  // Xóa hạng của tháng hiện tại
+  setRankConfig(state.currentMonth, { name: 'none', bonus: 0 });
+
   document.querySelectorAll('.rank-pill').forEach(p => {
     p.classList.remove('active');
     p.classList.remove('long-pressing');
@@ -221,7 +226,7 @@ function resetRankToNone() {
   const label = document.getElementById('currentBonusPctLabel');
   if (label) label.innerText = '+0%';
   updateAllViews();
-  showToast('Đã bỏ chọn hạng thưởng', 'success', 1800);
+  showToast('Đã bỏ chọn hạng thưởng tháng này', 'success', 1800);
 }
 
 let _rankLongPressAttached = false;
@@ -259,12 +264,18 @@ function attachRankLongPress() {
   });
 }
 
-export function initRankUI() {
+// v50.8.0: đồng bộ pill hạng theo tháng đang xem
+export function syncRankUIForCurrentMonth() {
+  const cfg = getRankConfig(state.currentMonth);
   document.querySelectorAll('.rank-pill').forEach(p => {
-    p.classList.toggle('active', p.dataset.rank === state.rankName);
+    p.classList.toggle('active', p.dataset.rank === cfg.name);
   });
   const label = document.getElementById('currentBonusPctLabel');
-  if (label) label.innerText = `+${Math.round(state.rankBonus * 100)}%`;
+  if (label) label.innerText = `+${Math.round((cfg.bonus || 0) * 100)}%`;
+}
+
+export function initRankUI() {
+  syncRankUIForCurrentMonth();
   attachRankLongPress();
 }
 
