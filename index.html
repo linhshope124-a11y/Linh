@@ -16,7 +16,7 @@
 </head>
 <body>
 
-<!-- ============ FLOATING HEADER v50.3 ============ -->
+<!-- ============ FLOATING HEADER ============ -->
 <div class="header-wrapper">
   <div class="header-card">
     <div class="header-row">
@@ -384,7 +384,6 @@
 
   </div>
 </div>
-
 <!-- ============ BOTTOM NAV ============ -->
 <aside class="bottom-nav">
   <button class="nav-btn active" data-tab="overview" onclick="switchMainTab('overview', this)" aria-label="Tổng quan">
@@ -456,7 +455,7 @@
 
       <div class="menu-section-label">Cài đặt</div>
       <button class="menu-item" onclick="toggleThemeFromMenu()">
-        <span class="menu-icon" id="menuThemeIcon">
+        <span class="menu-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
@@ -674,7 +673,15 @@
       <p class="settings-hint">Tự động lưu lên Cloud — reset máy không mất dữ liệu.</p>
 
       <label class="settings-label">GitHub Token</label>
-      <input type="password" id="ghTokenInput" class="input-control" placeholder="ghp_..." style="font-family:'JetBrains Mono',monospace;font-size:12px">
+      <input type="password" id="ghTokenInput" class="input-control" placeholder="ghp_... (dán token mới)" style="font-family:'JetBrains Mono',monospace;font-size:12px">
+
+      <!-- v50.8.2: Token status + nút xóa -->
+      <div class="token-status-wrap" id="tokenStatusWrap" style="display:none">
+        <span class="token-saved-label" id="tokenSavedLabel">✅ Đã lưu token</span>
+        <button type="button" class="token-clear-btn" id="clearTokenBtn" onclick="clearCloudToken()">
+          🗑️ Xóa token
+        </button>
+      </div>
 
       <label class="settings-label" style="margin-top:12px">Gist ID</label>
       <input type="text" id="gistIdInput" class="input-control" placeholder="Tự động sau lần backup đầu" style="font-family:'JetBrains Mono',monospace;font-size:12px">
@@ -824,7 +831,7 @@
 <!-- ============ TOAST ============ -->
 <div id="appToast" class="app-toast"></div>
 
-<!-- ============ UPDATE BANNER v50.7.2 ============ -->
+<!-- ============ UPDATE BANNER ============ -->
 <div id="updateBanner" class="update-banner">
   <span class="update-banner-icon">🎉</span>
   <span id="updateBannerMsg" class="update-banner-msg">Có bản mới!</span>
