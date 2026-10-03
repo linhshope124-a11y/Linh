@@ -201,16 +201,18 @@ export function applyImportedPayload(parsed, mode = 'overwrite') {
 }
 
 /**
- * v50.8.0: Kiểm tra app đang có dữ liệu → hỏi user muốn GHI ĐÈ hay THÊM VÀO.
+ * v50.8.2: Kiểm tra app đang có dữ liệu → hỏi user muốn GHI ĐÈ hay THÊM VÀO.
  * EXPORT để cloud.js dùng chung.
+ * @param {number} newCount - Số bản ghi chuẩn bị nạp (để hiển thị cho user)
  * @returns {Promise<string>} 'overwrite' | 'merge'
  */
-export function askImportMode() {
+export function askImportMode(newCount = 0) {
   const currentTotal = totalRecords(state.appData);
   if (currentTotal === 0) return Promise.resolve('overwrite'); // App trống → ghi đè
 
+  const newInfo = newCount > 0 ? `\n📁 File muốn nạp: ${newCount} bản ghi\n` : '';
   const msg =
-    `⚠️ App đang có ${currentTotal} bản ghi.\n\n` +
+    `⚠️ App đang có ${currentTotal} bản ghi.` + newInfo + `\n` +
     `Bạn muốn:\n\n` +
     `• OK → GHI ĐÈ\n` +
     `  Xóa hết data cũ, thay bằng dữ liệu mới\n\n` +
@@ -234,8 +236,12 @@ export async function confirmImportJsonString() {
     return;
   }
 
-  const mode = await askImportMode();
-  if (!mode) return;
+  // v50.8.2: đếm số bản ghi sắp nạp để hiển thị
+  const newCount = (parsed.data?.delivery?.length || 0)
+                 + (parsed.data?.pickup?.length   || 0)
+                 + (parsed.data?.return?.length   || 0);
+  const mode = await askImportMode(newCount);
+  if (mode === 'cancel') return;
 
   const result = applyImportedPayload(parsed, mode);
   if (!result.success) {
@@ -293,8 +299,12 @@ export async function importData(event) {
       return;
     }
 
-    const mode = await askImportMode();
-    if (!mode) { event.target.value = ''; return; }
+    // v50.8.2: đếm số bản ghi sắp nạp
+    const newCount = (parsed.data?.delivery?.length || 0)
+                   + (parsed.data?.pickup?.length   || 0)
+                   + (parsed.data?.return?.length   || 0);
+    const mode = await askImportMode(newCount);
+    if (mode === 'cancel') { event.target.value = ''; return; }
 
     const result = applyImportedPayload(parsed, mode);
     if (!result.success) {
