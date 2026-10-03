@@ -433,6 +433,67 @@ body {
 .g-badge-warning { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
 .g-badge-danger  { color: var(--danger);  background: var(--danger-bg);  border-color: var(--danger); }
 
+/* ===== SCREENSHOTS ===== */
+.g-screenshot-wrap {
+  margin: 14px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.g-screenshot {
+  width: 100%;
+  height: auto;
+  display: block;
+  cursor: zoom-in;
+  transition: transform 0.2s;
+}
+.g-screenshot:active { transform: scale(0.995); }
+.g-screenshot-caption {
+  padding: 10px 14px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  font-weight: 600;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  letter-spacing: 0.1px;
+}
+
+/* Lightbox */
+#gLightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+#gLightbox.active { display: flex; }
+#gLightbox img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+#gLightbox .g-lb-close {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0));
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
 /* ===== FOOTER ===== */
 .g-footer {
   margin-top: 24px;
@@ -502,7 +563,7 @@ body {
   <section class="g-hero">
     <div class="g-hero-title">SPX Tracker</div>
     <div class="g-hero-sub">Theo dõi sản lượng & tính điểm phúc lợi SPX Express</div>
-    <span class="g-hero-version">v50.4.1</span>
+    <span class="g-hero-version">v50.5</span>
   </section>
 
   <!-- ============ MỤC LỤC ============ -->
@@ -593,25 +654,10 @@ body {
       <span class="g-section-icon">🎨</span>
     </div>
 
-    <pre class="g-code">┌─────────────────────────────────┐
-│ [☰]  [‹ Tháng 10/2026 ›]  [🕰] │
-├─────────────────────────────────┤
-│  Điểm tích lũy      Tháng 10    │
-│  1.479 Điểm      [ⓘ Chi tiết]   │
-│  ─────────────────────────      │
-│  GIAO    LẤY     HOÀN           │
-│   301     16       1            │
-├─────────────────────────────────┤
-│ HẠNG [Đồng][Bạc][Vàng][BK][KC]  │
-├─────────────────────────────────┤
-│ PHÂN BỔ  ●95% · ●5% · ●0%      │
-├─────────────────────────────────┤
-│ Thu nhập            +777 Điểm ▼ │
-├─────────────────────────────────┤
-│ Cơ hội tăng điểm                │
-├─────────────────────────────────┤
-│ [T.Quan][Giao][📷][Lấy][Hoàn]   │
-└─────────────────────────────────┘</pre>
+    <div class="g-screenshot-wrap">
+      <img src="./overview.png" alt="Màn hình Tổng quan" class="g-screenshot" onclick="openLightbox(this.src)">
+      <div class="g-screenshot-caption">Màn hình Tổng quan — tab T.Quan</div>
+    </div>
 
     <h3 class="g-h3">🧭 5 Tab chính</h3>
     <table class="g-table">
@@ -624,6 +670,11 @@ body {
         <tr><td><b>Hoàn</b></td><td>Chi tiết bảng 8 dải Hoàn</td></tr>
       </tbody>
     </table>
+
+    <div class="g-screenshot-wrap">
+      <img src="./pickup.png" alt="Tab Lấy — chi tiết 8 dải" class="g-screenshot" onclick="openLightbox(this.src)">
+      <div class="g-screenshot-caption">Tab Lấy — chi tiết 8 dải khối lượng</div>
+    </div>
   </section>
 
   <!-- ============ 4. BẮT ĐẦU NHANH ============ -->
@@ -690,22 +741,17 @@ body {
     </div>
 
     <h3 class="g-h3">✏️ Cách 2: Nhập tay</h3>
+    <p class="g-p">Menu <b>☰</b> → <b>Nhập sản lượng</b> → chọn ngày + nhập 8 dải:</p>
+
+    <div class="g-screenshot-wrap">
+      <img src="./entry.png" alt="Modal nhập sản lượng" class="g-screenshot" onclick="openLightbox(this.src)">
+      <div class="g-screenshot-caption">Modal nhập sản lượng — 8 dải khối lượng</div>
+    </div>
+
     <ol class="g-olist">
-      <li>Menu <b>☰</b> → <b>Nhập sản lượng</b></li>
       <li>Chọn <b>Ngày ghi nhận</b> (mặc định hôm nay)</li>
       <li>Chuyển tab <b>Giao / Lấy / Hoàn</b></li>
-      <li>Nhập số đơn cho <b>8 dải khối lượng</b>:
-        <ul class="g-list" style="margin-top:6px">
-          <li><code>&gt;0 - 2 kg</code></li>
-          <li><code>&gt;2 - 4 kg</code></li>
-          <li><code>&gt;4 - 6 kg</code></li>
-          <li><code>&gt;6 - 8 kg</code></li>
-          <li><code>&gt;8 - 10 kg</code></li>
-          <li><code>&gt;10 - 12 kg</code></li>
-          <li><code>&gt;12 - 15 kg</code></li>
-          <li><code>&gt;15 kg</code></li>
-        </ul>
-      </li>
+      <li>Nhập số đơn cho <b>8 dải khối lượng</b></li>
       <li>Bấm <b>Lưu dữ liệu</b></li>
     </ol>
 
@@ -830,9 +876,13 @@ TN:     +159 Điểm    ← thu nhập</pre>
     </div>
 
     <h3 class="g-h3">🎯 Cơ hội tăng điểm</h3>
-    <p class="g-p">Liệt kê <b>mọi dải</b> bạn có thể tăng điểm:</p>
-    <pre class="g-code">🟧 G  &gt;0-2 kg · 273 đơn
-   Thêm +27 đơn đạt 300-400     +75 Điểm</pre>
+    <p class="g-p">Liệt kê <b>mọi dải</b> bạn có thể tăng điểm — sắp xếp theo hiệu quả:</p>
+
+    <div class="g-screenshot-wrap">
+      <img src="./opportunity.png" alt="Cơ hội tăng điểm" class="g-screenshot" onclick="openLightbox(this.src)">
+      <div class="g-screenshot-caption">Mục "Cơ hội tăng điểm" — gợi ý ưu tiên</div>
+    </div>
+
     <div class="g-note">
       <span class="g-note-title">💡 Mẹo tối ưu</span>
       Ưu tiên dải có <b>+CẦN nhỏ</b> mà <b>+ĐƯỢC lớn</b> → tăng điểm hiệu quả nhất.
@@ -1023,6 +1073,11 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
       <p>Menu <b>☰</b> → <b>Chế độ tối</b> → chuyển sang giao diện tối</p>
     </div>
 
+    <div class="g-screenshot-wrap">
+      <img src="./overview-dark.png" alt="Dark mode" class="g-screenshot" onclick="openLightbox(this.src)">
+      <div class="g-screenshot-caption">Giao diện Dark mode — tab T.Quan</div>
+    </div>
+
     <div class="g-card">
       <div class="g-card-title">🧹 Dọn bản ghi trùng</div>
       <p>Menu <b>☰</b> → <b>Backup & Cloud</b> → kéo xuống → <b>Dọn bản ghi trùng lặp</b></p>
@@ -1163,7 +1218,7 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
   <!-- ============ FOOTER ============ -->
   <footer class="g-footer">
     <div class="g-footer-text">
-      <b>SPX Tracker v50.4.1</b><br>
+      <b>SPX Tracker v50.5</b><br>
       Made with ❤️ for SPX drivers
     </div>
     <a href="./index.html" class="g-footer-btn">
@@ -1177,6 +1232,12 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
 
 </div>
 
+<!-- ============ LIGHTBOX ẢNH ============ -->
+<div id="gLightbox" onclick="closeLightbox()">
+  <button class="g-lb-close" onclick="closeLightbox()" aria-label="Đóng">✕</button>
+  <img id="gLightboxImg" alt="Ảnh phóng to" onclick="event.stopPropagation()">
+</div>
+
 <script>
 // Đồng bộ theme sáng/tối với app
 (function() {
@@ -1187,6 +1248,19 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
     document.documentElement.setAttribute('data-theme', 'light');
   }
 })();
+
+// Lightbox ảnh
+function openLightbox(src) {
+  const lb = document.getElementById('gLightbox');
+  const img = document.getElementById('gLightboxImg');
+  if (!lb || !img) return;
+  img.src = src;
+  lb.classList.add('active');
+}
+function closeLightbox() {
+  const lb = document.getElementById('gLightbox');
+  if (lb) lb.classList.remove('active');
+}
 </script>
 
 </body>
