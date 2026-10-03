@@ -39,15 +39,6 @@ function attachAutoClearInputs() {
   });
 }
 
-// ================ SERVICE WORKER ================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js', { scope: './' })
-      .then(reg => console.log('[PWA] SW đã đăng ký:', reg.scope))
-      .catch(err => console.warn('[PWA] Bỏ qua SW:', err.message));
-  });
-}
-
 // ================ v50.4: SAVE CONFIG THEO THÁNG ================
 let manualPointsTimer = null;
 function _saveManualPoints() {
@@ -133,12 +124,125 @@ function _initHeroExpandState() {
   }
 }
 
+// ================ v50.7.2: AUTO-UPDATE ================
+let swRegistration = null;
+let currentAppVersion = null;
+let waitingWorker = null;
+
+async function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    console.log('[PWA] SW registered:', swRegistration.scope);
+
+    // Lắng nghe SW mới
+    swRegistration.addEventListener('updatefound', () => {
+      const newWorker = swRegistration.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          console.log('[PWA] SW mới sẵn sàng (waiting)');
+          waitingWorker = newWorker;
+          showUpdateBanner();
+        }
+      });
+    });
+
+    // Lắng nghe message từ SW (khi SW mới activate xong)
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'SW_UPDATED') {
+        console.log('[PWA] SW updated → reloading...');
+        window.location.reload();
+      }
+    });
+  } catch (e) {
+    console.warn('[PWA] SW registration failed:', e);
+  }
+}
+
+async function checkVersion() {
+  try {
+    const res = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const data = await res.json();
+    const serverVersion = data.version;
+    if (!serverVersion) return;
+
+    if (!currentAppVersion) {
+      currentAppVersion = serverVersion;
+      console.log('[Update] Current version:', serverVersion);
+      return;
+    }
+
+    if (serverVersion !== currentAppVersion) {
+      console.log('[Update] New version found:', serverVersion, '(current:', currentAppVersion + ')');
+      // Force SW check update
+      if (swRegistration) {
+        try { await swRegistration.update(); } catch {}
+      }
+      // Nếu SW đã waiting sẵn → hiện banner luôn
+      if (swRegistration && swRegistration.waiting) {
+        waitingWorker = swRegistration.waiting;
+      }
+      showUpdateBanner(serverVersion);
+    }
+  } catch (e) {
+    // Bỏ qua lỗi mạng
+  }
+}
+
+function showUpdateBanner(newVer) {
+  const banner = document.getElementById('updateBanner');
+  if (!banner) return;
+  const msg = document.getElementById('updateBannerMsg');
+  if (msg) {
+    msg.textContent = newVer ? `Có bản mới ${newVer}!` : 'Có bản mới!';
+  }
+  banner.classList.add('active');
+}
+
+function hideUpdateBanner() {
+  const banner = document.getElementById('updateBanner');
+  if (banner) banner.classList.remove('active');
+}
+
+async function applyUpdate() {
+  hideUpdateBanner();
+  try {
+    // Lấy worker đang waiting
+    const worker = waitingWorker
+      || (swRegistration && swRegistration.waiting)
+      || (swRegistration && swRegistration.installing);
+
+    if (worker) {
+      // Gửi lệnh skipWaiting → SW mới activate → notify client → reload
+      worker.postMessage({ type: 'SKIP_WAITING' });
+      // Fallback: nếu sau 2.5s chưa reload → ép reload
+      setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          window.location.reload();
+        }
+      }, 2500);
+    } else {
+      // Không có SW chờ → reload trực tiếp
+      window.location.reload();
+    }
+  } catch (e) {
+    console.error('[Update] failed:', e);
+    window.location.reload();
+  }
+}
+
 // ================ EXPOSE TO WINDOW ================
 Object.assign(window, {
   toggleTheme,
   toggleThemeFromMenu,
   switchMainTab, switchModalSubTab, setOverviewFilter, setHistFilter,
   setRankTier,
+
+  // v50.7.2: Auto-update
+  applyUpdate,
+  checkVersion,
 
   // ===== v46: PERIOD BAR =====
   setPeriodMode,
@@ -241,4 +345,9 @@ Object.assign(window, {
   attachAutoClearInputs();
   updateAllViews();
   setTimeout(() => preloadTesseractWorker(), 2000);
+
+  // v50.7.2: Auto-update system
+  registerSW();
+  setTimeout(checkVersion, 2000);              // Lần đầu sau 2s
+  setInterval(checkVersion, 5 * 60 * 1000);    // Sau đó mỗi 5 phút
 })();
