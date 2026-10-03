@@ -1,5 +1,5 @@
 /* =============================================================
-   SPX Tracker v50.3 — Header Cluster 3 nhóm
+   SPX Tracker v50.4 — Salary theo tháng
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
@@ -1344,6 +1344,27 @@ details.income-section[open] .income-chevron {
   border-radius: 10px;
 }
 
+/* ============ v50.4: SALARY MONTH HINT ============ */
+.salary-month-hint {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  margin-bottom: 14px;
+  display: block;
+  text-align: center;
+  letter-spacing: -0.005em;
+  transition: all 0.2s;
+}
+.salary-month-hint.salary-month-hint--empty {
+  color: var(--warning);
+  background: var(--warning-bg);
+  border-color: var(--warning-bd);
+}
+
 /* ============ TABLE ============ */
 .table-scroll {
   overflow-x: auto;
@@ -2362,6 +2383,9 @@ details.income-section[open] .income-chevron {
   /* Hero toggle */
   .hero-toggle-btn { padding: 5px 9px; font-size: 10.5px; }
   .hero-toggle-btn svg { width: 12px; height: 12px; }
+
+  /* v50.4: hint tháng */
+  .salary-month-hint { font-size: 11px; padding: 8px 10px; }
 }
 
 /* ============ REDUCED MOTION ============ */
