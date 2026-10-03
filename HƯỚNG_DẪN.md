@@ -45,7 +45,7 @@ Không cần tài khoản, không cần đăng ký. Dữ liệu lưu ngay trên 
 🌐 Cách 1: Dùng trên trình duyệt (nhanh)
 
 1. Mở Chrome/Safari trên điện thoại
-2. Truy cập: https://linhshope124-a11y.github.io/LINH/
+2. Truy cập: https://linhshope124-a11y.github.io/Linh/
 3. App tự tải về máy (~15MB lần đầu)
 4. Đợi 5-10s → dùng được
 
