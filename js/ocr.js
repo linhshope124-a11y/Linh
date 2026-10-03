@@ -212,14 +212,18 @@ function identifyRangeKey(minV, maxV) {
   return null;
 }
 
-// ==================== PARSE v43.5g ====================
+// ==================== PARSE v50.7 ====================
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
   const text = cleanText
     .replace(/[–—]/g, '-')
     .replace(/,/g, '.')
-    .replace(/¡/g, '1');
+    .replace(/¡/g, '1')
+    // v50.7: xóa dòng chứa timestamp (status bar điện thoại) — gây nhiễu số
+    .split('\n')
+    .filter(line => !/\b\d{1,2}:\d{2}\b/.test(line))
+    .join('\n');
 
   const totalRegex = /T[oôổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
