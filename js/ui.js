@@ -436,11 +436,15 @@ export function showToast(message, type = 'success', duration = 2200) {
 
 // ================ HELPERS ================
 function clearAllConfidenceHighlightsLocal() {
+  // v50.6: xóa banner cảnh báo phân bố
+  const banner = document.getElementById('distWarningBanner');
+  if (banner) banner.remove();
+
   ['del_inp','pick_inp','ret_inp'].forEach(pfx =>
     ['0_2','2_4','4_6','6_8','8_10','10_12','12_15','over_15'].forEach(k => {
       const input = document.getElementById(pfx + '_' + k);
       if (!input) return;
-      input.classList.remove('conf-high', 'conf-mid', 'conf-low');
+      input.classList.remove('conf-high', 'conf-mid', 'conf-low', 'conf-suspect');
       const parent = input.closest('.weight-input-item');
       if (parent) {
         const badge = parent.querySelector('.conf-badge');
