@@ -12,7 +12,6 @@ import {
   openHistoryTab,
   openSettingsModal, closeSettingsModal,
   openCoffeeModal, closeCoffeeModal, copyBankNumber,
-  openGuideModal, closeGuideModal,
   toggleThemeFromMenu
 } from './ui.js';
 import {
@@ -183,7 +182,6 @@ Object.assign(window, {
   openHistoryTab,
   openSettingsModal, closeSettingsModal,
   openCoffeeModal, closeCoffeeModal, copyBankNumber,
-  openGuideModal, closeGuideModal,
   handleOcrImage, openOcrLightbox, closeOcrLightbox,
   openBatchOcrModal, closeBatchOcrModal, appendBatchFiles,
   saveBatchAll, importBatchItem, removeBatchItem,
