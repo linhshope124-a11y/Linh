@@ -1,10 +1,23 @@
-const CACHE = 'spx-tracker-v505';
+const CACHE = 'spx-tracker-v506';
 const CORE = [
-  './', './index.html', './manifest.json', './css/style.css',
-  './js/main.js', './js/config.js', './js/utils.js', './js/state.js',
-  './js/calc.js', './js/theme.js', './js/ocr.js', './js/ui.js',
-  './js/render.js', './js/entry.js', './js/backup.js',
-  './js/cloud.js', './js/undo.js'
+  './',
+  './index.html',
+  './guide.html',
+  './manifest.json',
+  './css/style.css',
+  './js/main.js',
+  './js/config.js',
+  './js/utils.js',
+  './js/state.js',
+  './js/calc.js',
+  './js/theme.js',
+  './js/ocr.js',
+  './js/ui.js',
+  './js/render.js',
+  './js/entry.js',
+  './js/backup.js',
+  './js/cloud.js',
+  './js/undo.js'
 ];
 
 self.addEventListener('install', e => {
