@@ -1,4 +1,4 @@
-import { state, persistData } from './state.js';
+import { state, persistData, getSalaryConfig, hasSalaryConfig } from './state.js';
 import { WEIGHT_LABELS, WEIGHT_KEYS, TABLE_4_DATA, TABLE_5_DATA, TABLE_6_DATA } from './config.js';
 import { lookupTier, aggregateWeights, isDateInCurrentPeriod } from './calc.js';
 import { formatPts, formatDateDisplay, _fmt, getCurrentMonthIso, getTodayIso } from './utils.js';
@@ -139,13 +139,15 @@ function _updateAllViews() {
   const rawBase   = delPts + pickPts + retPts;
   const rankBonus = Math.round(rawBase * state.rankBonus);
 
-  const salaryDays = getSalaryDaysForPeriod();
-  const workDays   = getWorkDaysByPeriod();
+  // ===== v50.4: Lương theo tháng =====
+  const salaryDays  = getSalaryDaysForPeriod();
+  const workDays    = getWorkDaysByPeriod();
   const displayDays = Math.min(workDays, salaryDays);
 
-  const salaryBase   = state.manualSalary || 0;
-  const manualBuuCuc = state.manualPoints?.buuCuc || 0;
-  const manualTaiXe  = state.manualPoints?.taiXe  || 0;
+  const salaryCfg    = getSalaryConfig(state.currentMonth);
+  const salaryBase   = salaryCfg.base;
+  const manualBuuCuc = salaryCfg.buuCuc;
+  const manualTaiXe  = salaryCfg.taiXe;
   const monthlyTotal = salaryBase + manualBuuCuc + manualTaiXe;
 
   const perDay = salaryDays > 0 ? monthlyTotal / salaryDays : 0;
@@ -266,7 +268,7 @@ function _updateAllViews() {
   if (ordersPickEl) ordersPickEl.innerText = _fmt(total.pick);
   if (ordersRetEl)  ordersRetEl.innerText  = _fmt(total.ret);
 
-  // ===== Income UI =====
+  // ===== v50.4: Income UI =====
   const salaryBaseEl   = document.getElementById('salaryBaseInput');
   const buuCucInput    = document.getElementById('manualBuuCucInput');
   const taiXeInput     = document.getElementById('manualTaiXeInput');
@@ -279,6 +281,20 @@ function _updateAllViews() {
   if (salaryBaseEl && document.activeElement !== salaryBaseEl) salaryBaseEl.value = salaryBase;
   if (buuCucInput && document.activeElement !== buuCucInput)   buuCucInput.value  = manualBuuCuc;
   if (taiXeInput  && document.activeElement !== taiXeInput)    taiXeInput.value   = manualTaiXe;
+
+  // Hint tháng áp dụng
+  const salaryMonthHint = document.getElementById('salaryMonthHint');
+  if (salaryMonthHint) {
+    const [y, m] = state.currentMonth.split('-');
+    const label = `Tháng ${parseInt(m, 10)}/${y}`;
+    if (hasSalaryConfig(state.currentMonth)) {
+      salaryMonthHint.innerText = `📅 Áp dụng cho: ${label}`;
+      salaryMonthHint.classList.remove('salary-month-hint--empty');
+    } else {
+      salaryMonthHint.innerText = `⚠️ Chưa thiết lập cho: ${label}`;
+      salaryMonthHint.classList.add('salary-month-hint--empty');
+    }
+  }
 
   const workDaysText = Number.isInteger(displayDays)
     ? displayDays.toString()
