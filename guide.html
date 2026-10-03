@@ -563,7 +563,7 @@ body {
   <section class="g-hero">
     <div class="g-hero-title">SPX Tracker</div>
     <div class="g-hero-sub">Theo dõi sản lượng & tính điểm phúc lợi SPX Express</div>
-    <span class="g-hero-version">v50.7.1</span>
+    <span class="g-hero-version">v50.7.2</span>
   </section>
 
   <!-- ============ MỤC LỤC ============ -->
@@ -602,6 +602,7 @@ body {
       <li>💰 <b>Tính thu nhập</b> theo công + phụ cấp (lưu riêng từng tháng)</li>
       <li>🏆 <b>Chọn hạng thưởng</b> để tính % bonus</li>
       <li>☁️ <b>Backup Cloud</b> qua GitHub Gist — không mất dữ liệu</li>
+      <li>🔄 <b>Tự cập nhật</b> khi có bản mới — không cần xóa cache</li>
       <li>📱 <b>Chạy offline</b> — không cần mạng sau lần đầu tải</li>
     </ul>
     <div class="g-note">
@@ -1091,6 +1092,14 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
     </div>
 
     <div class="g-card">
+      <div class="g-card-title">🔄 Cập nhật app (v50.7.2+)</div>
+      <p>App <b>tự kiểm tra bản mới</b> mỗi 5 phút. Khi có bản mới → hiện banner cam ở dưới màn hình:</p>
+      <p style="background:var(--surface);border:1px solid var(--accent-border);border-radius:8px;padding:8px 10px;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent)">🎉 Có bản mới v50.7.3! [Cập nhật]</p>
+      <p style="margin-top:8px">Bấm <b>"Cập nhật"</b> → app tự reload, <b>dữ liệu giữ nguyên</b>.</p>
+      <p>Nếu không thấy banner → Menu <b>☰</b> → <b>🔄 Kiểm tra cập nhật</b> để check thủ công.</p>
+    </div>
+
+    <div class="g-card">
       <div class="g-card-title">🧹 Dọn bản ghi trùng</div>
       <p>Menu <b>☰</b> → <b>Backup & Cloud</b> → kéo xuống → <b>Dọn bản ghi trùng lặp</b></p>
       <p>Tìm và xóa các bản ghi cùng ngày + cùng số liệu.</p>
@@ -1142,7 +1151,13 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
 
     <h3 class="g-h3">🔄 App không cập nhật sau khi deploy</h3>
     <p class="g-p"><b>Triệu chứng:</b> Bấm vào vẫn thấy giao diện cũ.</p>
-    <p class="g-p"><b>Cách xử lý:</b></p>
+    <p class="g-p"><b>Cách xử lý (v50.7.2+ — khuyến nghị):</b></p>
+    <ol class="g-olist">
+      <li>Menu <b>☰</b> → <b>🔄 Kiểm tra cập nhật</b></li>
+      <li>Nếu có bản mới → bấm <b>"Cập nhật"</b> trên banner → app tự reload</li>
+      <li>Nếu vẫn cũ → tắt hẳn app → mở lại (sẽ tự tải bản mới sau ~2s)</li>
+    </ol>
+    <p class="g-p"><b>Cách xử lý (phiên bản cũ — chỉ khi cần):</b></p>
     <ol class="g-olist">
       <li>Chạm 🔒 (ổ khóa) trên URL → <b>Xóa dữ liệu trang</b></li>
       <li>Nhấn nút □ → <b>vuốt Chrome lên</b> để kill hẳn</li>
@@ -1222,7 +1237,7 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
 
     <div class="g-card">
       <div class="g-card-title">❓ Làm sao biết app đã cập nhật phiên bản mới?</div>
-      <p>Xem số version ở đầu trang này. Nếu nghi ngờ → clear cache theo mục 13.</p>
+      <p>Xem số version ở đầu trang này. Hoặc khi có banner <b>"🎉 Có bản mới"</b> hiện ra → bấm <b>"Cập nhật"</b>.</p>
     </div>
 
     <div class="g-card">
@@ -1244,7 +1259,7 @@ VD: Gốc 1.100 điểm, hạng Vàng (+20%)
   <!-- ============ FOOTER ============ -->
   <footer class="g-footer">
     <div class="g-footer-text">
-      <b>SPX Tracker v50.7.1</b><br>
+      <b>SPX Tracker v50.7.2</b><br>
       Made with ❤️ for SPX drivers
     </div>
     <a href="./index.html" class="g-footer-btn">
