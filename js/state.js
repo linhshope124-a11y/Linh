@@ -9,7 +9,7 @@ export const state = {
   salaryDays: 26,
 
   // v50.8.0: Hạng thưởng theo tháng
-  rankByMonth: {},   // ← MỚI: { "YYYY-MM": { name, bonus } }
+  rankByMonth: {},
 
   region: 'mien',
 
@@ -17,7 +17,6 @@ export const state = {
   histFilter: 'all',
   overviewFilter: 'all',
 
-  // v46: Chế độ xem — 'month' hoặc 'day'
   periodMode: 'month',
   currentMonth: getCurrentMonthIso(),
   currentDate: getTodayIso(),
@@ -33,6 +32,52 @@ const LEGACY_POINTS_KEY   = 'spx_manual_points';
 const RANK_BY_MONTH_KEY   = 'spx_rank_by_month';
 const LEGACY_RANK_KEY     = 'spx_rank_bonus';
 const LEGACY_RANK_NAME_KEY= 'spx_rank_name';
+
+// ============ v50.8.2: SAFE PARSE ============
+/**
+ * Parse localStorage an toàn — không crash khi data hỏng.
+ * @param {string} key - tên key trong localStorage
+ * @param {*} fallback - giá trị trả về nếu parse lỗi hoặc không có
+ * @returns {*}
+ */
+function safeParseLocalStorage(key, fallback = null) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return (parsed === null || parsed === undefined) ? fallback : parsed;
+  } catch (e) {
+    console.warn('[Storage] Parse lỗi key:', key, e.message);
+    return fallback;
+  }
+}
+
+/**
+ * Lấy giá trị localStorage dạng số an toàn.
+ */
+function safeParseNumber(key, fallback = 0) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null || raw === '') return fallback;
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? n : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Lấy string localStorage an toàn — nếu parse ra không phải string thì trả fallback.
+ */
+function safeParseString(key, fallback = '') {
+  try {
+    const raw = localStorage.getItem(key);
+    return typeof raw === 'string' ? raw : fallback;
+  } catch {
+    return fallback;
+  }
+}
+// ============ /SAFE PARSE ============
 
 function sanitizeRecords(arr) {
   if (!Array.isArray(arr)) return [];
@@ -52,7 +97,11 @@ function sanitizeRecords(arr) {
 
 // ============ v50.4: SALARY BY MONTH ============
 export function persistSalaryByMonth() {
-  localStorage.setItem(SALARY_BY_MONTH_KEY, JSON.stringify(state.salaryByMonth));
+  try {
+    localStorage.setItem(SALARY_BY_MONTH_KEY, JSON.stringify(state.salaryByMonth));
+  } catch (e) {
+    console.warn('[Storage] Không ghi được salaryByMonth:', e);
+  }
 }
 
 export function getSalaryConfig(monthIso) {
@@ -85,25 +134,17 @@ export function hasSalaryConfig(monthIso) {
 
 function loadSalaryByMonth() {
   // 1. Thử đọc cấu trúc mới
-  try {
-    const raw = localStorage.getItem(SALARY_BY_MONTH_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        state.salaryByMonth = parsed;
-        return;
-      }
-    }
-  } catch {}
+  const parsed = safeParseLocalStorage(SALARY_BY_MONTH_KEY, null);
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    state.salaryByMonth = parsed;
+    return;
+  }
 
   // 2. Migration từ data cũ (chạy 1 lần duy nhất)
-  const oldSalary = parseFloat(localStorage.getItem(LEGACY_SALARY_KEY)) || 0;
-  let oldBuuCuc = 0, oldTaiXe = 0;
-  try {
-    const oldPts = JSON.parse(localStorage.getItem(LEGACY_POINTS_KEY) || '{}');
-    oldBuuCuc = oldPts.buuCuc || 0;
-    oldTaiXe  = oldPts.taiXe  || 0;
-  } catch {}
+  const oldSalary = safeParseNumber(LEGACY_SALARY_KEY, 0);
+  const oldPts = safeParseLocalStorage(LEGACY_POINTS_KEY, {});
+  const oldBuuCuc = Number(oldPts?.buuCuc) || 0;
+  const oldTaiXe  = Number(oldPts?.taiXe)  || 0;
 
   if (oldSalary > 0 || oldBuuCuc > 0 || oldTaiXe > 0) {
     const m = state.currentMonth || getCurrentMonthIso();
@@ -111,8 +152,10 @@ function loadSalaryByMonth() {
       [m]: { base: oldSalary, buuCuc: oldBuuCuc, taiXe: oldTaiXe }
     };
     persistSalaryByMonth();
-    localStorage.removeItem(LEGACY_SALARY_KEY);
-    localStorage.removeItem(LEGACY_POINTS_KEY);
+    try {
+      localStorage.removeItem(LEGACY_SALARY_KEY);
+      localStorage.removeItem(LEGACY_POINTS_KEY);
+    } catch {}
     console.log('[Migration] Đã chuyển config lương cũ vào tháng', m);
   }
 }
@@ -120,7 +163,11 @@ function loadSalaryByMonth() {
 
 // ============ v50.8.0: RANK BY MONTH ============
 export function persistRankByMonth() {
-  localStorage.setItem(RANK_BY_MONTH_KEY, JSON.stringify(state.rankByMonth));
+  try {
+    localStorage.setItem(RANK_BY_MONTH_KEY, JSON.stringify(state.rankByMonth));
+  } catch (e) {
+    console.warn('[Storage] Không ghi được rankByMonth:', e);
+  }
 }
 
 export function getRankConfig(monthIso) {
@@ -140,7 +187,6 @@ export function setRankConfig(monthIso, config) {
   const name  = config.name || 'none';
   const bonus = Number(config.bonus) || 0;
 
-  // Nếu name = 'none' → xóa config tháng đó
   if (name === 'none') {
     delete state.rankByMonth[m];
   } else {
@@ -155,21 +201,15 @@ export function hasRankConfig(monthIso) {
 }
 
 function loadRankByMonth() {
-  // 1. Thử đọc cấu trúc mới
-  try {
-    const raw = localStorage.getItem(RANK_BY_MONTH_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        state.rankByMonth = parsed;
-        return;
-      }
-    }
-  } catch {}
+  const parsed = safeParseLocalStorage(RANK_BY_MONTH_KEY, null);
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    state.rankByMonth = parsed;
+    return;
+  }
 
-  // 2. Migration từ data cũ (chạy 1 lần duy nhất)
-  const oldBonus = parseFloat(localStorage.getItem(LEGACY_RANK_KEY)) || 0;
-  const oldName  = localStorage.getItem(LEGACY_RANK_NAME_KEY) || 'none';
+  // Migration từ data cũ
+  const oldBonus = safeParseNumber(LEGACY_RANK_KEY, 0);
+  const oldName  = safeParseString(LEGACY_RANK_NAME_KEY, 'none');
 
   if (oldName !== 'none' && oldBonus > 0) {
     const m = state.currentMonth || getCurrentMonthIso();
@@ -177,74 +217,101 @@ function loadRankByMonth() {
       [m]: { name: oldName, bonus: oldBonus }
     };
     persistRankByMonth();
-    localStorage.removeItem(LEGACY_RANK_KEY);
-    localStorage.removeItem(LEGACY_RANK_NAME_KEY);
+    try {
+      localStorage.removeItem(LEGACY_RANK_KEY);
+      localStorage.removeItem(LEGACY_RANK_NAME_KEY);
+    } catch {}
     console.log('[Migration] Đã chuyển hạng thưởng cũ vào tháng', m);
   }
 }
 // ============ /RANK BY MONTH ============
 
+// ============ v50.8.2: LOAD STATE (HARDENED) ============
 export function loadState() {
-  let d = JSON.parse(localStorage.getItem(STORAGE_KEYS.records));
-  if (!d || (!d.delivery && !d.pickup)) {
-    d = JSON.parse(localStorage.getItem(STORAGE_KEYS.vault)) || { delivery: [], pickup: [], return: [] };
+  // 1. Load records — an toàn với data hỏng
+  let d = safeParseLocalStorage(STORAGE_KEYS.records, null);
+
+  // Nếu không có records → thử vault
+  if (!d || (!d.delivery && !d.pickup && !d.return)) {
+    const vaultData = safeParseLocalStorage(STORAGE_KEYS.vault, null);
+    if (vaultData) {
+      d = vaultData;
+      console.log('[loadState] Phục hồi từ vault');
+    }
   }
+
+  // Nếu vẫn không có → khởi tạo rỗng
+  if (!d || typeof d !== 'object') {
+    d = { delivery: [], pickup: [], return: [] };
+  }
+
+  // Sanitize từng loại
   state.appData = {
     delivery: sanitizeRecords(d.delivery),
     pickup:   sanitizeRecords(d.pickup),
     return:   sanitizeRecords(d.return)
   };
 
-  // v46: period mode
-  const savedMode = localStorage.getItem('spx_period_mode');
+  // 2. Period mode
+  const savedMode = safeParseString('spx_period_mode', 'month');
   state.periodMode = (savedMode === 'day' || savedMode === 'month') ? savedMode : 'month';
 
-  // currentMonth
-  const savedMonth = localStorage.getItem('spx_current_month');
-  if (savedMonth && /^\d{4}-\d{2}$/.test(savedMonth)) {
+  // 3. currentMonth — validate format
+  const savedMonth = safeParseString('spx_current_month', '');
+  if (/^\d{4}-\d{2}$/.test(savedMonth)) {
     state.currentMonth = savedMonth;
   } else {
     state.currentMonth = getCurrentMonthIso();
   }
 
-  // currentDate
-  const savedDate = localStorage.getItem('spx_current_date');
-  if (savedDate && /^\d{4}-\d{2}-\d{2}$/.test(savedDate)) {
+  // 4. currentDate — validate format
+  const savedDate = safeParseString('spx_current_date', '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(savedDate)) {
     state.currentDate = savedDate;
   } else {
     state.currentDate = getTodayIso();
   }
 
-  // v50.4: salary config theo từng tháng
+  // 5. Salary config
   state.salaryDays = 26;
   loadSalaryByMonth();
 
-  // v50.8.0: rank config theo từng tháng
+  // 6. Rank config
   loadRankByMonth();
 
-  const reg = localStorage.getItem('spx_region');
+  // 7. Region
+  const reg = safeParseString('spx_region', 'mien');
   state.region = (reg === 'hcm_hn' || reg === 'mien') ? reg : 'mien';
 }
+// ============ /LOAD STATE ============
 
 export function persistData() {
-  localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.appData));
-  const total = state.appData.delivery.length + state.appData.pickup.length + state.appData.return.length;
-  if (total > 0) localStorage.setItem(STORAGE_KEYS.vault, JSON.stringify(state.appData));
+  try {
+    localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.appData));
+    const total = state.appData.delivery.length + state.appData.pickup.length + state.appData.return.length;
+    if (total > 0) {
+      localStorage.setItem(STORAGE_KEYS.vault, JSON.stringify(state.appData));
+    }
+  } catch (e) {
+    console.warn('[Storage] Không ghi được records:', e);
+  }
 }
 
 export function persistSettings() {
-  localStorage.setItem('spx_region', state.region);
-  // v50.8.0: rank và salary đã có hàm persist riêng
+  try {
+    localStorage.setItem('spx_region', state.region);
+  } catch {}
 }
 
-// v46: persist period state (mode + month + date)
 export function persistPeriodState() {
-  localStorage.setItem('spx_period_mode',  state.periodMode);
-  localStorage.setItem('spx_current_month', state.currentMonth);
-  localStorage.setItem('spx_current_date',  state.currentDate);
+  try {
+    localStorage.setItem('spx_period_mode',  state.periodMode);
+    localStorage.setItem('spx_current_month', state.currentMonth);
+    localStorage.setItem('spx_current_date',  state.currentDate);
+  } catch {}
 }
 
-// Backward compat — hàm cũ vẫn gọi được
+// Backward compat
 export function persistCurrentMonth() {
   persistPeriodState();
 }
