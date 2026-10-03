@@ -136,8 +136,6 @@ export function applyImportedPayload(parsed, mode = 'overwrite') {
     if (typeof importedSettings.theme === 'string') {
       localStorage.setItem(STORAGE_KEYS.theme, importedSettings.theme);
       document.documentElement.setAttribute('data-theme', importedSettings.theme);
-      const icon = document.getElementById('themeIcon');
-      if (icon) icon.innerText = importedSettings.theme === 'dark' ? '☀️' : '🌙';
     }
 
     // ===== v50.4: salaryByMonth =====
