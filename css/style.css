@@ -2463,3 +2463,66 @@ a.menu-item:visited {
   padding-top: 8px;
   border-top: 1px dashed rgba(234, 88, 12, 0.35);
 }
+
+/* ============ v50.7.2: UPDATE BANNER ============ */
+.update-banner {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%) translateY(180px);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(255, 87, 34, 0.35),
+              0 2px 8px rgba(15, 23, 42, 0.08);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 180;
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: calc(100% - 32px);
+  pointer-events: none;
+}
+.update-banner.active {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.update-banner-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  animation: updatePulse 1.5s ease-in-out infinite;
+}
+@keyframes updatePulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+.update-banner-msg {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.update-banner-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+}
+.update-banner-btn:active {
+  transform: scale(0.95);
+}
