@@ -1,5 +1,12 @@
-import { state, persistData, persistSalaryByMonth } from './state.js';
+import {
+  state,
+  persistData,
+  persistSalaryByMonth,
+  persistRankByMonth
+} from './state.js';
 import { STORAGE_KEYS, APP_VERSION } from './config.js';
+import { applyImportedPayload, askImportMode } from './backup.js';
+import { updateAllViews } from './render.js';
 
 const GH_API = 'https://api.github.com';
 const GIST_FILENAME = 'spx-tracker-backup.json';
@@ -20,17 +27,18 @@ function buildPayload() {
     version: APP_VERSION,
     exportedAt: new Date().toISOString(),
     settings: {
-      rankName: state.rankName,
-      rankBonus: state.rankBonus,
-      theme: localStorage.getItem(STORAGE_KEYS.theme) || 'light',
-      salaryByMonth: state.salaryByMonth,   // ← v50.4
-      salaryDays: state.salaryDays,
-      region: state.region
+      // v50.8.0
+      rankByMonth:  state.rankByMonth,
+      salaryByMonth: state.salaryByMonth,
+      salaryDays:   state.salaryDays,
+      region:       state.region,
+      theme:        localStorage.getItem(STORAGE_KEYS.theme) || 'light'
     },
     data: state.appData
   };
 }
 
+// ==================== TEST CONNECTION ====================
 export async function testCloudConnection() {
   const token = document.getElementById('ghTokenInput').value.trim();
   if (!token) { setStatus('❌ Chưa nhập token', 'err'); return; }
@@ -48,6 +56,7 @@ export async function testCloudConnection() {
   }
 }
 
+// ==================== PUSH TO CLOUD ====================
 export async function pushToCloud() {
   const token = (document.getElementById('ghTokenInput')?.value.trim()) || getToken();
   if (!token) { setStatus('❌ Chưa có token', 'err'); return; }
@@ -105,12 +114,13 @@ export async function pushToCloud() {
   }
 }
 
+// ==================== PULL FROM CLOUD ====================
 export async function pullFromCloud() {
   const token  = (document.getElementById('ghTokenInput')?.value.trim()) || getToken();
   const gistId = (document.getElementById('gistIdInput')?.value.trim()) || getGistId();
 
   if (!token || !gistId) { setStatus('❌ Chưa cấu hình token/gist', 'err'); return; }
-  if (!confirm('Khôi phục từ Cloud sẽ GHI ĐÈ dữ liệu hiện tại. Tiếp tục?')) return;
+  if (!confirm('Khôi phục từ Cloud sẽ ÁP DỤNG dữ liệu từ Cloud. Tiếp tục?')) return;
 
   setStatus('⏳ Đang tải...', 'idle');
   try {
@@ -125,79 +135,28 @@ export async function pullFromCloud() {
     const parsed = JSON.parse(content);
     if (!parsed.data || !parsed.data.delivery) throw new Error('Dữ liệu không hợp lệ');
 
-    // Dọn trùng lặp tự động khi restore
-    function dedupeList(list) {
-      const seen = new Set();
-      return list.filter(r => {
-        const key = r.date + '|' + (r.weights ? Object.values(r.weights).join('_') : '');
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
-    }
+    // v50.8.0: Hỏi user chọn chế độ (chỉ hỏi nếu app đang có data)
+    const mode = await askImportMode();
+    if (!mode) { setStatus('Đã hủy', 'idle'); return; }
 
-    const originalDel  = parsed.data.delivery || [];
-    const originalPick = parsed.data.pickup   || [];
-    const originalRet  = parsed.data.return   || [];
+    // Áp dụng payload với mode đã chọn
+    const result = applyImportedPayload(parsed, mode);
 
-    state.appData = {
-      delivery: dedupeList(originalDel),
-      pickup:   dedupeList(originalPick),
-      return:   dedupeList(originalRet)
-    };
-
-    const removedCount = (originalDel.length - state.appData.delivery.length)
-                       + (originalPick.length - state.appData.pickup.length)
-                       + (originalRet.length - state.appData.return.length);
-
-    if (parsed.settings) {
-      if (typeof parsed.settings.rankName === 'string') state.rankName = parsed.settings.rankName;
-      if (Number.isFinite(parsed.settings.rankBonus)) state.rankBonus = parsed.settings.rankBonus;
-      if (typeof parsed.settings.theme === 'string') {
-        localStorage.setItem(STORAGE_KEYS.theme, parsed.settings.theme);
-        document.documentElement.setAttribute('data-theme', parsed.settings.theme);
-        const icon = document.getElementById('themeIcon');
-        if (icon) icon.innerText = parsed.settings.theme === 'dark' ? '☀️' : '🌙';
-      }
-
-      // ===== v50.4: salaryByMonth =====
-      if (parsed.settings.salaryByMonth && typeof parsed.settings.salaryByMonth === 'object') {
-        state.salaryByMonth = parsed.settings.salaryByMonth;
-        persistSalaryByMonth();
-      } else {
-        // Legacy: migrate vào tháng hiện tại
-        const legacySalary = Number(parsed.settings.manualSalary) || 0;
-        const legacyBuuCuc = parsed.settings.manualPoints?.buuCuc || 0;
-        const legacyTaiXe  = parsed.settings.manualPoints?.taiXe  || 0;
-        if (legacySalary > 0 || legacyBuuCuc > 0 || legacyTaiXe > 0) {
-          const m = state.currentMonth || new Date().toISOString().slice(0, 7);
-          state.salaryByMonth[m] = { base: legacySalary, buuCuc: legacyBuuCuc, taiXe: legacyTaiXe };
-          persistSalaryByMonth();
-        }
-      }
-
-      if (Number.isFinite(parsed.settings.salaryDays)) {
-        state.salaryDays = parsed.settings.salaryDays;
-        localStorage.setItem('spx_salary_days', state.salaryDays);
-      }
-
-      // Region (nếu file có)
-      if (typeof parsed.settings.region === 'string' &&
-          (parsed.settings.region === 'mien' || parsed.settings.region === 'hcm_hn')) {
-        state.region = parsed.settings.region;
-        localStorage.setItem('spx_region', state.region);
-      }
-    }
+    if (!result.success) throw new Error('Áp dụng dữ liệu thất bại');
 
     persistData();
+
     const { initRankUI, initRegionUI } = await import('./ui.js');
     const { updateAllViews } = await import('./render.js');
     initRankUI();
     initRegionUI();
     updateAllViews();
 
-    let doneMsg = '✅ Khôi phục từ Cloud thành công!';
-    if (removedCount > 0) doneMsg += `\n\n🧹 Đã tự động bỏ qua ${removedCount} bản ghi trùng lặp.`;
+    let doneMsg = mode === 'overwrite'
+      ? `✅ Đã GHI ĐÈ từ Cloud: ${result.addedCount} bản ghi`
+      : `✅ Đã THÊM VÀO từ Cloud: +${result.addedCount} bản ghi` +
+        (result.removedCount > 0 ? `\n🧹 Bỏ qua ${result.removedCount} trùng` : '');
+
     setStatus('✅ Khôi phục thành công!', 'ok');
     alert(doneMsg);
   } catch (e) {
@@ -205,6 +164,7 @@ export async function pullFromCloud() {
   }
 }
 
+// ==================== INIT CLOUD UI ====================
 export function initCloudUI() {
   const token = getToken();
   const gistId = getGistId();
@@ -232,6 +192,7 @@ export function initCloudUI() {
   }
 }
 
+// ==================== AUTO BACKUP ====================
 let autoBackupTimer = null;
 export function scheduleAutoBackup() {
   if (!isAutoBackup() || !getToken()) return;
