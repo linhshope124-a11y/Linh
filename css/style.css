@@ -1,22 +1,11 @@
 /* =============================================================
-   SPX Tracker v50.4 — Salary theo tháng
+   SPX Tracker v50.8.2 — Design tokens + Layout + Hero
    ============================================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap');
 
 /* ============ DESIGN TOKENS ============ */
 :root {
-  --n-50:  #f8fafc;
-  --n-100: #f1f5f9;
-  --n-200: #e2e8f0;
-  --n-300: #cbd5e1;
-  --n-400: #94a3b8;
-  --n-500: #64748b;
-  --n-600: #475569;
-  --n-700: #334155;
-  --n-800: #1e293b;
-  --n-900: #0f172a;
-
   --bg:         #f8fafc;
   --surface:    #ffffff;
   --surface-2:  #f1f5f9;
@@ -72,34 +61,6 @@
   --sh-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
   --nav-h: 68px;
-
-  --spx-orange: var(--accent);
-  --text-primary: var(--text-1);
-  --text-secondary: var(--text-2);
-  --text-muted: var(--text-3);
-  --glass-surface: var(--surface);
-  --glass-subtle: var(--surface-2);
-  --glass-border: var(--border);
-  --glass-border-subtle: var(--border);
-  --glass-shadow: var(--sh-xs);
-  --glass-emerald: var(--success-bg);
-  --glass-emerald-border: var(--success-bd);
-  --glass-emerald-text: var(--success);
-  --glass-violet: var(--giao-soft);
-  --glass-violet-border: var(--giao-bd);
-  --glass-violet-text: var(--giao);
-  --glass-sky: var(--lay-soft);
-  --glass-sky-border: var(--lay-bd);
-  --glass-sky-text: var(--lay);
-  --glass-amber: var(--hoan-soft);
-  --glass-amber-border: var(--hoan-bd);
-  --glass-amber-text: var(--hoan);
-  --glass-rose: var(--danger-bg);
-  --glass-rose-border: var(--danger-bd);
-  --glass-rose-text: var(--danger);
-  --radius-lg: var(--r-lg);
-  --radius-md: var(--r-md);
-  --radius-sm: var(--r-sm);
 }
 
 [data-theme="dark"] {
@@ -150,30 +111,6 @@
   --sh-sm: 0 2px 6px rgba(0, 0, 0, 0.5);
   --sh-md: 0 4px 16px rgba(0, 0, 0, 0.5);
   --sh-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
-
-  --text-primary: var(--text-1);
-  --text-secondary: var(--text-2);
-  --text-muted: var(--text-3);
-  --glass-surface: var(--surface);
-  --glass-subtle: var(--surface-2);
-  --glass-border: var(--border);
-  --glass-border-subtle: var(--border);
-  --glass-shadow: var(--sh-xs);
-  --glass-emerald: var(--success-bg);
-  --glass-emerald-border: var(--success-bd);
-  --glass-emerald-text: var(--success);
-  --glass-violet: var(--giao-soft);
-  --glass-violet-border: var(--giao-bd);
-  --glass-violet-text: var(--giao);
-  --glass-sky: var(--lay-soft);
-  --glass-sky-border: var(--lay-bd);
-  --glass-sky-text: var(--lay);
-  --glass-amber: var(--hoan-soft);
-  --glass-amber-border: var(--hoan-bd);
-  --glass-amber-text: var(--hoan);
-  --glass-rose: var(--danger-bg);
-  --glass-rose-border: var(--danger-bd);
-  --glass-rose-text: var(--danger);
 }
 
 /* ============ BASE ============ */
@@ -202,7 +139,7 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ============ FLOATING HEADER v50.3 ============ */
+/* ============ FLOATING HEADER ============ */
 .header-wrapper {
   position: sticky;
   top: 0;
@@ -229,7 +166,6 @@ body {
   gap: 10px;
 }
 
-/* Nút icon tròn (Menu, Latest) */
 .header-icon-btn {
   width: 40px;
   height: 40px;
@@ -261,7 +197,6 @@ body {
   }
 }
 
-/* Period cluster (nhóm giữa) */
 .period-cluster {
   flex: 1;
   min-width: 0;
@@ -452,7 +387,6 @@ body {
 }
 .nav-btn:active { transform: scale(0.94); }
 
-/* FAB Quét 48px */
 .nav-btn-fab {
   display: flex;
   flex-direction: column;
@@ -647,7 +581,6 @@ body {
 
 .hero-data { display: block; }
 
-/* Row chính: value + toggle */
 .hero-row-main {
   display: flex;
   align-items: center;
@@ -655,7 +588,6 @@ body {
   gap: 12px;
 }
 
-/* Hero value với clamp chống tràn */
 .hero-value {
   font-size: clamp(28px, 8vw, 38px);
   font-weight: 800;
@@ -673,7 +605,6 @@ body {
   vertical-align: baseline;
 }
 
-/* Nút toggle chi tiết */
 .hero-toggle-btn {
   display: inline-flex;
   align-items: center;
@@ -709,7 +640,6 @@ body {
   }
 }
 
-/* Metrics wrap (ẩn/hiện) */
 .hero-metrics-wrap {
   max-height: 0;
   overflow: hidden;
@@ -752,7 +682,6 @@ body {
   letter-spacing: 0.6px;
 }
 
-/* Hero tiles (gộp 3 loại đơn) */
 .hero-tiles {
   margin-top: 14px;
   padding-top: 14px;
@@ -798,7 +727,6 @@ body {
   color: var(--text-3);
 }
 
-/* Empty state */
 .hero-empty { display: none; }
 .hero-empty-title {
   font-size: 18px;
@@ -861,93 +789,6 @@ body {
 .hero-giao .hero-eyebrow { color: var(--giao); }
 .hero-lay  .hero-eyebrow { color: var(--lay); }
 .hero-hoan .hero-eyebrow { color: var(--hoan); }
-
-/* ============ LEGACY TILES (giữ để không vỡ JS cũ) ============ */
-.tile-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-.tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 10px 14px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transition: transform 0.15s;
-  box-shadow: var(--sh-xs);
-}
-.tile:active { transform: scale(0.985); }
-.tile-label {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.9px;
-  color: var(--text-3);
-  opacity: 0.9;
-  margin-bottom: 4px;
-}
-.tile-primary {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1;
-  color: var(--text-1);
-  font-family: 'JetBrains Mono', monospace;
-}
-.tile-primary.is-zero {
-  color: var(--text-3) !important;
-  font-size: 22px;
-  opacity: 0.55;
-}
-.tile-primary-unit {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  margin-top: 1px;
-}
-.tile-secondary {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border);
-  width: 100%;
-}
-.tile-secondary span {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.tile-giao .tile-primary { color: var(--giao); }
-.tile-lay  .tile-primary { color: var(--lay); }
-.tile-hoan .tile-primary { color: var(--hoan); }
-.tile-giao .tile-secondary span { color: var(--giao); }
-.tile-lay  .tile-secondary span { color: var(--lay); }
-.tile-hoan .tile-secondary span { color: var(--hoan); }
-.tile-val {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.tile-foot {
-  font-size: 10.5px;
-  color: var(--text-3);
-  font-weight: 500;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border);
-}
-.tile-foot b { color: var(--text-2); font-weight: 700; }
-.tile-giao .tile-val { color: var(--giao); }
-.tile-lay  .tile-val { color: var(--lay); }
-.tile-hoan .tile-val { color: var(--hoan); }
-
 /* ============ RANK PILLS ============ */
 .card-rank { padding: 12px 16px !important; }
 .rank-inline-row {
@@ -1344,7 +1185,7 @@ details.income-section[open] .income-chevron {
   border-radius: 10px;
 }
 
-/* ============ v50.4: SALARY MONTH HINT ============ */
+/* ============ SALARY MONTH HINT ============ */
 .salary-month-hint {
   font-size: 11.5px;
   font-weight: 700;
@@ -1460,6 +1301,15 @@ details.income-section[open] .income-chevron {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
   letter-spacing: -0.02em;
+}
+.table-clean .gain-cell .gain-unit {
+  color: var(--text-3);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0;
+  margin-left: 1px;
+  opacity: 0.75;
 }
 .table-clean .next-cell .max-tag {
   color: var(--success);
@@ -1774,6 +1624,13 @@ details.income-section[open] .income-chevron {
 .input-control.conf-high { border-left: 4px solid var(--success) !important; }
 .input-control.conf-mid  { border-left: 4px solid var(--warning) !important; background: var(--warning-bg); }
 .input-control.conf-low  { border-left: 4px solid var(--danger) !important;  background: var(--danger-bg); }
+.input-control.conf-suspect {
+  border-left: 4px solid #ea580c !important;
+  background: #fff7ed !important;
+}
+[data-theme="dark"] .input-control.conf-suspect {
+  background: rgba(234, 88, 12, 0.12) !important;
+}
 
 .conf-badge {
   position: absolute;
@@ -1796,6 +1653,41 @@ details.income-section[open] .income-chevron {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+/* ============ OCR DISTRIBUTION WARNING ============ */
+.dist-warning-banner {
+  background: #fff7ed;
+  border: 1px solid #ea580c;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: #9a3412;
+}
+[data-theme="dark"] .dist-warning-banner {
+  background: rgba(234, 88, 12, 0.12);
+  border-color: rgba(234, 88, 12, 0.4);
+  color: #fb923c;
+}
+.dist-warning-title {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.dist-warning-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.dist-warning-list li { margin-bottom: 2px; }
+.dist-warning-hint {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(234, 88, 12, 0.35);
 }
 
 /* ============ MENU MODAL ============ */
@@ -1830,6 +1722,14 @@ details.income-section[open] .income-chevron {
 .menu-item:hover { background: var(--surface-2); }
 .menu-item:active { background: var(--border); }
 
+a.menu-item {
+  text-decoration: none;
+  color: var(--text-1);
+}
+a.menu-item:visited {
+  color: var(--text-1);
+}
+
 .menu-icon {
   width: 42px;
   height: 42px;
@@ -1855,76 +1755,6 @@ details.income-section[open] .income-chevron {
   color: var(--text-3);
   margin-top: 2px;
 }
-
-/* ============ GUIDE MODAL ============ */
-.guide-modal-box { max-width: 500px; }
-.guide-body { padding: 8px 20px 20px; }
-
-.guide-section {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border);
-}
-.guide-section:last-child { border-bottom: none; }
-
-.guide-h {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--text-1);
-  margin-bottom: 10px;
-  letter-spacing: -0.01em;
-}
-
-.guide-list {
-  padding-left: 20px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.7;
-}
-.guide-list li { margin-bottom: 4px; }
-.guide-list b { color: var(--text-1); font-weight: 700; }
-
-.guide-p {
-  font-size: 12.5px;
-  color: var(--text-2);
-  line-height: 1.6;
-  margin-bottom: 6px;
-}
-.guide-p:last-child { margin-bottom: 0; }
-.guide-p b { color: var(--text-1); font-weight: 700; }
-
-.guide-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  margin-bottom: 8px;
-}
-.guide-card:last-child { margin-bottom: 0; }
-.guide-card-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-1);
-  margin-bottom: 4px;
-}
-.guide-card p {
-  font-size: 11.5px;
-  color: var(--text-2);
-  line-height: 1.55;
-  margin: 0;
-}
-.guide-card b { color: var(--text-1); font-weight: 700; }
-
-.guide-note {
-  background: var(--accent-soft);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--r-md);
-  padding: 10px 12px;
-  margin-top: 10px;
-  font-size: 11.5px;
-  color: var(--text-2);
-  line-height: 1.55;
-}
-.guide-note b { color: var(--accent); font-weight: 700; }
 
 /* ============ SETTINGS MODAL ============ */
 .settings-section-title {
@@ -1980,6 +1810,38 @@ details.income-section[open] .income-chevron {
   border-radius: 4px;
   color: var(--text-2);
 }
+
+/* ============ v50.8.2: TOKEN STATUS ============ */
+.token-status-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  background: var(--success-bg);
+  border: 1px solid var(--success-bd);
+  border-radius: 10px;
+}
+.token-saved-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+}
+.token-clear-btn {
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--danger-bd);
+  background: var(--danger-bg);
+  color: var(--danger);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.token-clear-btn:active { transform: scale(0.95); }
 
 /* ============ CLOUD STATUS ============ */
 .cloud-status {
@@ -2294,177 +2156,7 @@ details.income-section[open] .income-chevron {
 .app-toast.error   { background: var(--danger);  color: #fff; }
 .app-toast.warning { background: var(--warning); color: #fff; }
 
-/* ============ RESPONSIVE ============ */
-@media (min-width: 640px) {
-  .bottom-nav { border-radius: 16px 16px 0 0; }
-}
-
-@media (max-width: 360px) {
-  /* Header nhỏ hơn */
-  .header-wrapper {
-    padding: 10px 12px 6px;
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  }
-  .header-card {
-    padding: 9px 10px !important;
-    border-radius: 18px;
-  }
-  .header-row { gap: 8px; }
-  .header-icon-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-  }
-  .header-icon-btn svg { width: 18px; height: 18px; }
-  .period-arrow-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
-  .period-label {
-    font-size: 12.5px;
-    padding: 7px 4px;
-  }
-
-  /* Hero */
-  .hero { padding: 16px; }
-  .hero-sm .hero-value { font-size: clamp(20px, 6vw, 28px); }
-  .hero-metric-value { font-size: 14px; }
-  .hero-metric-label { font-size: 9.5px; }
-  .hero-tiles { gap: 6px; }
-  .hero-tile-value { font-size: 20px; }
-  .hero-tile-label { font-size: 9.5px; }
-  .hero-empty-title { font-size: 16px; }
-  .hero-empty-sub { font-size: 12px; }
-  .btn-cta-ocr, .btn-cta-manual {
-    padding: 10px 10px;
-    font-size: 12px;
-  }
-  .btn-cta-ocr svg, .btn-cta-manual svg { width: 14px; height: 14px; }
-
-  /* Tiles legacy */
-  .tile { padding: 14px 8px 12px; }
-  .tile-primary { font-size: 21px; }
-  .tile-val { font-size: 18px; }
-
-  /* Rank */
-  .rank-inline-label { font-size: 9.5px; }
-  .rank-pill-group-inline .rank-pill { font-size: 10px !important; padding: 7px 2px !important; }
-  .rank-pill-group { gap: 4px; }
-  .rank-pill { font-size: 10px; padding: 10px 2px; letter-spacing: -0.02em; }
-
-  /* FAB */
-  .fab-icon { width: 44px; height: 44px; }
-  .fab-icon svg { width: 22px; height: 22px; }
-  .nav-label { font-size: 10px; }
-
-  /* Table */
-  .table-clean th { font-size: 9px; padding: 10px 5px; }
-  .table-clean td { font-size: 11.5px; padding: 11px 5px; }
-  .table-clean th:first-child, .table-clean td:first-child { padding-left: 14px; }
-  .table-clean th:last-child,  .table-clean td:last-child  { padding-right: 14px; }
-  .table-clean .need-cell .need-num,
-  .table-clean .gain-cell .gain-num { font-size: 11px; }
-
-  /* Region */
-  .region-pill { padding: 10px 8px; font-size: 11.5px; }
-  .region-pill span:last-child { font-size: 9.5px; }
-
-  /* Ratio */
-  .legend-pct { font-size: 12.5px; }
-  .legend-orders { font-size: 10px; }
-  .ratio-empty { padding: 16px 12px; font-size: 11.5px; }
-
-  /* Income */
-  .income-summary { padding: 14px 16px !important; }
-  .income-summary-value { font-size: 14px; }
-  .income-summary-title { font-size: 14px; }
-
-  /* Hero toggle */
-  .hero-toggle-btn { padding: 5px 9px; font-size: 10.5px; }
-  .hero-toggle-btn svg { width: 12px; height: 12px; }
-
-  /* v50.4: hint tháng */
-  .salary-month-hint { font-size: 11px; padding: 8px 10px; }
-}
-
-/* ============ REDUCED MOTION ============ */
-@media (prefers-reduced-motion: reduce) {
-  .fab-icon { animation: none !important; }
-  .hero-metrics-wrap { transition: none !important; }
-  .ratio-seg,
-  .income-progress-fill,
-  .nav-icon,
-  .hero,
-  .undo-banner,
-  .app-toast,
-  .modal-box {
-    transition: none !important;
-    animation: none !important;
-  }
-}
-
-/* ============ v50.4.1: đơn vị "điểm" cột ĐƯỢC ============ */
-.table-clean .gain-cell .gain-unit {
-  color: var(--text-3);
-  font-weight: 500;
-  font-family: 'Inter', sans-serif;
-  font-size: 9px;
-  letter-spacing: 0;
-  margin-left: 1px;
-  opacity: 0.75;
-}
-
-/* ============ v50.5: Menu item dạng link (HDSD) ============ */
-a.menu-item {
-  text-decoration: none;
-  color: var(--text-1);
-}
-a.menu-item:visited {
-  color: var(--text-1);
-}
-
-/* ============ v50.6: OCR DISTRIBUTION WARNING ============ */
-.input-control.conf-suspect {
-  border-left: 4px solid #ea580c !important;
-  background: #fff7ed !important;
-}
-
-.dist-warning-banner {
-  background: #fff7ed;
-  border: 1px solid #ea580c;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  color: #9a3412;
-}
-[data-theme="dark"] .dist-warning-banner {
-  background: rgba(234, 88, 12, 0.12);
-  border-color: rgba(234, 88, 12, 0.4);
-  color: #fb923c;
-}
-.dist-warning-title {
-  font-size: 13px;
-  font-weight: 800;
-  margin-bottom: 6px;
-  letter-spacing: -0.01em;
-}
-.dist-warning-list {
-  margin: 0 0 8px;
-  padding-left: 18px;
-  font-size: 12px;
-  line-height: 1.55;
-}
-.dist-warning-list li { margin-bottom: 2px; }
-.dist-warning-hint {
-  font-size: 11px;
-  font-weight: 600;
-  opacity: 0.85;
-  padding-top: 8px;
-  border-top: 1px dashed rgba(234, 88, 12, 0.35);
-}
-
-/* ============ v50.7.2: UPDATE BANNER ============ */
+/* ============ UPDATE BANNER ============ */
 .update-banner {
   position: fixed;
   bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom, 0px));
@@ -2525,4 +2217,99 @@ a.menu-item:visited {
 }
 .update-banner-btn:active {
   transform: scale(0.95);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (min-width: 640px) {
+  .bottom-nav { border-radius: 16px 16px 0 0; }
+}
+
+@media (max-width: 360px) {
+  .header-wrapper {
+    padding: 10px 12px 6px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+  .header-card {
+    padding: 9px 10px !important;
+    border-radius: 18px;
+  }
+  .header-row { gap: 8px; }
+  .header-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .header-icon-btn svg { width: 18px; height: 18px; }
+  .period-arrow-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+  }
+  .period-label {
+    font-size: 12.5px;
+    padding: 7px 4px;
+  }
+
+  .hero { padding: 16px; }
+  .hero-sm .hero-value { font-size: clamp(20px, 6vw, 28px); }
+  .hero-metric-value { font-size: 14px; }
+  .hero-metric-label { font-size: 9.5px; }
+  .hero-tiles { gap: 6px; }
+  .hero-tile-value { font-size: 20px; }
+  .hero-tile-label { font-size: 9.5px; }
+  .hero-empty-title { font-size: 16px; }
+  .hero-empty-sub { font-size: 12px; }
+  .btn-cta-ocr, .btn-cta-manual {
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+  .btn-cta-ocr svg, .btn-cta-manual svg { width: 14px; height: 14px; }
+
+  .rank-inline-label { font-size: 9.5px; }
+  .rank-pill-group-inline .rank-pill { font-size: 10px !important; padding: 7px 2px !important; }
+  .rank-pill-group { gap: 4px; }
+  .rank-pill { font-size: 10px; padding: 10px 2px; letter-spacing: -0.02em; }
+
+  .fab-icon { width: 44px; height: 44px; }
+  .fab-icon svg { width: 22px; height: 22px; }
+  .nav-label { font-size: 10px; }
+
+  .table-clean th { font-size: 9px; padding: 10px 5px; }
+  .table-clean td { font-size: 11.5px; padding: 11px 5px; }
+  .table-clean th:first-child, .table-clean td:first-child { padding-left: 14px; }
+  .table-clean th:last-child,  .table-clean td:last-child  { padding-right: 14px; }
+  .table-clean .need-cell .need-num,
+  .table-clean .gain-cell .gain-num { font-size: 11px; }
+
+  .region-pill { padding: 10px 8px; font-size: 11.5px; }
+  .region-pill span:last-child { font-size: 9.5px; }
+
+  .legend-pct { font-size: 12.5px; }
+  .legend-orders { font-size: 10px; }
+  .ratio-empty { padding: 16px 12px; font-size: 11.5px; }
+
+  .income-summary { padding: 14px 16px !important; }
+  .income-summary-value { font-size: 14px; }
+  .income-summary-title { font-size: 14px; }
+
+  .hero-toggle-btn { padding: 5px 9px; font-size: 10.5px; }
+  .hero-toggle-btn svg { width: 12px; height: 12px; }
+
+  .salary-month-hint { font-size: 11px; padding: 8px 10px; }
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion: reduce) {
+  .fab-icon { animation: none !important; }
+  .hero-metrics-wrap { transition: none !important; }
+  .ratio-seg,
+  .income-progress-fill,
+  .nav-icon,
+  .hero,
+  .undo-banner,
+  .app-toast,
+  .modal-box {
+    transition: none !important;
+    animation: none !important;
+  }
 }
