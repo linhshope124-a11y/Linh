@@ -1,4 +1,4 @@
-const CACHE = 'spx-tracker-v510';
+const CACHE = 'spx-tracker-v511';
 const CORE = [
   './',
   './index.html',
