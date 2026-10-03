@@ -1,4 +1,4 @@
-import { state, loadState, persistPeriodState } from './state.js';
+import { state, loadState, persistPeriodState, getSalaryConfig, setSalaryConfig } from './state.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { getTodayIso, getCurrentMonthIso } from './utils.js';
 import {
@@ -49,13 +49,13 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// ================ SAVE CONFIG ================
+// ================ v50.4: SAVE CONFIG THEO THÁNG ================
 let manualPointsTimer = null;
 function _saveManualPoints() {
   const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
   const taiXe  = parseInt(document.getElementById('manualTaiXeInput').value, 10) || 0;
-  state.manualPoints = { buuCuc, taiXe };
-  localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
+  const cfg = getSalaryConfig(state.currentMonth);
+  setSalaryConfig(state.currentMonth, { ...cfg, buuCuc, taiXe });
   clearTimeout(manualPointsTimer);
   manualPointsTimer = setTimeout(() => updateAllViews(), 300);
 }
@@ -63,8 +63,8 @@ function _saveManualPoints() {
 let salaryTimer = null;
 function _saveSalaryConfig() {
   const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
-  state.manualSalary = salary;
-  localStorage.setItem('spx_manual_salary', salary);
+  const cfg = getSalaryConfig(state.currentMonth);
+  setSalaryConfig(state.currentMonth, { ...cfg, base: salary });
   clearTimeout(salaryTimer);
   salaryTimer = setTimeout(() => updateAllViews(), 300);
 }
@@ -197,22 +197,27 @@ Object.assign(window, {
   saveManualPoints: _saveManualPoints,
   saveSalaryConfig: _saveSalaryConfig,
 
+  // v50.4: force save config vào tháng hiện tại
   forceSaveConfig: function() {
     const buuCuc = parseInt(document.getElementById('manualBuuCucInput').value, 10) || 0;
     const taiXe  = parseInt(document.getElementById('manualTaiXeInput').value, 10) || 0;
     const salary = parseFloat(document.getElementById('salaryBaseInput').value) || 0;
-    state.manualPoints = { buuCuc, taiXe };
-    state.manualSalary = salary;
-    localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
-    localStorage.setItem('spx_manual_salary', salary);
+
+    setSalaryConfig(state.currentMonth, { base: salary, buuCuc, taiXe });
     localStorage.setItem('spx_region', state.region);
+
     clearTimeout(manualPointsTimer);
     clearTimeout(salaryTimer);
     updateAllViews();
-    alert('Đã lưu cấu hình!\n\n• Lương: ' + salary.toLocaleString('vi-VN') +
-          '\n• Bưu cục: ' + buuCuc.toLocaleString('vi-VN') +
-          '\n• Tài xế: ' + taiXe.toLocaleString('vi-VN') +
-          '\n• Khu vực: ' + (state.region === 'hcm_hn' ? 'TP.HCM & HN' : 'Miền'));
+
+    const [y, m] = state.currentMonth.split('-');
+    alert(
+      `Đã lưu cấu hình cho Tháng ${parseInt(m, 10)}/${y}!\n\n` +
+      `• Lương:   ${salary.toLocaleString('vi-VN')}\n` +
+      `• Bưu cục: ${buuCuc.toLocaleString('vi-VN')}\n` +
+      `• Tài xế:  ${taiXe.toLocaleString('vi-VN')}\n` +
+      `• Khu vực: ${state.region === 'hcm_hn' ? 'TP.HCM & HN' : 'Miền'}`
+    );
   },
 
   findDuplicates: _findDuplicates,
