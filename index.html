@@ -481,6 +481,20 @@
         </div>
       </button>
 
+      <button class="menu-item" onclick="closeMenuModal();checkVersion()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title">Kiểm tra cập nhật</div>
+          <div class="menu-sub">Tìm bản mới từ server</div>
+        </div>
+      </button>
+
       <div class="menu-section-label">Dữ liệu</div>
       <button class="menu-item" onclick="closeMenuModal();openAddModal()">
         <span class="menu-icon">
@@ -809,6 +823,13 @@
 
 <!-- ============ TOAST ============ -->
 <div id="appToast" class="app-toast"></div>
+
+<!-- ============ UPDATE BANNER v50.7.2 ============ -->
+<div id="updateBanner" class="update-banner">
+  <span class="update-banner-icon">🎉</span>
+  <span id="updateBannerMsg" class="update-banner-msg">Có bản mới!</span>
+  <button class="update-banner-btn" onclick="applyUpdate()">Cập nhật</button>
+</div>
 
 <script type="module" src="./js/main.js"></script>
 </body>
