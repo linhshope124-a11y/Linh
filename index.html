@@ -174,7 +174,7 @@
               <span class="income-summary-title">
                 Thu nhập
                 <button class="info-icon" type="button"
-                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa\n\nĐã tích lũy = Lương 1 công × số công\n\nQuy đổi: Giao + Lấy/6 + Hoàn\n• Miền: ≥60 = 1 công, ≥30 = 0.5 công\n• TP.HCM & HN: ≥80 = 1 công, ≥40 = 0.5 công')"
+                        onclick="event.preventDefault(); event.stopPropagation(); alert('Cách tính thu nhập:\n\nLương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa\n\nĐã tích lũy = Lương 1 công × số công\n\nQuy đổi: Giao + Lấy/6 + Hoàn\n• Miền: ≥60 = 1 công, ≥30 = 0.5 công\n• TP.HCM & HN: ≥80 = 1 công, ≥40 = 0.5 công\n\n⚡ Lương được lưu RIÊNG theo từng tháng.\nChuyển tháng để cấu hình tháng đó.')"
                         aria-label="Trợ giúp">i</button>
               </span>
               <div class="income-days-wrap">
@@ -195,6 +195,8 @@
           </summary>
 
           <div class="income-content">
+            <div class="salary-month-hint" id="salaryMonthHint">📅 Áp dụng cho: Tháng 10/2026</div>
+
             <div class="income-row income-row-region">
               <span class="income-row-label">Khu vực tính công</span>
               <div class="region-pill-group">
@@ -237,7 +239,7 @@
                 <b id="incomeTotalDisplayInner">+0 Điểm</b>
               </div>
             </div>
-            <button class="btn btn-primary income-save-btn" onclick="forceSaveConfig()">Lưu cấu hình</button>
+            <button class="btn btn-primary income-save-btn" onclick="forceSaveConfig()">Lưu cấu hình tháng này</button>
           </div>
         </details>
 
@@ -557,7 +559,7 @@
         <ol class="guide-list">
           <li>Nhấn nút <b>Quét 📷</b> giữa bottom nav để chụp/quét ảnh</li>
           <li>Hoặc menu <b>☰ → Nhập sản lượng</b> để nhập tay</li>
-          <li>Mở <b>Thu nhập</b> → chọn khu vực + nhập LCB, bưu cục, tài xế</li>
+          <li>Mở <b>Thu nhập</b> → chọn khu vực + nhập LCB, bưu cục, tài xế <b>cho tháng hiện tại</b></li>
         </ol>
       </section>
 
@@ -599,11 +601,12 @@
 
       <section class="guide-section">
         <h4 class="guide-h">💰 Thu nhập</h4>
+        <p class="guide-p"><b>⚡ Quan trọng:</b> Lương được lưu <b>RIÊNG theo từng tháng</b>. Khi công ty đổi chính sách, chỉ cần cấu hình lại cho tháng mới — dữ liệu tháng cũ giữ nguyên.</p>
         <ul class="guide-list">
-          <li><b>Khu vực</b> — Chọn Miền hoặc TP.HCM &amp; Hà Nội</li>
-          <li><b>LCB</b> — Lương cơ bản</li>
-          <li><b>Bưu cục</b> — Phụ cấp bưu cục</li>
-          <li><b>Tài xế</b> — Phụ cấp tài xế</li>
+          <li><b>Khu vực</b> — Chọn Miền hoặc TP.HCM &amp; Hà Nội (áp dụng chung, không theo tháng)</li>
+          <li><b>LCB</b> — Lương cơ bản của tháng đang xem</li>
+          <li><b>Bưu cục</b> — Phụ cấp bưu cục của tháng đang xem</li>
+          <li><b>Tài xế</b> — Phụ cấp tài xế của tháng đang xem</li>
         </ul>
         <div class="guide-note">
           <b>Công thức quy đổi:</b><br>
