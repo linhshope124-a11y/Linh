@@ -428,7 +428,56 @@ function findExactDuplicate(r) {
   ) || null;
 }
 
-// v45.1: auto-save không showToast — caller lo thông báo
+// ==================== v50.6: VALIDATE PHÂN BỐ ====================
+function validateDistribution(weights) {
+  const w = {
+    '0_2':    parseInt(weights['0_2'], 10)   || 0,
+    '2_4':    parseInt(weights['2_4'], 10)   || 0,
+    '4_6':    parseInt(weights['4_6'], 10)   || 0,
+    '6_8':    parseInt(weights['6_8'], 10)   || 0,
+    '8_10':   parseInt(weights['8_10'], 10)  || 0,
+    '10_12':  parseInt(weights['10_12'], 10) || 0,
+    '12_15':  parseInt(weights['12_15'], 10) || 0,
+    'over_15':parseInt(weights['over_15'], 10)|| 0
+  };
+  const total = Object.values(w).reduce((s, v) => s + v, 0);
+  if (total < 5) return { ok: true, warnings: [], suspectKeys: [] };
+
+  const warnings = [];
+  const suspects = new Set();
+
+  // Rule 1: 0-2 ≥ 50%
+  if (w['0_2'] / total < 0.5) {
+    warnings.push(`Dải 0-2 chỉ ${Math.round(w['0_2']/total*100)}% (thường ≥50%)`);
+    suspects.add('0_2');
+  }
+  // Rule 2: 0-2 ≥ 2-4
+  if (w['0_2'] < w['2_4']) {
+    warnings.push('Dải 2-4 nhiều hơn dải 0-2');
+    suspects.add('0_2'); suspects.add('2_4');
+  }
+  // Rule 3: 2-4 ≥ 4-6
+  if (w['2_4'] < w['4_6']) {
+    warnings.push('Dải 4-6 nhiều hơn dải 2-4');
+    suspects.add('2_4'); suspects.add('4_6');
+  }
+  // Rule 4: max ≤ 5× dải 0-2
+  const maxKey = Object.keys(w).reduce((a, b) => w[a] > w[b] ? a : b);
+  if (w['0_2'] > 0 && w[maxKey] > w['0_2'] * 5) {
+    warnings.push('Có dải cao bất thường');
+    suspects.add(maxKey);
+  }
+  // Rule 5: 3 dải nhỏ ≥ 70%
+  const small = w['0_2'] + w['2_4'] + w['4_6'];
+  if (small / total < 0.7) {
+    warnings.push(`Dải nhỏ chỉ ${Math.round(small/total*100)}% (thường ≥70%)`);
+    suspects.add('0_2'); suspects.add('2_4'); suspects.add('4_6');
+  }
+
+  return { ok: warnings.length === 0, warnings, suspectKeys: [...suspects] };
+}
+
+// v45.1 + v50.6: auto-save chỉ khi tất cả check pass
 function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
@@ -437,6 +486,10 @@ function tryAutoSave(r) {
 
   if (r.expectedTotal !== null && r.expectedTotal !== r.totalFound) return false;
   if (r.totalFound <= 0) return false;
+
+  // v50.6: check phân bố hợp lý
+  const dist = validateDistribution(r.weights);
+  if (!dist.ok) return false;
 
   const type = getTypeFromResult(r);
   const weights = buildWeights(r);
@@ -648,6 +701,9 @@ export function fillModalFromResult(batchItem) {
   state.lastOcrImageDataUrl = r.fullDataUrl || '';
   state.isOcrScan = true;
 
+  // v50.6: kiểm tra phân bố bất thường
+  const distCheck = validateDistribution(r.weights);
+
   const debugEl = document.getElementById('ocrDebugText');
   if (debugEl) {
     const modeStr = r.mode ? `[mode: ${r.mode}]` : '';
@@ -686,8 +742,53 @@ export function fillModalFromResult(batchItem) {
   let toastType = 'success';
   if (lowCount > 0) { msg += ' · có dải đỏ'; toastType = 'error'; }
   else if (midCount > 0) { msg += ' · có dải vàng'; toastType = 'warning'; }
+  if (!distCheck.ok) { msg += ' · ⚠️ phân bố bất thường'; toastType = 'error'; }
+
+  // v50.6: hiện banner cảnh báo + đánh dấu ô cam
+  if (!distCheck.ok) {
+    showDistributionWarning(distCheck, r.detectedColorType);
+  }
 
   showToast(msg + ' — kiểm tra và lưu', toastType, 3500);
+}
+
+// v50.6: hiển thị cảnh báo phân bố
+function showDistributionWarning(distCheck, detectedType) {
+  // Xóa banner cũ
+  const old = document.getElementById('distWarningBanner');
+  if (old) old.remove();
+
+  const prefix = detectedType === 'del' ? 'del_inp'
+               : detectedType === 'pick' ? 'pick_inp' : 'ret_inp';
+
+  // Đánh dấu ô cam
+  const suffixMap = {
+    '0_2':'0_2','2_4':'2_4','4_6':'4_6','6_8':'6_8',
+    '8_10':'8_10','10_12':'10_12','12_15':'12_15','over_15':'over_15'
+  };
+  distCheck.suspectKeys.forEach(k => {
+    const inp = document.getElementById(prefix + '_' + suffixMap[k]);
+    if (!inp) return;
+    inp.classList.add('conf-suspect');
+  });
+
+  // Tạo banner
+  const banner = document.createElement('div');
+  banner.id = 'distWarningBanner';
+  banner.className = 'dist-warning-banner';
+  banner.innerHTML = `
+    <div class="dist-warning-title">⚠️ Phân bố bất thường</div>
+    <ul class="dist-warning-list">
+      ${distCheck.warnings.map(w => `<li>${w}</li>`).join('')}
+    </ul>
+    <div class="dist-warning-hint">Đối chiếu với ảnh gốc bên dưới trước khi lưu</div>
+  `;
+
+  // Chèn ngay trước .modal-tabs trong entry modal
+  const tabs = document.getElementById('modalSubTabGroup');
+  if (tabs && tabs.parentNode) {
+    tabs.parentNode.insertBefore(banner, tabs);
+  }
 }
 
 // ==================== COMPARE ====================
@@ -782,8 +883,10 @@ function renderBatchList() {
         if (c < 70) lowCount++;
         else if (c < 85) midCount++;
       });
+      const distCheck = validateDistribution(r.weights);
       const confIcon  = lowCount > 0 ? ' 🔴' : midCount > 0 ? ' 🟡' : ' 🟢';
       const warnIcon  = (r.expectedTotal !== null && r.totalFound !== r.expectedTotal) ? ' ⚠️' : '';
+      const distIcon  = !distCheck.ok ? ' 🟠' : '';   // v50.6
       const cacheIcon = item.fromCache ? ' ⚡' : '';
       const type = getTypeFromResult(r);
       const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
@@ -791,7 +894,7 @@ function renderBatchList() {
         ? `<button class="batch-btn batch-btn-compare" onclick="importBatchItem(${idx})">🔍 So sánh</button>`
         : `<button class="batch-btn batch-btn-import" onclick="importBatchItem(${idx})">📝 Nhập</button>`;
       const existingBadge = existing
-        ? ` <span style="font-size:9px;padding:1px 6px;border-radius:4px;background:var(--warning-soft);border:1px solid var(--warning-border);color:var(--warning);font-weight:700">Đã có</span>`
+        ? ` <span style="font-size:9px;padding:1px 6px;border-radius:4px;background:var(--warning-bg);border:1px solid var(--warning-bd);color:var(--warning);font-weight:700">Đã có</span>`
         : '';
       div.className = 'batch-item';
       div.innerHTML = `
@@ -799,7 +902,7 @@ function renderBatchList() {
         <div class="batch-info">
           <div class="batch-title">
             <span class="hist-badge-tag ${typeClass}">${typeLabel}</span>
-            <span>${formatDateDisplay(r.parsedDate)}${confIcon}${warnIcon}${cacheIcon}${existingBadge}</span>
+            <span>${formatDateDisplay(r.parsedDate)}${confIcon}${warnIcon}${distIcon}${cacheIcon}${existingBadge}</span>
           </div>
           <div class="batch-meta">${escapeHtml(item.file)}</div>
           <div class="batch-total">${r.totalFound} đơn</div>
@@ -866,19 +969,25 @@ export function saveBatchAll() {
 
   const finalList = [];
   let dupExisting = 0;
+  let suspectSkipped = 0;   // v50.6
   dedupedBatch.forEach(item => {
     const r = item.result;
     const type = getTypeFromResult(r);
     const existing = state.appData[type].find(rec => rec.date === r.parsedDate);
     if (existing) { dupExisting++; return; }
+
+    // v50.6: bỏ qua ảnh có phân bố bất thường
+    const dist = validateDistribution(r.weights);
+    if (!dist.ok) { suspectSkipped++; return; }
+
     finalList.push({ item, type, weights: buildWeights(r) });
   });
 
-  const totalSkipped = dupInBatch + dupExisting;
+  const totalSkipped = dupInBatch + dupExisting + suspectSkipped;
 
   if (finalList.length === 0) {
     let msg = 'Không có gì để lưu';
-    if (totalSkipped > 0) msg += ` (bỏ qua ${totalSkipped} ảnh trùng)`;
+    if (totalSkipped > 0) msg += ` (bỏ qua ${totalSkipped} ảnh)`;
     showToast(msg, 'warning', 2500);
     return;
   }
@@ -893,8 +1002,9 @@ export function saveBatchAll() {
   updateAllViews();
 
   let doneMsg = `Đã lưu ${finalList.length} bản ghi`;
-  if (totalSkipped > 0) doneMsg += ` (bỏ qua ${totalSkipped} trùng)`;
-  showToast(doneMsg, 'success', 2500);
+  if (totalSkipped > 0) doneMsg += ` (bỏ qua ${totalSkipped} ảnh)`;
+  if (suspectSkipped > 0) doneMsg += ` · ⚠️ ${suspectSkipped} nghi ngờ`;
+  showToast(doneMsg, 'success', 3000);
 }
 
 function escapeHtml(s) {
@@ -936,7 +1046,7 @@ export function clearAllConfidenceHighlights() {
   prefixes.forEach(pfx => keys.forEach(k => {
     const input = document.getElementById(pfx + '_' + k);
     if (!input) return;
-    input.classList.remove('conf-high', 'conf-mid', 'conf-low');
+    input.classList.remove('conf-high', 'conf-mid', 'conf-low', 'conf-suspect');
     const parent = input.closest('.weight-input-item');
     if (parent) {
       const badge = parent.querySelector('.conf-badge');
