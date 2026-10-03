@@ -1,4 +1,4 @@
-import { state, persistData } from './state.js';
+import { state, persistData, persistSalaryByMonth } from './state.js';
 import { STORAGE_KEYS, APP_VERSION } from './config.js';
 
 const GH_API = 'https://api.github.com';
@@ -23,9 +23,9 @@ function buildPayload() {
       rankName: state.rankName,
       rankBonus: state.rankBonus,
       theme: localStorage.getItem(STORAGE_KEYS.theme) || 'light',
-      manualPoints: state.manualPoints,
-      manualSalary: state.manualSalary,
-      salaryDays: state.salaryDays
+      salaryByMonth: state.salaryByMonth,   // ← v50.4
+      salaryDays: state.salaryDays,
+      region: state.region
     },
     data: state.appData
   };
@@ -159,27 +159,41 @@ export async function pullFromCloud() {
         const icon = document.getElementById('themeIcon');
         if (icon) icon.innerText = parsed.settings.theme === 'dark' ? '☀️' : '🌙';
       }
-      if (parsed.settings.manualPoints) {
-        state.manualPoints = {
-          buuCuc: parsed.settings.manualPoints.buuCuc || 0,
-          taiXe:  parsed.settings.manualPoints.taiXe  || 0
-        };
-        localStorage.setItem('spx_manual_points', JSON.stringify(state.manualPoints));
+
+      // ===== v50.4: salaryByMonth =====
+      if (parsed.settings.salaryByMonth && typeof parsed.settings.salaryByMonth === 'object') {
+        state.salaryByMonth = parsed.settings.salaryByMonth;
+        persistSalaryByMonth();
+      } else {
+        // Legacy: migrate vào tháng hiện tại
+        const legacySalary = Number(parsed.settings.manualSalary) || 0;
+        const legacyBuuCuc = parsed.settings.manualPoints?.buuCuc || 0;
+        const legacyTaiXe  = parsed.settings.manualPoints?.taiXe  || 0;
+        if (legacySalary > 0 || legacyBuuCuc > 0 || legacyTaiXe > 0) {
+          const m = state.currentMonth || new Date().toISOString().slice(0, 7);
+          state.salaryByMonth[m] = { base: legacySalary, buuCuc: legacyBuuCuc, taiXe: legacyTaiXe };
+          persistSalaryByMonth();
+        }
       }
-      if (Number.isFinite(parsed.settings.manualSalary)) {
-        state.manualSalary = parsed.settings.manualSalary;
-        localStorage.setItem('spx_manual_salary', state.manualSalary);
-      }
+
       if (Number.isFinite(parsed.settings.salaryDays)) {
         state.salaryDays = parsed.settings.salaryDays;
         localStorage.setItem('spx_salary_days', state.salaryDays);
       }
+
+      // Region (nếu file có)
+      if (typeof parsed.settings.region === 'string' &&
+          (parsed.settings.region === 'mien' || parsed.settings.region === 'hcm_hn')) {
+        state.region = parsed.settings.region;
+        localStorage.setItem('spx_region', state.region);
+      }
     }
 
     persistData();
-    const { initRankUI } = await import('./ui.js');
+    const { initRankUI, initRegionUI } = await import('./ui.js');
     const { updateAllViews } = await import('./render.js');
     initRankUI();
+    initRegionUI();
     updateAllViews();
 
     let doneMsg = '✅ Khôi phục từ Cloud thành công!';
