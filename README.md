@@ -1,143 +1,236 @@
-<div align="center">
+# 🚚 SPX Tracker
 
-# 📦 SPX Tracker
+> PWA theo dõi sản lượng giao/lấy/hoàn & tính điểm phúc lợi SPX Express
 
-**Theo dõi sản lượng · Tính điểm SPX · Backup Cloud**
+---
 
-[![Live](https://img.shields.io/badge/Live_Demo-ff5722?style=for-the-badge)](https://linhshope124-a11y.github.io/spx-tracker1/)
-[![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8?style=for-the-badge)]()
-[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](./LICENSE)
+## 🌐 Truy cập nhanh
 
-</div>
+👉 **https://linhshope124-a11y.github.io/Linh/**
 
-PWA dành cho **tài xế SPX Express** — theo dõi sản lượng **Giao / Lấy / Hoàn** hàng ngày và tính điểm thưởng theo **chính sách phúc lợi** công ty.
-
-**Không cần cài đặt.** Mở URL → Thêm vào màn hình chính → Dùng luôn.
-
-👉 **Mở app:** https://linhshope124-a11y.github.io/spx-tracker1/
+Cài như app:
+- **Android (Chrome):** ⋮ → Thêm vào màn hình chính
+- **iPhone (Safari):** Chia sẻ → Thêm vào màn hình chính
 
 ---
 
 ## ✨ Tính năng
 
-**📊 Theo dõi** — 8 dải khối lượng × 3 loại đơn · Bảng điểm SPX · 6 hạng thưởng · Cơ hội tăng điểm
-
-**📷 OCR** — Quét ảnh chụp màn hình SPX · Batch nhiều ảnh · Cache SHA-1 (0.1s) · Confidence color
-
-**💰 Thu nhập** — Quy đổi **6 lấy = 1 giao = 1 hoàn** · 2 khu vực: Miền (60/30) · HCM/HN (80/40) · Ngày tối đa T2 = 24, khác 26
-
-**☁️ Backup** — Cloud Gist miễn phí · Auto-save · Undo 5s · Dark mode
-
----
-
-## 📱 Cài đặt
-
-| Nền tảng | Cách cài |
-|---|---|
-| **Android** | Chrome → ⋮ → *Thêm vào màn hình chính* |
-| **iOS** | Safari → Chia sẻ → *Thêm vào màn hình chính* |
-| **Desktop** | Mở URL bất kỳ browser |
-
-App chạy **offline**, có icon riêng sau khi cài.
-
----
-
-## 🔢 Công thức
-Tính công 1 ngày:
-
-Đơn tính công = Giao + Lấy/6 + Hoàn
-
-Miền: ≥60 = 1 công ≥30 = 0.5 công
-
-TP.HCM & HN: ≥80 = 1 công ≥40 = 0.5 công
-
-Thu nhập:
-
-Lương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa
-
-Tích lũy = Lương 1 công × số công
-
-Tổng điểm: Tổng = Gốc + (Gốc x % hạng) + Thu nhập
-
-📖 Chi tiết: **[HƯỚNG_DẪN.md](./HƯỚNG_DẪN.md)**
-
----
-
-## 📁 Cấu trúc
-spx-tracker1/
-
-text
-
-index.html manifest.json sw.js
-
-README.md HƯỚNG_DẪN.md · LICENSE
-
-css/style.css
-
-js/
-
-main.js # Bootstrap
-
-config.js # Bảng điểm SPX
-
-state.js # App state
-
-render.js # Render UI
-
-ui.js # Actions
-
-entry.js # CRUD
-
-ocr.js # OCR pipeline
-
-backup.js # Import/Export
-
-cloud.js # Gist sync
-
-calc.js # Logic tính
-
-theme.js # Dark mode
-
-undo.js # Undo 5s
-
-utils.js # Helpers
+- 📊 **Theo dõi sản lượng** — 8 dải khối lượng Giao / Lấy / Hoàn
+- 🎯 **Tính điểm phúc lợi** — theo chính sách SPX Express
+- 📷 **Quét ảnh OCR** — chụp màn hình SPX → tự nhập liệu
+- 💰 **Thu nhập theo tháng** — lưu riêng từng tháng
+- 🏆 **Hạng thưởng** — Đồng / Bạc / Vàng / B.Kim / K.Cương
+- ☁️ **Backup Cloud** — GitHub Gist
+- 📱 **Chạy offline** — sau lần đầu tải
+- 🌙 **Dark mode**
+- ↩️ **Undo** — hoàn tác 5s
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Tech |
-|---|---|
-| Core | Vanilla JavaScript (ES modules) |
-| Styling | CSS3 — Design tokens |
-| OCR | Tesseract.js v5 |
-| Storage | localStorage + GitHub Gist |
-| PWA | Service Worker + Manifest |
+- Vanilla JS (ES Modules, không framework)
+- CSS thuần với design tokens (light/dark)
+- PWA — Service Worker + Manifest
+- Tesseract.js v5 — OCR tiếng Việt
+- GitHub Gist API — Cloud backup
+- localStorage — Lưu dữ liệu local
 
-**Không framework** · Tải < 500KB · Mượt trên mọi thiết bị.
+**Không cần build step** — code chạy trực tiếp trên trình duyệt.
 
 ---
 
-## 🗺️ Roadmap
+## 📂 Cấu trúc
 
-**Đã xong:** Module hóa · OCR batch · Cloud Backup · Undo 5s · Region selector
+```
 
-| Mã | Tính năng | Ưu tiên |
+Linh/
+├── index.html              # Entry point — main app
+├── guide.html              # Trang hướng dẫn sử dụng
+├── manifest.json           # PWA manifest
+├── sw.js                   # Service Worker
+├── README.md               # File này
+├── css/
+│   └── style.css
+└── js/
+├── main.js
+├── config.js
+├── state.js
+├── utils.js
+├── calc.js
+├── render.js
+├── ui.js
+├── entry.js
+├── ocr.js
+├── backup.js
+├── cloud.js
+├── theme.js
+└── undo.js
+
+```
+
+---
+
+## 📐 Công thức nghiệp vụ
+
+### Quy đổi đơn → công
+```
+
+Đơn tính công = Giao + (Lấy / 6) + Hoàn
+
+```
+
+### Ngưỡng công
+
+| Khu vực | 1 công | 0.5 công |
 |---|---|---|
-| 🔍 SPX-H | Search nâng cao | ⭐⭐⭐ |
-| 🔔 SPX-I | Notification nhắc | ⭐⭐ |
-| 📤 SPX-F | PWA Share Target | ⭐ |
-| 📄 SPX-J | Export PDF | ⭐ |
-| ☁️ SPX-G | Supabase Sync | ⭐ |
+| Miền Bắc/Trung/Nam | ≥ 60 | ≥ 30 |
+| TP.HCM & Hà Nội | ≥ 80 | ≥ 40 |
+
+### Số ngày tối đa
+- Tháng 2 → **24**
+- Các tháng khác → **26**
+
+### Thu nhập
+```
+
+Lương 1 công = (LCB + Bưu cục + Tài xế) / số ngày tối đa
+Tích lũy      = Lương 1 công × số công đã làm
+
+```
+
+### Tổng điểm
+```
+
+Tổng = Gốc + (Gốc × %hạng) + Thu nhập
+
+```
 
 ---
 
-## 🤝 Đóng góp
+## 🚀 Cài đặt cho developer
 
-**Báo bug:** [Tạo issue](https://github.com/linhshope124-a11y/spx-tracker1/issues/new) kèm mô tả + screenshot.
+### Chạy local
 
-**Gửi PR:**
 ```bash
-git checkout -b feature/ten-tinh-nang
-git commit -m "Add: tính năng X"
-git push origin feature/ten-tinh-nang
+git clone https://github.com/linhshope124-a11y/Linh.git
+cd Linh
+python -m http.server 8000
+```
+
+Mở http://localhost:8000
+
+Deploy
+
+Repo tự động deploy qua GitHub Pages khi push lên main.
+
+```bash
+git add .
+git commit -m "v50.5: mô tả thay đổi"
+git push
+```
+
+⚠️ Nhớ bump CACHE trong sw.js mỗi lần deploy.
+
+---
+
+🔄 Version History
+
+Version Thay đổi chính
+v50.5 Tách HDSD ra guide.html riêng
+v50.4.1 Đơn vị "điểm" cột ĐƯỢC
+v50.4 Thu nhập lưu theo từng tháng
+v50.3 Header cluster 3 nhóm visual
+v50.1 Label tháng có năm
+v50 Bỏ toggle Ngày, header 1 hàng
+v49 Hero + Tiles gộp, clamp font
+v48 Hero collapsible
+v47 Floating header card
+v46 Toggle Tháng/Ngày
+v45 OCR auto-save
+v44 Chốt OCR fix
+v43 Redesign chuyên nghiệp
+v42 Month picker
+
+---
+
+📖 Hướng dẫn sử dụng
+
+Xem tại guide.html hoặc Menu ☰ → Hướng dẫn sử dụng.
+
+---
+
+🤝 Đóng góp
+
+1. Fork repo
+2. Tạo branch: git checkout -b feature/ten-tinh-nang
+3. Commit: git commit -m "Thêm tính năng X"
+4. Push: git push origin feature/ten-tinh-nang
+5. Mở Pull Request
+
+Quy tắc code
+
+· ✅ Vanilla JS — không thêm framework
+· ✅ Tiếng Việt cho UI + comment
+· ✅ Bump CACHE trong sw.js mỗi lần sửa
+· ❌ Không dùng coachmark / tooltip overlay
+· ✅ Test trên Chrome mobile trước khi push
+
+---
+
+🐛 Báo lỗi
+
+Mở Issues kèm:
+
+· Ảnh chụp màn hình
+· Mô tả ngắn hành động gây lỗi
+· Phiên bản app
+
+---
+
+☕ Ủng hộ tác giả
+
+· Viettinbank: 106879606835
+· Chủ TK: LINH
+
+Cảm ơn bạn! ❤️
+
+---
+
+📜 Giấy phép
+
+MIT License — tự do sử dụng, chỉnh sửa, phân phối.
+
+---
+
+Made with ❤️ for SPX drivers
+
+```
+
+---
+
+## 🎯 Tóm lại — Bạn làm thế nào?
+
+**Nhanh nhất:**
+
+1. **Copy** đoạn trong khối code ở trên ☝️
+2. Mở **github.com/linhshope124-a11y/Linh** trên Chrome
+3. **Add file → Create new file**
+4. Đặt tên: `README.md`
+5. **Paste** nội dung
+6. **Commit new file** ✅
+
+**Xong trong ~1 phút.** Sau đó vào repo → thấy README hiển thị đẹp ngay.
+
+---
+
+## ⚠️ Lưu ý
+
+- Tên file **phải viết hoa đúng**: `README.md` (không phải `readme.md`)
+- Đặt ở **thư mục gốc** repo (ngang cấp `index.html`), **KHÔNG** đặt trong `css/` hay `js/`
+- Nếu muốn thêm ảnh sau → tạo thư mục `screenshots/` và upload ảnh vào
+
+---
+
+Không làm được bước nào → chụp ảnh màn hình chỗ bị lỗi, tôi chỉ tiếp 🎯
