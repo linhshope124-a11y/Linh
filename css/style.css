@@ -2414,3 +2414,12 @@ details.income-section[open] .income-chevron {
   margin-left: 1px;
   opacity: 0.75;
 }
+
+/* ============ v50.5: Menu item dạng link (HDSD) ============ */
+a.menu-item {
+  text-decoration: none;
+  color: var(--text-1);
+}
+a.menu-item:visited {
+  color: var(--text-1);
+}
