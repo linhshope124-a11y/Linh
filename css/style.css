@@ -2423,3 +2423,43 @@ a.menu-item {
 a.menu-item:visited {
   color: var(--text-1);
 }
+
+/* ============ v50.6: OCR DISTRIBUTION WARNING ============ */
+.input-control.conf-suspect {
+  border-left: 4px solid #ea580c !important;
+  background: #fff7ed !important;
+}
+
+.dist-warning-banner {
+  background: #fff7ed;
+  border: 1px solid #ea580c;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  color: #9a3412;
+}
+[data-theme="dark"] .dist-warning-banner {
+  background: rgba(234, 88, 12, 0.12);
+  border-color: rgba(234, 88, 12, 0.4);
+  color: #fb923c;
+}
+.dist-warning-title {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+.dist-warning-list {
+  margin: 0 0 8px;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.dist-warning-list li { margin-bottom: 2px; }
+.dist-warning-hint {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(234, 88, 12, 0.35);
+}
