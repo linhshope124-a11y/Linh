@@ -61,8 +61,10 @@ export function closePasteJsonModal() { document.getElementById('pasteJsonModal'
  * v50.8.0: Áp dụng payload import với 2 chế độ:
  *   - overwrite: GHI ĐÈ (xóa hết cũ, thay bằng file)
  *   - merge:     THÊM VÀO (giữ cũ, thêm mới, skip trùng)
+ *
+ * EXPORT để cloud.js dùng chung.
  */
-function applyImportedPayload(parsed, mode = 'overwrite') {
+export function applyImportedPayload(parsed, mode = 'overwrite') {
   let importedData = null, importedSettings = null;
   if (parsed?.data && (parsed.data.delivery || parsed.data.pickup || parsed.data.return)) {
     importedData = parsed.data; importedSettings = parsed.settings || null;
@@ -87,11 +89,10 @@ function applyImportedPayload(parsed, mode = 'overwrite') {
       return:   newRet
     };
     addedCount = totalRecords(state.appData);
-    removedCount = 0; // Ghi đè → không đếm trùng
+    removedCount = 0;
     console.log(`[Import] OVERWRITE: ${oldTotal} → ${addedCount} bản ghi`);
   } else {
     // === MERGE (THÊM VÀO) ===
-    // Skip bản ghi trùng (date + weights) giữa cũ và mới
     const mergeList = (oldList, newList) => {
       const merged = [...oldList];
       let added = 0;
@@ -115,7 +116,7 @@ function applyImportedPayload(parsed, mode = 'overwrite') {
     };
     addedCount = m1.added + m2.added + m3.added;
     const newTotal = totalRecords({ delivery: newDel, pickup: newPick, return: newRet });
-    removedCount = newTotal - addedCount; // Số bản ghi bị skip vì trùng
+    removedCount = newTotal - addedCount;
     console.log(`[Import] MERGE: thêm ${addedCount}, skip ${removedCount} trùng`);
   }
 
@@ -144,7 +145,6 @@ function applyImportedPayload(parsed, mode = 'overwrite') {
       if (mode === 'overwrite') {
         state.salaryByMonth = importedSettings.salaryByMonth;
       } else {
-        // Merge: không ghi đè tháng đã có
         Object.keys(importedSettings.salaryByMonth).forEach(m => {
           if (!state.salaryByMonth[m]) {
             state.salaryByMonth[m] = importedSettings.salaryByMonth[m];
@@ -202,21 +202,21 @@ function applyImportedPayload(parsed, mode = 'overwrite') {
 
 /**
  * v50.8.0: Kiểm tra app đang có dữ liệu → hỏi user muốn GHI ĐÈ hay THÊM VÀO.
- * @returns {Promise<string|null>} 'overwrite' | 'merge' | null (user hủy)
+ * EXPORT để cloud.js dùng chung.
+ * @returns {Promise<string>} 'overwrite' | 'merge'
  */
-function askImportMode() {
+export function askImportMode() {
   const currentTotal = totalRecords(state.appData);
-  if (currentTotal === 0) return Promise.resolve('overwrite'); // App trống → ghi đè luôn
+  if (currentTotal === 0) return Promise.resolve('overwrite'); // App trống → ghi đè
 
   const msg =
     `⚠️ App đang có ${currentTotal} bản ghi.\n\n` +
     `Bạn muốn:\n\n` +
     `• OK → GHI ĐÈ\n` +
-    `  Xóa hết data cũ, thay bằng file\n\n` +
+    `  Xóa hết data cũ, thay bằng dữ liệu mới\n\n` +
     `• Cancel → THÊM VÀO\n` +
-    `  Giữ data cũ + thêm mới (skip trùng)`;
+    `  Giữ data cũ + thêm mới (bỏ qua bản ghi trùng)`;
 
-  // confirm() chỉ có 2 nút OK/Cancel
   const ok = window.confirm(msg);
   return Promise.resolve(ok ? 'overwrite' : 'merge');
 }
@@ -262,11 +262,11 @@ export function exportData() {
     exportedAt: new Date().toISOString(),
     settings: {
       // v50.8.0
-      rankByMonth:  state.rankByMonth,
+      rankByMonth:   state.rankByMonth,
       salaryByMonth: state.salaryByMonth,
-      salaryDays:   state.salaryDays,
-      region:       state.region,
-      theme:        localStorage.getItem(STORAGE_KEYS.theme) || 'light'
+      salaryDays:    state.salaryDays,
+      region:        state.region,
+      theme:         localStorage.getItem(STORAGE_KEYS.theme) || 'light'
     },
     data: state.appData
   };
