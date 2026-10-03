@@ -390,10 +390,6 @@ export function closeSettingsModal() {
   document.getElementById('settingsModal').classList.remove('active');
 }
 
-// ================ GUIDE MODAL ================
-export function openGuideModal()  { document.getElementById('guideModal').classList.add('active'); }
-export function closeGuideModal() { document.getElementById('guideModal').classList.remove('active'); }
-
 // ================ COFFEE MODAL ================
 export function openCoffeeModal()  { document.getElementById('coffeeModal').classList.add('active'); }
 export function closeCoffeeModal() { document.getElementById('coffeeModal').classList.remove('active'); }
