@@ -4,6 +4,27 @@ import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
 
+// ==================== UNDO LOADER (v50.8.3-fix) ====================
+// Dynamic import tránh circular dependency + fallback an toàn
+let _pushUndoFn = null;
+let _pushUndoLoading = null;
+
+async function ensurePushUndo() {
+  if (_pushUndoFn) return _pushUndoFn;
+  if (_pushUndoLoading) return _pushUndoLoading;
+  _pushUndoLoading = (async () => {
+    try {
+      const mod = await import('./undo.js');
+      _pushUndoFn = mod.pushUndo || null;
+      return _pushUndoFn;
+    } catch (e) {
+      console.warn('[OCR] Không load được undo.js:', e);
+      return null;
+    }
+  })();
+  return _pushUndoLoading;
+}
+
 // ==================== TESSERACT WORKER ====================
 let cachedTesseractWorker = null;
 let workerLoadingPromise = null;
@@ -474,8 +495,8 @@ function validateDistribution(weights) {
   return { ok: warnings.length === 0, warnings, suspectKeys: [...suspects] };
 }
 
-// v45.1 + v50.6: auto-save chỉ khi tất cả check pass
-function tryAutoSave(r) {
+// ==================== v50.8.3-fix: AUTO-SAVE + UNDO ====================
+async function tryAutoSave(r) {
   const confs = Object.values(r.confidences).filter(c => c != null);
   if (confs.length === 0) return false;
   const allHigh = confs.every(c => c >= 85);
@@ -489,7 +510,20 @@ function tryAutoSave(r) {
 
   const type = getTypeFromResult(r);
   const weights = buildWeights(r);
-  state.appData[type].unshift({ id: generateId(), date: r.parsedDate, weights });
+  const newId = generateId();
+
+  // Dynamic import pushUndo (an toàn — nếu lỗi thì bỏ qua, không crash)
+  const pushUndoFn = await ensurePushUndo();
+  if (pushUndoFn) {
+    pushUndoFn({
+      msg: `OCR tự lưu ${getTypeLabel(r)} ${formatDateDisplay(r.parsedDate)}`,
+      restore: () => {
+        state.appData[type] = state.appData[type].filter(it => it.id !== newId);
+      }
+    });
+  }
+
+  state.appData[type].unshift({ id: newId, date: r.parsedDate, weights });
   updateAllViews();
   return true;
 }
@@ -526,7 +560,7 @@ export async function handleOcrImage(event) {
         continue;
       }
 
-      if (tryAutoSave(r)) {
+      if (await tryAutoSave(r)) {
         autoSaved.push(item);
       } else {
         needAttention.push(item);
@@ -938,8 +972,8 @@ export function showBackToBatchBtn(show) {
 }
 export function hasBatchPending() { return batchResults.length > 0; }
 
-// ==================== SAVE BATCH ====================
-export function saveBatchAll() {
+// ==================== SAVE BATCH (v50.8.3-fix) ====================
+export async function saveBatchAll() {
   const valid = batchResults.filter(r => !r.error);
   if (valid.length === 0) { showToast('Không có dữ liệu hợp lệ', 'error'); return; }
 
@@ -978,9 +1012,28 @@ export function saveBatchAll() {
     return;
   }
 
+  // Thêm records + gom id
+  const addedIds = [];
   finalList.forEach(({ item, type, weights }) => {
-    state.appData[type].unshift({ id: generateId(), date: item.result.parsedDate, weights });
+    const id = generateId();
+    state.appData[type].unshift({ id, date: item.result.parsedDate, weights });
+    addedIds.push({ type, id });
   });
+
+  // Dynamic import pushUndo — an toàn
+  if (addedIds.length > 0) {
+    const pushUndoFn = await ensurePushUndo();
+    if (pushUndoFn) {
+      pushUndoFn({
+        msg: `OCR lưu ${addedIds.length} bản ghi`,
+        restore: () => {
+          addedIds.forEach(({ type, id }) => {
+            state.appData[type] = state.appData[type].filter(it => it.id !== id);
+          });
+        }
+      });
+    }
+  }
 
   batchResults = [];
   showBackToBatchBtn(false);
