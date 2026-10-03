@@ -3,10 +3,14 @@ import { generateId, getCurrentMonthIso, getTodayIso } from './utils.js';
 
 export const state = {
   appData: { delivery: [], pickup: [], return: [] },
-  rankBonus: 0,
-  rankName: 'none',
-  salaryByMonth: {},          // ← MỚI v50.4: { "YYYY-MM": {base, buuCuc, taiXe} }
+
+  // v50.4: Lương theo tháng
+  salaryByMonth: {},
   salaryDays: 26,
+
+  // v50.8.0: Hạng thưởng theo tháng
+  rankByMonth: {},   // ← MỚI: { "YYYY-MM": { name, bonus } }
+
   region: 'mien',
 
   activeTab: 'overview',
@@ -25,6 +29,10 @@ export const state = {
 const SALARY_BY_MONTH_KEY = 'spx_salary_by_month';
 const LEGACY_SALARY_KEY   = 'spx_manual_salary';
 const LEGACY_POINTS_KEY   = 'spx_manual_points';
+
+const RANK_BY_MONTH_KEY   = 'spx_rank_by_month';
+const LEGACY_RANK_KEY     = 'spx_rank_bonus';
+const LEGACY_RANK_NAME_KEY= 'spx_rank_name';
 
 function sanitizeRecords(arr) {
   if (!Array.isArray(arr)) return [];
@@ -108,7 +116,73 @@ function loadSalaryByMonth() {
     console.log('[Migration] Đã chuyển config lương cũ vào tháng', m);
   }
 }
-// ============ /v50.4 ============
+// ============ /SALARY BY MONTH ============
+
+// ============ v50.8.0: RANK BY MONTH ============
+export function persistRankByMonth() {
+  localStorage.setItem(RANK_BY_MONTH_KEY, JSON.stringify(state.rankByMonth));
+}
+
+export function getRankConfig(monthIso) {
+  const m = monthIso || state.currentMonth || getCurrentMonthIso();
+  const cfg = state.rankByMonth[m];
+  if (cfg && typeof cfg === 'object' && cfg.name) {
+    return {
+      name:  String(cfg.name),
+      bonus: Number(cfg.bonus) || 0
+    };
+  }
+  return { name: 'none', bonus: 0 };
+}
+
+export function setRankConfig(monthIso, config) {
+  const m = monthIso || state.currentMonth || getCurrentMonthIso();
+  const name  = config.name || 'none';
+  const bonus = Number(config.bonus) || 0;
+
+  // Nếu name = 'none' → xóa config tháng đó
+  if (name === 'none') {
+    delete state.rankByMonth[m];
+  } else {
+    state.rankByMonth[m] = { name, bonus };
+  }
+  persistRankByMonth();
+}
+
+export function hasRankConfig(monthIso) {
+  const m = monthIso || state.currentMonth || getCurrentMonthIso();
+  return Boolean(state.rankByMonth[m]);
+}
+
+function loadRankByMonth() {
+  // 1. Thử đọc cấu trúc mới
+  try {
+    const raw = localStorage.getItem(RANK_BY_MONTH_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        state.rankByMonth = parsed;
+        return;
+      }
+    }
+  } catch {}
+
+  // 2. Migration từ data cũ (chạy 1 lần duy nhất)
+  const oldBonus = parseFloat(localStorage.getItem(LEGACY_RANK_KEY)) || 0;
+  const oldName  = localStorage.getItem(LEGACY_RANK_NAME_KEY) || 'none';
+
+  if (oldName !== 'none' && oldBonus > 0) {
+    const m = state.currentMonth || getCurrentMonthIso();
+    state.rankByMonth = {
+      [m]: { name: oldName, bonus: oldBonus }
+    };
+    persistRankByMonth();
+    localStorage.removeItem(LEGACY_RANK_KEY);
+    localStorage.removeItem(LEGACY_RANK_NAME_KEY);
+    console.log('[Migration] Đã chuyển hạng thưởng cũ vào tháng', m);
+  }
+}
+// ============ /RANK BY MONTH ============
 
 export function loadState() {
   let d = JSON.parse(localStorage.getItem(STORAGE_KEYS.records));
@@ -120,9 +194,6 @@ export function loadState() {
     pickup:   sanitizeRecords(d.pickup),
     return:   sanitizeRecords(d.return)
   };
-
-  state.rankBonus = parseFloat(localStorage.getItem(STORAGE_KEYS.rank)) || 0;
-  state.rankName  = localStorage.getItem(STORAGE_KEYS.rankName) || 'none';
 
   // v46: period mode
   const savedMode = localStorage.getItem('spx_period_mode');
@@ -148,6 +219,9 @@ export function loadState() {
   state.salaryDays = 26;
   loadSalaryByMonth();
 
+  // v50.8.0: rank config theo từng tháng
+  loadRankByMonth();
+
   const reg = localStorage.getItem('spx_region');
   state.region = (reg === 'hcm_hn' || reg === 'mien') ? reg : 'mien';
 }
@@ -159,9 +233,8 @@ export function persistData() {
 }
 
 export function persistSettings() {
-  localStorage.setItem(STORAGE_KEYS.rank,     state.rankBonus);
-  localStorage.setItem(STORAGE_KEYS.rankName, state.rankName);
   localStorage.setItem('spx_region', state.region);
+  // v50.8.0: rank và salary đã có hàm persist riêng
 }
 
 // v46: persist period state (mode + month + date)
