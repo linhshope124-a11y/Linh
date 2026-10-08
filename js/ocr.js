@@ -1,5 +1,5 @@
 // =============================================================
-// OCR ENGINE v1-β.3 — PART 1/2
+// OCR ENGINE — PART 1/2
 // Imports · Config · Worker · Preprocess · Parse
 // =============================================================
 
@@ -9,16 +9,21 @@ import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
 import { showConfirm } from './dialog.js';
+// ⭐ PATCH #3: cache module tách riêng (IndexedDB)
+import {
+  cacheGetAsync, cacheSet,
+  clearOcrCache as _clearOcrCacheImpl,
+  getOcrCacheStats as _getOcrCacheStatsImpl,
+  initOcrCache, refreshOcrCacheStats
+} from './ocr-cache.js';
+
+// Re-export để main.js và các module khác không cần đổi import path
+export { getOcrCacheStats, initOcrCache, refreshOcrCacheStats } from './ocr-cache.js';
 
 // ==================== CONFIG ====================
 const DISABLE_AUTO_SAVE = true;
-
 const OCR_TIMEOUT_MS    = 60000;
-const OCR_CACHE_VERSION = 'v1b-3';
-const OCR_CACHE_MAX     = 50;
-const LS_CACHE_PREFIX   = 'spx_ocr_ls_';
-const LS_CACHE_INDEX    = 'spx_ocr_ls_index';
-const LS_CACHE_MAX_BYTES = 4 * 1024 * 1024;
+// Cache config giờ nằm ở ocr-cache.js
 
 // ==================== ABORT CONTROLLER ====================
 let _ocrAbortController = null;
@@ -80,7 +85,11 @@ function ensureTesseractLib() {
     s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
     s.async = true;
     s.onload = resolve;
-    s.onerror = () => { _tessLibPromise = null; s.remove(); reject(new Error('Không tải được thư viện OCR — kiểm tra mạng')); };
+    s.onerror = () => {
+      _tessLibPromise = null;
+      s.remove();
+      reject(new Error('Không tải được thư viện OCR — kiểm tra mạng'));
+    };
     document.head.appendChild(s);
   });
   return _tessLibPromise;
@@ -512,8 +521,8 @@ function extractDate(text) {
 }
 
 // =============================================================
-// OCR ENGINE v1-β.3 — PART 2/2
-// Cache LS Optimized · Main · Modals · Copy log · Exports
+// OCR ENGINE — PART 2/2
+// Batch state · Pipeline · Modals · Copy log · Exports
 // =============================================================
 
 // ==================== LOG STORAGE ====================
@@ -664,177 +673,10 @@ async function tryAutoSaveForce(r) {
   return true;
 }
 
-// ==================== CACHE 2 TẦNG (Optimized) ====================
-const ocrCache = new Map();
-
-let _cacheIndexCache = null;
-
-function _cacheKey(hash) {
-  return `${OCR_CACHE_VERSION}_${hash}`;
-}
-
-function readCacheIndex() {
-  if (_cacheIndexCache !== null) return _cacheIndexCache;
-  try {
-    const raw = localStorage.getItem(LS_CACHE_INDEX);
-    if (!raw) {
-      _cacheIndexCache = [];
-      return _cacheIndexCache;
-    }
-    const arr = JSON.parse(raw);
-    _cacheIndexCache = Array.isArray(arr) ? arr : [];
-    return _cacheIndexCache;
-  } catch {
-    _cacheIndexCache = [];
-    return _cacheIndexCache;
-  }
-}
-
-function writeCacheIndex(index) {
-  _cacheIndexCache = index;
-  try {
-    localStorage.setItem(LS_CACHE_INDEX, JSON.stringify(index));
-  } catch {}
-}
-
-function invalidateCacheIndex() {
-  _cacheIndexCache = null;
-}
-
-function estimateLocalStorageBytes() {
-  try {
-    let total = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith(LS_CACHE_PREFIX)) continue;
-      const val = localStorage.getItem(key);
-      if (val) total += key.length + val.length;
-    }
-    return total * 2;
-  } catch { return 0; }
-}
-
-function evictOldestCache() {
-  const index = readCacheIndex();
-  if (index.length === 0) return false;
-  const oldest = index.shift();
-  try { localStorage.removeItem(LS_CACHE_PREFIX + oldest); } catch {}
-  writeCacheIndex(index);
-  ocrCache.delete(oldest);
-  return true;
-}
-
-function pruneCacheIfNeeded() {
-  const index = readCacheIndex();
-  const targetCount = Math.floor(OCR_CACHE_MAX * 0.8);
-  let removedCount = 0;
-  while (index.length > targetCount) {
-    const oldest = index.shift();
-    try { localStorage.removeItem(LS_CACHE_PREFIX + oldest); } catch {}
-    ocrCache.delete(oldest);
-    removedCount++;
-  }
-  if (removedCount > 0) writeCacheIndex(index);
-
-  let bytes = estimateLocalStorageBytes();
-  const targetBytes = LS_CACHE_MAX_BYTES * 0.5;
-  let safety = 100;
-  while (bytes > targetBytes && safety-- > 0) {
-    if (!evictOldestCache()) break;
-    bytes = estimateLocalStorageBytes();
-  }
-}
-
-function cacheGet(hash) {
-  const key = _cacheKey(hash);
-  if (ocrCache.has(key)) {
-    const v = ocrCache.get(key);
-    const index = readCacheIndex();
-    const idx = index.indexOf(key);
-    if (idx !== -1) {
-      index.splice(idx, 1);
-      index.push(key);
-      writeCacheIndex(index);
-    }
-    return v;
-  }
-  try {
-    const raw = localStorage.getItem(LS_CACHE_PREFIX + key);
-    if (raw) {
-      const value = JSON.parse(raw);
-      ocrCache.set(key, value);
-      const index = readCacheIndex();
-      const idx = index.indexOf(key);
-      if (idx !== -1) {
-        index.splice(idx, 1);
-        index.push(key);
-        writeCacheIndex(index);
-      }
-      return value;
-    }
-  } catch {}
-  return null;
-}
-
-function cacheSet(hash, value) {
-  const key = _cacheKey(hash);
-  ocrCache.set(key, value);
-  try {
-    localStorage.setItem(LS_CACHE_PREFIX + key, JSON.stringify(value));
-    const index = readCacheIndex();
-    if (!index.includes(key)) {
-      index.push(key);
-      writeCacheIndex(index);
-    }
-    pruneCacheIfNeeded();
-  } catch (e) {
-    try {
-      pruneCacheIfNeeded();
-      localStorage.setItem(LS_CACHE_PREFIX + key, JSON.stringify(value));
-    } catch {}
-  }
-}
-
 // ==================== XÓA CACHE OCR ====================
+// Uỷ quyền cho ocr-cache.js — giữ wrapper để export tên cũ
 export async function clearOcrCache() {
-  const ok = await showConfirm(
-    'Xóa toàn bộ cache OCR?\n\nLần sau quét lại ảnh cũ sẽ phải OCR từ đầu.',
-    { title: '🗑️ Xóa cache OCR', okText: 'Xóa', cancelText: 'Hủy', danger: true }
-  );
-  if (!ok) return 0;
-
-  let count = 0;
-  ocrCache.clear();
-  _cacheIndexCache = [];
-  try {
-    const index = readCacheIndex();
-    count = index.length;
-    index.forEach(key => { try { localStorage.removeItem(LS_CACHE_PREFIX + key); } catch {} });
-    localStorage.removeItem(LS_CACHE_INDEX);
-  } catch {}
-  try {
-    const toRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(LS_CACHE_PREFIX)) toRemove.push(key);
-    }
-    toRemove.forEach(k => { try { localStorage.removeItem(k); } catch {} });
-    count = Math.max(count, toRemove.length);
-  } catch {}
-  invalidateCacheIndex();
-  showToast(`Đã xóa ${count} cache OCR`, 'success', 2500);
-  return count;
-}
-
-export function getOcrCacheStats() {
-  const index = readCacheIndex();
-  return {
-    ramEntries: ocrCache.size,
-    lsEntries: index.length,
-    sizeKB: Math.round(estimateLocalStorageBytes() / 1024),
-    maxEntries: OCR_CACHE_MAX,
-    maxSizeKB: Math.round(LS_CACHE_MAX_BYTES / 1024)
-  };
+  return _clearOcrCacheImpl();
 }
 
 // ==================== HASH BLOB ====================
@@ -1066,7 +908,7 @@ async function processOneFile(file, signal) {
   _checkAborted(signal);
 
   const hash = await hashBlob(file);
-  const cached = cacheGet(hash);
+  const cached = await cacheGetAsync(hash);   // ⭐ PATCH #3: async — đọc cả L1 + IDB
 
   if (cached) {
     _checkAborted(signal);
@@ -1419,10 +1261,12 @@ export function backToBatch() {
   showBackToBatchBtn(false);
   openBatchOcrModal();
 }
+
 export function showBackToBatchBtn(show) {
   const btn = document.getElementById('backToBatchBtn');
   if (btn) btn.style.display = show ? 'inline-flex' : 'none';
 }
+
 export function hasBatchPending() { return batchResults.length > 0; }
 
 // ==================== SAVE BATCH ====================
@@ -1597,4 +1441,22 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   }[c]));
+}
+
+// ==================== INTERNAL: showSummaryToast ====================
+/**
+ * Hiện toast tổng kết sau khi OCR nhiều ảnh.
+ * (Hàm này có trong bản gốc của bạn nhưng tôi chưa thấy phần thân — 
+ *  nếu bạn đã có, giữ nguyên; nếu thiếu, đây là bản gợi ý.)
+ */
+function showSummaryToast(saved, dup, need, delay = 0) {
+  const parts = [];
+  if (saved > 0) parts.push(`✅ ${saved} tự lưu`);
+  if (dup > 0)   parts.push(`⚠️ ${dup} trùng`);
+  if (need > 0)  parts.push(`📝 ${need} cần xử lý`);
+  if (parts.length === 0) return;
+
+  const msg = parts.join(' · ');
+  const type = need > 0 ? 'warning' : (dup > 0 ? 'warning' : 'success');
+  setTimeout(() => showToast(msg, type, 3500), delay);
 }
