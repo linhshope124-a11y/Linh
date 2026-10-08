@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { WEIGHT_KEYS, WEIGHT_SUFFIXES } from './config.js';
-import { sanitizeInt, generateId, getTodayIso, formatDateDisplay, deepClone } from './utils.js';
+import { sanitizeInt, generateId, getTodayIso, formatDateDisplay, deepClone, isValidIsoDate } from './utils.js';
 import { closeModal } from './ui.js';
 import { updateAllViews } from './render.js';
 import { hasBatchPending, backToBatch } from './ocr.js';
@@ -25,11 +25,7 @@ function findDuplicate(type, date, weights) {
 
 export async function saveRecord() {
   const date = document.getElementById('inputDate').value || getTodayIso();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    await showAlert('Ngày không hợp lệ!', { title: 'Lỗi', okText: 'Đóng' });
-    return;
-  }
-  if (isNaN(new Date(date).getTime())) {
+  if (!isValidIsoDate(date)) {
     await showAlert('Ngày không hợp lệ!', { title: 'Lỗi', okText: 'Đóng' });
     return;
   }
