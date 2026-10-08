@@ -9,22 +9,7 @@ import { getTodayIso, formatDateDisplay, generateId } from './utils.js';
 import { openAddModal, openEditModal, switchModalSubTab, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
 import { showConfirm } from './dialog.js';
-// ==================== SUMMARY TOAST ====================
-function showSummaryToast(autoSaved, duplicates, needAttention, delay = 0) {
-  if (autoSaved === 0 && duplicates === 0 && needAttention === 0) return;
 
-  const parts = [];
-  if (autoSaved > 0)      parts.push(`✅ Đã lưu ${autoSaved}`);
-  if (duplicates > 0)     parts.push(`⚡ Trùng ${duplicates}`);
-  if (needAttention > 0)  parts.push(`⚠️ Cần check ${needAttention}`);
-
-  const msg = parts.join(' · ');
-  const type = needAttention > 0 ? 'warning'
-             : autoSaved > 0     ? 'success'
-             : 'warning';
-
-  setTimeout(() => showToast(msg, type, 3200), delay);
-}
 // ==================== CONFIG ====================
 const DISABLE_AUTO_SAVE = true;
 
@@ -85,6 +70,22 @@ async function ensurePushUndo() {
 }
 
 // ==================== TESSERACT WORKER ====================
+// Tải thư viện Tesseract (~2MB) chỉ khi thật sự dùng OCR — trước đây chặn render ở <head>.
+let _tessLibPromise = null;
+function ensureTesseractLib() {
+  if (window.Tesseract) return Promise.resolve();
+  if (_tessLibPromise) return _tessLibPromise;
+  _tessLibPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => { _tessLibPromise = null; s.remove(); reject(new Error('Không tải được thư viện OCR — kiểm tra mạng')); };
+    document.head.appendChild(s);
+  });
+  return _tessLibPromise;
+}
+
 let cachedTesseractWorker = null;
 let workerLoadingPromise = null;
 
@@ -92,6 +93,7 @@ async function getTesseractWorker() {
   if (cachedTesseractWorker) return cachedTesseractWorker;
   if (workerLoadingPromise) return workerLoadingPromise;
   workerLoadingPromise = (async () => {
+    await ensureTesseractLib();
     const worker = await Tesseract.createWorker('vie', 1, {
       logger: m => {
         const overlay = document.getElementById('ocrLoadingOverlay');
