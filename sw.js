@@ -1,11 +1,15 @@
 // =============================================================
 // SPX Tracker — Service Worker
 // Cache: app shell (CACHE) + Tesseract (TESS_CACHE) + Share Target
+//
+// ⚠️ MỖI LẦN SỬA FILE TRONG CORE → BUMP CACHE VERSION
+//    - spx-tracker-v3 → spx-tracker-v4 → ...
+//    - TESS_CACHE và SHARE_CACHE KHÔNG cần bump (dữ liệu không đổi)
 // =============================================================
 
-const CACHE      = 'spx-tracker-v2';
-const TESS_CACHE = 'spx-tesseract-v1';
-const SHARE_CACHE = 'spx-shared-files';
+const CACHE       = 'spx-tracker-v3';      // ⭐ v3 — sau patch #1, #2, #3
+const TESS_CACHE  = 'spx-tesseract-v1';    // giữ nguyên — Tesseract không đổi
+const SHARE_CACHE = 'spx-shared-files';    // giữ nguyên — dữ liệu tạm
 
 const CORE = [
   './',
@@ -22,6 +26,8 @@ const CORE = [
   './js/calc.js',
   './js/theme.js',
   './js/ocr.js',
+  './js/ocr-cache.js',      // ⭐ PATCH #3: file mới
+  './js/sw-bridge.js',      // ⭐ PATCH #2: file mới
   './js/ui.js',
   './js/render.js',
   './js/entry.js',
