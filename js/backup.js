@@ -1,6 +1,7 @@
 import {
   state,
   persistData,
+  sanitizeRecords,
   persistSalaryByMonth,
   persistRankByMonth
 } from './state.js';
@@ -66,9 +67,9 @@ export function applyImportedPayload(parsed, mode = 'overwrite') {
     importedData = parsed;
   } else return { success: false };
 
-  const newDel  = dedupeList(importedData.delivery || []);
-  const newPick = dedupeList(importedData.pickup   || []);
-  const newRet  = dedupeList(importedData.return   || []);
+  const newDel  = dedupeList(sanitizeRecords(importedData.delivery));
+  const newPick = dedupeList(sanitizeRecords(importedData.pickup));
+  const newRet  = dedupeList(sanitizeRecords(importedData.return));
 
   let removedCount = 0;
   let addedCount = 0;
@@ -86,10 +87,13 @@ export function applyImportedPayload(parsed, mode = 'overwrite') {
   } else {
     const mergeList = (oldList, newList) => {
       const merged = [...oldList];
+      const keyOf = r => r.date + '|' + WEIGHT_KEYS.map(k => r.weights[k]).join('_');
+      const have = new Set(oldList.map(keyOf));
       let added = 0;
       newList.forEach(r => {
-        const dup = oldList.find(o => o.date === r.date && weightsEqual(o.weights, r.weights));
-        if (dup) return;
+        const k = keyOf(r);
+        if (have.has(k)) return;
+        have.add(k);
         merged.push(r);
         added++;
       });
@@ -111,8 +115,7 @@ export function applyImportedPayload(parsed, mode = 'overwrite') {
     console.log(`[Import] MERGE: thêm ${addedCount}, skip ${removedCount} trùng`);
   }
 
-  localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.appData));
-  localStorage.setItem(STORAGE_KEYS.vault,   JSON.stringify(state.appData));
+  persistData();   // có try/catch + báo lỗi khi đầy bộ nhớ
 
   // ===== Settings =====
   if (importedSettings) {
