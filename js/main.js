@@ -1,4 +1,4 @@
-import { state, loadState, persistPeriodState, getSalaryConfig, setSalaryConfig } from './state.js';
+import { state, loadState, persistSettings, persistPeriodState, getSalaryConfig, setSalaryConfig } from './state.js';
 import { initTheme, toggleTheme } from './theme.js';
 import { getTodayIso, getCurrentMonthIso } from './utils.js';
 import {
@@ -46,6 +46,8 @@ import {
 import { undoLast } from './undo.js';
 import { showAlert, showConfirm } from './dialog.js';
 import { WEIGHT_KEYS } from './config.js';
+// ⭐ PATCH #2: SW bridge
+import { requestPrecacheTesseract } from './sw-bridge.js';
 
 // ================ AUTO-CLEAR INPUT ================
 function attachAutoClearInputs() {
@@ -182,18 +184,18 @@ function _showIncomeInfo() {
   );
 }
 
-// ================ v50.11.11: OPEN OCR PICKER (defer preload) ================
+// ================ OPEN OCR PICKER (defer preload) ================
 /**
  * Mở file picker để quét ảnh.
- * Preload Tesseract worker CHỈ KHI user thực sự bấm 📷 (không auto preload).
- * → Tiết kiệm ~2MB data cho user không dùng OCR.
+ * - Lazy-load Tesseract lib (~2MB) chỉ khi user bấm 📷
+ * - Yêu cầu SW precache Tesseract runtime → OCR offline lần sau
  */
 let _ocrPreloadTriggered = false;
 function _openOcrPicker() {
-  // Preload lần đầu (fire-and-forget)
   if (!_ocrPreloadTriggered) {
     _ocrPreloadTriggered = true;
-    preloadTesseractWorker();     // không await — để picker mở ngay
+    preloadTesseractWorker();       // không await — picker mở ngay
+    requestPrecacheTesseract();     // ⭐ SW tải Tesseract vào cache → OCR offline
   }
 
   const input = document.getElementById('ocrFileInput');
@@ -225,7 +227,7 @@ async function registerSW() {
 
     navigator.serviceWorker.addEventListener('message', e => {
       if (e.data && e.data.type === 'SW_UPDATED') {
-        console.log('[PWA] SW updated → reloading...');
+        if (document.querySelector('.modal-shade.active')) { showUpdateBanner(); return; }
         window.location.reload();
       }
     });
@@ -234,10 +236,6 @@ async function registerSW() {
   }
 }
 
-/**
- * Kiểm tra version từ server.
- * @param {boolean} manual - true nếu user bấm menu
- */
 async function checkVersion(manual = false) {
   try {
     const res = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
@@ -315,13 +313,7 @@ async function applyUpdate() {
   }
 }
 
-// ================ v50.11.11: VISIBILITY-BASED CHECK ================
-/**
- * Fix #6: thay setInterval 5 phút bằng visibility-based check.
- * - Khi user quay lại app (visible) → check 1 lần.
- * - Không còn check ngầm khi app ẩn → tiết kiệm pin.
- * - Throttle: tối thiểu 5 phút giữa 2 lần check tự động.
- */
+// ================ VISIBILITY-BASED CHECK ================
 let _lastAutoCheckTime = 0;
 const AUTO_CHECK_THROTTLE_MS = 5 * 60 * 1000;
 
@@ -423,6 +415,7 @@ async function _runShareTargetIfNeeded() {
   // Preload OCR worker vì chắc chắn sẽ dùng
   _ocrPreloadTriggered = true;
   preloadTesseractWorker();
+  requestPrecacheTesseract();      // ⭐ SW cache Tesseract cho lần sau offline
 
   await new Promise(r => setTimeout(r, 400));
 
@@ -460,7 +453,7 @@ Object.assign(window, {
   syncRankUIForCurrentMonth,
 
   applyUpdate,
-  checkVersion: () => checkVersion(true),   // menu gọi → manual mode
+  checkVersion: () => checkVersion(true),
 
   setPeriodMode,
   periodPrev,
@@ -480,7 +473,6 @@ Object.assign(window, {
   closeShareTargetModal,
   handleSharedImage,
 
-  // v50.11.11: History date filter (thay 9 hàm filter cũ)
   openHistoryDatePicker,
   applyHistoryDateFilter,
   clearHistoryDateFilter,
@@ -489,7 +481,6 @@ Object.assign(window, {
   closeAllOpportunitiesModal,
   setAllOppFilter,
 
-  // v50.11.11: open OCR picker (defer Tesseract)
   openOcrPicker: _openOcrPicker,
 
   // REGION
@@ -513,7 +504,8 @@ Object.assign(window, {
       const label = regionKey === 'hcm_hn'
         ? 'TP.HCM & Hà Nội (80/40)'
         : 'Miền Trung (60/30)';
-      showAlert(`Đã chọn khu vực: ${label}`, { title: 'Khu vực', okText: 'OK' });
+      persistSettings();
+      showToast(`Đã chọn: ${label}`, 'success', 1800);
     } catch (e) {
       console.error('[Region] error:', e);
       showAlert('Lỗi đổi khu vực: ' + e.message, { title: 'Lỗi', okText: 'Đóng' });
@@ -569,7 +561,11 @@ Object.assign(window, {
   findDuplicates: _findDuplicates,
   cleanupDuplicates: _cleanupDuplicates,
 
-  toggleHeroMetrics: _toggleHeroMetrics
+  toggleHeroMetrics: _toggleHeroMetrics,
+
+  // ⭐ PATCH #2: SW bridge — debug từ console
+  isTesseractCached: () => import('./sw-bridge.js').then(m => m.isTesseractCached()),
+  clearTesseractCache: () => import('./sw-bridge.js').then(m => m.clearTesseractCache())
 });
 
 // ================ HOOK SETTINGS MODAL → UPDATE STATS ================
@@ -578,6 +574,15 @@ window.openSettingsModal = function() {
   _origOpenSettingsModal();
   setTimeout(_updateOcrCacheStats, 100);
 };
+
+// ================ CẢNH BÁO KHI KHÔNG GHI ĐƯỢC DỮ LIỆU ================
+let _storageWarned = false;
+window.addEventListener('spx:storage-error', () => {
+  if (_storageWarned) return;
+  _storageWarned = true;
+  showAlert('Bộ nhớ thiết bị đầy hoặc bị chặn — số liệu mới CHƯA được lưu.\n\nHãy xuất file sao lưu rồi giải phóng bộ nhớ.',
+    { title: '⚠️ Không lưu được', okText: 'Đã hiểu' });
+});
 
 // ================ INIT ================
 (async function init() {
@@ -592,12 +597,11 @@ window.openSettingsModal = function() {
 
   attachAutoClearInputs();
   updateAllViews();
-  // v50.11.11: KHÔNG auto preload Tesseract — chỉ preload khi user bấm 📷
+  // KHÔNG auto preload Tesseract — chỉ preload khi user bấm 📷
 
   registerSW();
   setTimeout(() => checkVersion(false), 2000);
 
-  // v50.11.11: visibility-based check (thay setInterval)
   document.addEventListener('visibilitychange', _maybeAutoCheck);
   window.addEventListener('focus', _maybeAutoCheck);
 
