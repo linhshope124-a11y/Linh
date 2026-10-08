@@ -28,6 +28,7 @@ import {
   saveBatchAll, importBatchItem, removeBatchItem,
   backToBatch, hasBatchPending, showBackToBatchBtn,
   clearOcrCache, getOcrCacheStats,
+  initOcrCache, refreshOcrCacheStats,        // ⭐ PATCH #3
   handleSharedImage
 } from './ocr.js';
 import { saveRecord, deleteRecord, clearAllHistory } from './entry.js';
@@ -130,12 +131,13 @@ async function _cleanupDuplicates() {
 }
 
 // ================ OCR CACHE STATS + CLEAR ================
-function _updateOcrCacheStats() {
+async function _updateOcrCacheStats() {
   const el = document.getElementById('ocrCacheStats');
   if (!el) return;
   try {
-    const stats = getOcrCacheStats();
-    el.innerText = `RAM: ${stats.ramEntries} · LS: ${stats.lsEntries} · ~${stats.sizeKB} KB (max ${stats.maxEntries}/${stats.maxSizeKB}KB)`;
+    // ⭐ PATCH #3: async refresh — đọc IDB rồi mới hiển thị
+    const stats = await refreshOcrCacheStats();
+    el.innerText = `RAM: ${stats.ramEntries} · IDB: ${stats.lsEntries} · ~${stats.sizeKB} KB (max ${stats.maxEntries}/${stats.maxSizeKB}KB)`;
   } catch (e) {
     el.innerText = 'Không đọc được thống kê';
   }
@@ -144,7 +146,7 @@ function _updateOcrCacheStats() {
 async function _clearOcrCacheFromSettings() {
   try {
     await clearOcrCache();
-    _updateOcrCacheStats();
+    await _updateOcrCacheStats();
   } catch (e) {
     console.error('[OCR Cache] Lỗi xóa:', e);
     await showAlert('Không xóa được cache: ' + e.message, { title: 'Lỗi', okText: 'Đóng' });
@@ -195,7 +197,7 @@ function _openOcrPicker() {
   if (!_ocrPreloadTriggered) {
     _ocrPreloadTriggered = true;
     preloadTesseractWorker();       // không await — picker mở ngay
-    requestPrecacheTesseract();     // ⭐ SW tải Tesseract vào cache → OCR offline
+    requestPrecacheTesseract();     // ⭐ PATCH #2: SW tải Tesseract vào cache
   }
 
   const input = document.getElementById('ocrFileInput');
@@ -227,6 +229,7 @@ async function registerSW() {
 
     navigator.serviceWorker.addEventListener('message', e => {
       if (e.data && e.data.type === 'SW_UPDATED') {
+        // ⭐ PATCH #1: không tự reload khi modal đang mở
         if (document.querySelector('.modal-shade.active')) { showUpdateBanner(); return; }
         window.location.reload();
       }
@@ -415,7 +418,7 @@ async function _runShareTargetIfNeeded() {
   // Preload OCR worker vì chắc chắn sẽ dùng
   _ocrPreloadTriggered = true;
   preloadTesseractWorker();
-  requestPrecacheTesseract();      // ⭐ SW cache Tesseract cho lần sau offline
+  requestPrecacheTesseract();      // ⭐ PATCH #2: SW cache Tesseract cho lần sau offline
 
   await new Promise(r => setTimeout(r, 400));
 
@@ -565,14 +568,18 @@ Object.assign(window, {
 
   // ⭐ PATCH #2: SW bridge — debug từ console
   isTesseractCached: () => import('./sw-bridge.js').then(m => m.isTesseractCached()),
-  clearTesseractCache: () => import('./sw-bridge.js').then(m => m.clearTesseractCache())
+  clearTesseractCache: () => import('./sw-bridge.js').then(m => m.clearTesseractCache()),
+
+  // ⭐ PATCH #3: OCR cache debug
+  debugListOcrCache: () => import('./ocr-cache.js').then(m => m.debugListCache())
 });
 
 // ================ HOOK SETTINGS MODAL → UPDATE STATS ================
 const _origOpenSettingsModal = openSettingsModal;
 window.openSettingsModal = function() {
   _origOpenSettingsModal();
-  setTimeout(_updateOcrCacheStats, 100);
+  // Async — không cần await, để modal mở trước rồi stats về sau
+  setTimeout(() => { _updateOcrCacheStats(); }, 100);
 };
 
 // ================ CẢNH BÁO KHI KHÔNG GHI ĐƯỢC DỮ LIỆU ================
@@ -597,6 +604,10 @@ window.addEventListener('spx:storage-error', () => {
 
   attachAutoClearInputs();
   updateAllViews();
+
+  // ⭐ PATCH #3: khởi tạo IDB cache (migration từ localStorage cũ)
+  initOcrCache().catch(e => console.warn('[Init] OCR cache init fail:', e));
+
   // KHÔNG auto preload Tesseract — chỉ preload khi user bấm 📷
 
   registerSW();
