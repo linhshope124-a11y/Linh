@@ -510,6 +510,7 @@ function extractDate(text) {
 
   return getTodayIso();
 }
+
 // =============================================================
 // OCR ENGINE v1-β.3 — PART 2/2
 // Cache LS Optimized · Main · Modals · Copy log · Exports
@@ -666,7 +667,6 @@ async function tryAutoSaveForce(r) {
 // ==================== CACHE 2 TẦNG (Optimized) ====================
 const ocrCache = new Map();
 
-// ⚡ v1-β.3: Cache index trong module — giảm đọc localStorage
 let _cacheIndexCache = null;
 
 function _cacheKey(hash) {
