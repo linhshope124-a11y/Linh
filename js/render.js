@@ -10,30 +10,10 @@ const TOP_OVERVIEW_COUNT = 4;
 const HEAVY_WEIGHT_KEYS = ['10_12', '12_15', 'over_15'];
 const SUFFIX_BY_COL = ['0_2', '2_4', '4_6', '6_8', '8_10', '10_12', '12_15', 'over_15'];
 
-// ============ v50.11.11: Hash check throttle ============
-let _lastDataHash = null;
-let _lastHashCheckTime = 0;
-const HASH_CHECK_INTERVAL_MS = 500;
-
-function _checkDataChanged() {
-  const now = Date.now();
-  if (now - _lastHashCheckTime < HASH_CHECK_INTERVAL_MS) return;
-  _lastHashCheckTime = now;
-
-  let currentHash;
-  try {
-    currentHash = JSON.stringify(state.appData);
-  } catch {
-    return;
-  }
-
-  if (_lastDataHash === null) {
-    _lastDataHash = currentHash;
-  } else if (currentHash !== _lastDataHash) {
-    _lastDataHash = currentHash;
-    window.dispatchEvent(new CustomEvent('spx:datachanged'));
-  }
-}
+// ============ Lưu ngay khi app bị ẩn/đóng (không phụ thuộc debounce render) ============
+const _flushNow = () => { persistData(); };
+window.addEventListener('pagehide', _flushNow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) _flushNow(); });
 
 // ============ v50.11.11: All opportunities modal state ============
 let _allOppFilter = 'del';
@@ -429,10 +409,11 @@ function _updateAllViews() {
     state.currentDate
   );
 
-  const delTbody  = document.getElementById('delTableBody');  delTbody.innerHTML = '';
-  const pickTbody = document.getElementById('pickTableBody'); pickTbody.innerHTML = '';
-  const retTbody  = document.getElementById('retTableBody');  retTbody.innerHTML = '';
+  const delTbody  = document.getElementById('delTableBody');  
+  const pickTbody = document.getElementById('pickTableBody'); 
+  const retTbody  = document.getElementById('retTableBody');  
 
+  let dRows = '', pRows = '', rRows = '';
   const ovSuggBuf = [];
   let delPts = 0, pickPts = 0, retPts = 0;
 
@@ -445,9 +426,9 @@ function _updateAllViews() {
     pickPts += pTier.matched.pt;
     retPts  += rTier.matched.pt;
 
-    delTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`);
-    pickTbody.insertAdjacentHTML('beforeend', `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`);
-    retTbody.insertAdjacentHTML('beforeend',  `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`);
+    dRows += `<tr>${renderRow(WEIGHT_LABELS[col], dOrders, dTier, 'delivery-num')}</tr>`;
+    pRows += `<tr>${renderRow(WEIGHT_LABELS[col], pOrders, pTier, 'pickup-num')}</tr>`;
+    rRows += `<tr>${renderRow(WEIGHT_LABELS[col], rOrders, rTier, 'return-num')}</tr>`;
 
     const wKey = SUFFIX_BY_COL[col];
 
@@ -455,6 +436,8 @@ function _updateAllViews() {
     const o2 = buildOverviewSuggestion('pick', WEIGHT_LABELS[col], pOrders, pTier, wKey); if (o2) ovSuggBuf.push(o2);
     const o3 = buildOverviewSuggestion('ret',  WEIGHT_LABELS[col], rOrders, rTier, wKey); if (o3) ovSuggBuf.push(o3);
   }
+
+  delTbody.innerHTML = dRows; pickTbody.innerHTML = pRows; retTbody.innerHTML = rRows;
 
   // Sort 3 tầng
   ovSuggBuf.sort((a, b) => {
@@ -615,12 +598,9 @@ function _updateAllViews() {
     state.appData.return.filter(r => isDateInCurrentPeriod(r.date, state.periodMode, state.currentMonth, state.currentDate)).length;
   document.getElementById('histCountNote').innerText = `${filteredCount} bản ghi`;
 
-  persistData();
+  if (persistData()) window.dispatchEvent(new CustomEvent('spx:datachanged'));
 
   renderReminderBanner();
-
-  // Throttled hash check → dispatch event cho cloud auto-backup
-  _checkDataChanged();
 
   renderHistory();
 }
