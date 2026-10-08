@@ -45,8 +45,7 @@ export function lookupTier(orders, colIdx, tableData) {
  * @returns {boolean}
  */
 export function isDateInCurrentPeriod(isoDate, periodMode, currentMonth, currentDate) {
-  if (!isoDate || typeof isoDate !== 'string') return false;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return false;
+  if (typeof isoDate !== 'string' || isoDate.length !== 10) return false; // dữ liệu đã được sanitize khi nạp/nhập
 
   // ===== Mode: DAY — so khớp chính xác =====
   if (periodMode === 'day') {
