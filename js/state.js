@@ -1,5 +1,5 @@
 import { STORAGE_KEYS, WEIGHT_KEYS } from './config.js';
-import { generateId, getCurrentMonthIso, getTodayIso } from './utils.js';
+import { generateId, getCurrentMonthIso, getTodayIso, isValidIsoDate } from './utils.js';
 
 export const state = {
   appData: { delivery: [], pickup: [], return: [] },
@@ -98,19 +98,18 @@ function sanitizeWeights(w) {
 }
 // ============ /SANITIZE WEIGHTS ============
 
-function sanitizeRecords(arr) {
+export function sanitizeRecords(arr) {
   if (!Array.isArray(arr)) return [];
-  return arr
-    .filter(r =>
-      r && typeof r === 'object' &&
-      typeof r.date === 'string' &&
-      /^\d{4}-\d{2}-\d{2}$/.test(r.date)
-    )
-    .map(r => ({
-      id: Number.isFinite(r.id) ? r.id : generateId(),
-      date: r.date,
-      weights: sanitizeWeights(r.weights)
-    }));
+  const seen = new Set();
+  const out = [];
+  for (const r of arr) {
+    if (!r || typeof r !== 'object' || !isValidIsoDate(r.date)) continue;
+    let id = Number.isFinite(r.id) ? r.id : generateId();
+    while (seen.has(id)) id = generateId();   // id trùng sẽ làm Sửa/Xóa nhầm bản ghi
+    seen.add(id);
+    out.push({ id, date: r.date, weights: sanitizeWeights(r.weights) });
+  }
+  return out;
 }
 
 // ============ v50.4: SALARY BY MONTH ============
@@ -303,15 +302,26 @@ export function loadState() {
 }
 // ============ /LOAD STATE ============
 
+// Chỉ ghi khi dữ liệu THỰC SỰ đổi (1 lần stringify/lần gọi, thay vì 3 lần + 2 lần ghi mỗi render).
+// Trả về true nếu có thay đổi so với lần ghi trước (dùng để kích hoạt auto-backup cloud).
+let _lastSerialized = null;
 export function persistData() {
+  let json;
+  try { json = JSON.stringify(state.appData); } catch { return false; }
+  if (json === _lastSerialized) return false;
+  const first = _lastSerialized === null;
   try {
-    localStorage.setItem(STORAGE_KEYS.records, JSON.stringify(state.appData));
-    const total = state.appData.delivery.length + state.appData.pickup.length + state.appData.return.length;
-    if (total > 0) {
-      localStorage.setItem(STORAGE_KEYS.vault, JSON.stringify(state.appData));
+    localStorage.setItem(STORAGE_KEYS.records, json);
+    const { delivery, pickup, return: ret } = state.appData;
+    if (delivery.length + pickup.length + ret.length > 0) {
+      localStorage.setItem(STORAGE_KEYS.vault, json);
     }
+    _lastSerialized = json;
+    return !first;
   } catch (e) {
     console.warn('[Storage] Không ghi được records:', e);
+    window.dispatchEvent(new CustomEvent('spx:storage-error', { detail: e }));
+    return false;
   }
 }
 
