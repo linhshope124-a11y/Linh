@@ -7,7 +7,7 @@
 //    - TESS_CACHE và SHARE_CACHE KHÔNG cần bump (dữ liệu không đổi)
 // =============================================================
 
-const CACHE       = 'spx-tracker-v8';      // ⭐ v3 — sau patch #1, #2, #3
+const CACHE       = 'spx-tracker-v9';      // ⭐ v3 — sau patch #1, #2, #3
 const TESS_CACHE  = 'spx-tesseract-v1';    // giữ nguyên — Tesseract không đổi
 const SHARE_CACHE = 'spx-shared-files';    // giữ nguyên — dữ liệu tạm
 
