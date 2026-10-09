@@ -383,12 +383,8 @@ function parseOcrText(cleanText) {
     .replace(/¡/g, '1')
     .split('\n')
     .filter(line => {
-      // Bỏ dòng có giờ HH:MM (status bar có dấu :)
       if (/\b\d{1,2}:\d{2}\b/.test(line)) return false;
-      // Bỏ dòng bắt đầu bằng 4+ chữ số liền (status bar không dấu :)
-      // VD: "2122 9   04566— Chỉ tiết..." → bỏ
       if (/^\s*\d{4,}/.test(line)) return false;
-      // Bỏ dòng chứa "Chỉ tiết" / "Chi tiết" (header lẫn với status bar)
       if (/Ch[iỉ]\s*ti[eế]t/i.test(line)) return false;
       return true;
     })
@@ -415,16 +411,13 @@ function parseOcrText(cleanText) {
   const totalPos = totalMatch ? totalMatch.index : -1;
   const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
-  // ===== DON-PATTERN NUMBERS (ưu tiên) =====
-  // Match "[N] Đơn" hoặc "[N] Dơn" hoặc "[N] đơn" (OCR hay đọc nhầm Đ → D)
-  // Pattern: 1-5 chữ số + khoảng trắng tùy chọn + Đ/D/đ/d + "ơn"
+  // ===== DON-PATTERN NUMBERS =====
   const donNums = [];
   const donRegex = /(\d{1,5})\s*[ĐDđd]\s*ơn\b/gi;
   while ((m = donRegex.exec(text)) !== null) {
     const val = parseInt(m[1], 10);
     const pos = m.index;
     const endPos = pos + m[0].length;
-    // Bỏ nếu trùng với range hoặc total
     if (ranges.some(r => pos < r.endPos && endPos > r.pos)) continue;
     if (totalPos >= 0 && pos >= totalPos && pos <= totalEnd + 3) continue;
     if (val > 99999) continue;
@@ -432,7 +425,7 @@ function parseOcrText(cleanText) {
   }
   donNums.sort((a, b) => a.pos - b.pos);
 
-  // ===== GENERIC NUMBERS (fallback) =====
+  // ===== GENERIC NUMBERS =====
   const nums = [];
   const numRegex = /\d{1,6}/g;
   while ((m = numRegex.exec(text)) !== null) {
@@ -441,7 +434,7 @@ function parseOcrText(cleanText) {
     const endPos = pos + m[0].length;
     if (ranges.some(r => pos < r.endPos && endPos > r.pos)) continue;
     if (totalPos >= 0 && pos >= totalPos && pos <= totalEnd + 3) continue;
-    if (val === 0) continue;   // nums thô: bỏ 0 (dễ nhiễu)
+    if (val === 0) continue;
     if (val > 99999) continue;
     nums.push({ value: val, pos, endPos });
   }
@@ -478,7 +471,6 @@ function parseOcrText(cleanText) {
     return result;
   }
 
-  // Ordered: match theo thứ tự xuất hiện
   const orderedResult = {};
   for (let i = 0; i < ranges.length && i < nums.length; i++) {
     orderedResult[ranges[i].key] = nums[i].value;
@@ -487,16 +479,11 @@ function parseOcrText(cleanText) {
   const sumOf = r => Object.values(r).reduce((a, b) => a + b, 0);
   const countOf = r => Object.keys(r).length;
 
-  // ⭐ DON-PATTERN MATCH (ưu tiên cao nhất)
   const donResult = distanceMatch(donNums, 'closest');
-
-  // Các match cũ dùng nums thô
   const mClosest = distanceMatch(nums, 'closest');
   const mBefore  = distanceMatch(nums, 'before');
   const mAfter   = distanceMatch(nums, 'after');
 
-  // ===== CANDIDATES với priority =====
-  // Priority thấp = ưu tiên cao hơn khi diff bằng nhau
   const candidates = [
     { name: 'don-pattern', res: donResult,      cnt: countOf(donResult),      priority: 0 },
     { name: 'closest',     res: mClosest,       cnt: countOf(mClosest),       priority: 1 },
@@ -505,12 +492,10 @@ function parseOcrText(cleanText) {
     { name: 'after',       res: mAfter,         cnt: countOf(mAfter),         priority: 4 }
   ];
 
-  // Tính diff so với expectedTotal
   candidates.forEach(c => {
     c.diff = expectedTotal !== null ? Math.abs(sumOf(c.res) - expectedTotal) : 0;
   });
 
-  // Sort: 1) diff nhỏ nhất, 2) priority, 3) nhiều số hơn
   candidates.sort((a, b) => {
     if (a.diff !== b.diff) return a.diff - b.diff;
     if (a.priority !== b.priority) return a.priority - b.priority;
@@ -984,7 +969,7 @@ async function processOneFile(file, signal) {
   _checkAborted(signal);
   const statusDesc = document.getElementById('ocrStatusDesc');
 
-  // Pass 1: Otsu
+  // ========== PASS 1: Otsu ==========
   if (statusDesc) statusDesc.innerText = 'Quét lần 1...';
   const pre1 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: true }, signal);
   _checkAborted(signal);
@@ -997,7 +982,7 @@ async function processOneFile(file, signal) {
     ? Math.abs(parsed1.totalFound - parsed1.expectedTotal)
     : 9999;
 
-  // Pass 2: Threshold 130
+  // ========== PASS 2: Threshold 130 ==========
   if (bestDiff > 0) {
     _checkAborted(signal);
     if (statusDesc) statusDesc.innerText = 'Quét lần 2...';
@@ -1011,7 +996,7 @@ async function processOneFile(file, signal) {
     if (diff2 < bestDiff) { bestResult = parsed2; bestText = text2; bestDiff = diff2; }
   }
 
-  // Pass 3: Threshold 160
+  // ========== PASS 3: Threshold 160 ==========
   if (bestDiff > 0) {
     _checkAborted(signal);
     if (statusDesc) statusDesc.innerText = 'Quét lần 3...';
@@ -1023,6 +1008,22 @@ async function processOneFile(file, signal) {
       ? Math.abs(parsed3.totalFound - parsed3.expectedTotal)
       : 9999;
     if (diff3 < bestDiff) { bestResult = parsed3; bestText = text3; bestDiff = diff3; }
+  }
+
+  // ========== PASS 4: Threshold 100 (giữ nét chữ 9, 8, 6, 5) ==========
+  // ⭐ MỚI: Với screenshot chất lượng cao, threshold thấp giữ đuôi chữ số 9
+  // → Fix case OCR đọc "19" thành "12"
+  if (bestDiff > 0) {
+    _checkAborted(signal);
+    if (statusDesc) statusDesc.innerText = 'Quét lần 4...';
+    const pre4 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 100 }, signal);
+    _checkAborted(signal);
+    const text4 = await ocrRecognize(pre4.dataUrl, signal);
+    const parsed4 = parseOcrText(text4);
+    const diff4 = parsed4.expectedTotal !== null
+      ? Math.abs(parsed4.totalFound - parsed4.expectedTotal)
+      : 9999;
+    if (diff4 < bestDiff) { bestResult = parsed4; bestText = text4; bestDiff = diff4; }
   }
 
   const result = {
