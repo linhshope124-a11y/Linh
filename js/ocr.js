@@ -25,10 +25,9 @@ export { getOcrCacheStats, initOcrCache, refreshOcrCacheStats } from './ocr-cach
 // Sau khi lấy đủ log, ĐỔI LẠI:
 //   DISABLE_AUTO_SAVE = true
 //   DRY_RUN_OCR       = false
-const DISABLE_AUTO_SAVE = false;      // tắt cờ disable auto-save
-const DRY_RUN_OCR       = true;       // DRY RUN: không lưu thật, chỉ mở modal để lấy log
+const DISABLE_AUTO_SAVE = false;
+const DRY_RUN_OCR       = true;
 const OCR_TIMEOUT_MS    = 60000;
-// Cache config giờ nằm ở ocr-cache.js
 
 // ==================== ABORT CONTROLLER ====================
 let _ocrAbortController = null;
@@ -376,19 +375,32 @@ function identifyRangeKey(minV, maxV) {
 function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
+
+  // ===== CLEAN TEXT =====
   const text = cleanText
     .replace(/[–—]/g, '-')
     .replace(/,/g, '.')
     .replace(/¡/g, '1')
     .split('\n')
-    .filter(line => !/\b\d{1,2}:\d{2}\b/.test(line))
+    .filter(line => {
+      // Bỏ dòng có giờ HH:MM (status bar có dấu :)
+      if (/\b\d{1,2}:\d{2}\b/.test(line)) return false;
+      // Bỏ dòng bắt đầu bằng 4+ chữ số liền (status bar không dấu :)
+      // VD: "2122 9   04566— Chỉ tiết..." → bỏ
+      if (/^\s*\d{4,}/.test(line)) return false;
+      // Bỏ dòng chứa "Chỉ tiết" / "Chi tiết" (header lẫn với status bar)
+      if (/Ch[iỉ]\s*ti[eế]t/i.test(line)) return false;
+      return true;
+    })
     .join('\n');
 
+  // ===== TOTAL =====
   const totalRegex = /T[oôổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
   let expectedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
   if (!Number.isFinite(expectedTotal)) expectedTotal = null;
 
+  // ===== RANGES =====
   const rangeRegex = /(\d{1,3})(?:[.,]\d{1,3})?\s*[-–~]\s*(\d{1,6})(?:[.,]\d{1,3})?/g;
   const ranges = [];
   let m;
@@ -403,26 +415,45 @@ function parseOcrText(cleanText) {
   const totalPos = totalMatch ? totalMatch.index : -1;
   const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
-  const numRegex = /\d{1,6}/g;
+  // ===== DON-PATTERN NUMBERS (ưu tiên) =====
+  // Match "[N] Đơn" hoặc "[N] Dơn" hoặc "[N] đơn" (OCR hay đọc nhầm Đ → D)
+  // Pattern: 1-5 chữ số + khoảng trắng tùy chọn + Đ/D/đ/d + "ơn"
+  const donNums = [];
+  const donRegex = /(\d{1,5})\s*[ĐDđd]\s*ơn\b/gi;
+  while ((m = donRegex.exec(text)) !== null) {
+    const val = parseInt(m[1], 10);
+    const pos = m.index;
+    const endPos = pos + m[0].length;
+    // Bỏ nếu trùng với range hoặc total
+    if (ranges.some(r => pos < r.endPos && endPos > r.pos)) continue;
+    if (totalPos >= 0 && pos >= totalPos && pos <= totalEnd + 3) continue;
+    if (val > 99999) continue;
+    donNums.push({ value: val, pos, endPos });
+  }
+  donNums.sort((a, b) => a.pos - b.pos);
+
+  // ===== GENERIC NUMBERS (fallback) =====
   const nums = [];
+  const numRegex = /\d{1,6}/g;
   while ((m = numRegex.exec(text)) !== null) {
     const val = parseInt(m[0], 10);
     const pos = m.index;
     const endPos = pos + m[0].length;
     if (ranges.some(r => pos < r.endPos && endPos > r.pos)) continue;
     if (totalPos >= 0 && pos >= totalPos && pos <= totalEnd + 3) continue;
-    if (val === 0) continue;
+    if (val === 0) continue;   // nums thô: bỏ 0 (dễ nhiễu)
     if (val > 99999) continue;
     nums.push({ value: val, pos, endPos });
   }
   nums.sort((a, b) => a.pos - b.pos);
 
-  function distanceMatch(mode) {
+  // ===== MATCH FUNCTIONS =====
+  function distanceMatch(numList, mode) {
     const result = {};
     const used = new Set();
     ranges.forEach(r => {
       let best = null, bestDist = 9999;
-      nums.forEach((n, idx) => {
+      numList.forEach((n, idx) => {
         if (used.has(idx)) return;
         let dist;
         if (mode === 'before') {
@@ -447,6 +478,7 @@ function parseOcrText(cleanText) {
     return result;
   }
 
+  // Ordered: match theo thứ tự xuất hiện
   const orderedResult = {};
   for (let i = 0; i < ranges.length && i < nums.length; i++) {
     orderedResult[ranges[i].key] = nums[i].value;
@@ -455,22 +487,33 @@ function parseOcrText(cleanText) {
   const sumOf = r => Object.values(r).reduce((a, b) => a + b, 0);
   const countOf = r => Object.keys(r).length;
 
-  const mClosest = distanceMatch('closest');
-  const mBefore  = distanceMatch('before');
-  const mAfter   = distanceMatch('after');
+  // ⭐ DON-PATTERN MATCH (ưu tiên cao nhất)
+  const donResult = distanceMatch(donNums, 'closest');
 
+  // Các match cũ dùng nums thô
+  const mClosest = distanceMatch(nums, 'closest');
+  const mBefore  = distanceMatch(nums, 'before');
+  const mAfter   = distanceMatch(nums, 'after');
+
+  // ===== CANDIDATES với priority =====
+  // Priority thấp = ưu tiên cao hơn khi diff bằng nhau
   const candidates = [
-    { name: 'ordered', res: orderedResult, cnt: countOf(orderedResult) },
-    { name: 'closest', res: mClosest,      cnt: countOf(mClosest) },
-    { name: 'before',  res: mBefore,       cnt: countOf(mBefore) },
-    { name: 'after',   res: mAfter,        cnt: countOf(mAfter) }
+    { name: 'don-pattern', res: donResult,      cnt: countOf(donResult),      priority: 0 },
+    { name: 'closest',     res: mClosest,       cnt: countOf(mClosest),       priority: 1 },
+    { name: 'ordered',     res: orderedResult,  cnt: countOf(orderedResult),  priority: 2 },
+    { name: 'before',      res: mBefore,        cnt: countOf(mBefore),        priority: 3 },
+    { name: 'after',       res: mAfter,         cnt: countOf(mAfter),         priority: 4 }
   ];
 
+  // Tính diff so với expectedTotal
   candidates.forEach(c => {
     c.diff = expectedTotal !== null ? Math.abs(sumOf(c.res) - expectedTotal) : 0;
   });
+
+  // Sort: 1) diff nhỏ nhất, 2) priority, 3) nhiều số hơn
   candidates.sort((a, b) => {
     if (a.diff !== b.diff) return a.diff - b.diff;
+    if (a.priority !== b.priority) return a.priority - b.priority;
     return b.cnt - a.cnt;
   });
 
@@ -638,7 +681,7 @@ async function tryAutoSave(r) {
   const dist = validateDistribution(r.weights);
   if (!dist.ok) return false;
 
-  // ⚠️ DRY RUN MODE: case sẽ tự-lưu → vẫn return false để pipeline mở modal cho bạn lấy log
+  // ⚠️ DRY RUN MODE
   if (DRY_RUN_OCR) return false;
 
   const weights = buildWeights(r);
