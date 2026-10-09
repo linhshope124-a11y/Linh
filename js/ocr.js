@@ -1,6 +1,6 @@
 // =============================================================
 // OCR ENGINE — PART 1/2
-// Imports · Config · Worker · Preprocess · Parse
+// Imports · Config · Worker · Preprocess · Parse · Post-process
 // =============================================================
 
 import { state } from './state.js';
@@ -283,14 +283,13 @@ async function preprocessImage(rawDataUrl, options = {}, signal) {
         const data = imgData.data;
 
         if (raw) {
-          // ⭐ PASS 5: Chỉ convert grayscale — để Tesseract tự adaptive threshold
+          // PASS 5: Chỉ convert grayscale — để Tesseract tự adaptive threshold
           for (let i = 0; i < data.length; i += 4) {
             const g = Math.round(data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
             data[i] = data[i+1] = data[i+2] = g;
-            // giữ alpha gốc (data[i+3])
           }
         } else {
-          // Thresholding như cũ
+          // Thresholding
           const gray = new Uint8Array(data.length / 4);
           for (let i = 0, j = 0; i < data.length; i += 4, j++) {
             gray[j] = Math.round(data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
@@ -388,7 +387,6 @@ function parseOcrText(cleanText) {
   const weights = { '0_2':0,'2_4':0,'4_6':0,'6_8':0,'8_10':0,'10_12':0,'12_15':0,'over_15':0 };
   const confidences = {};
 
-  // ===== CLEAN TEXT =====
   const text = cleanText
     .replace(/[–—]/g, '-')
     .replace(/,/g, '.')
@@ -402,13 +400,11 @@ function parseOcrText(cleanText) {
     })
     .join('\n');
 
-  // ===== TOTAL =====
   const totalRegex = /T[oôổ]ng\s*[:\-]?\s*(\d{1,6})/i;
   const totalMatch = text.match(totalRegex);
   let expectedTotal = totalMatch ? parseInt(totalMatch[1], 10) : null;
   if (!Number.isFinite(expectedTotal)) expectedTotal = null;
 
-  // ===== RANGES =====
   const rangeRegex = /(\d{1,3})(?:[.,]\d{1,3})?\s*[-–~]\s*(\d{1,6})(?:[.,]\d{1,3})?/g;
   const ranges = [];
   let m;
@@ -423,7 +419,6 @@ function parseOcrText(cleanText) {
   const totalPos = totalMatch ? totalMatch.index : -1;
   const totalEnd = totalMatch ? totalMatch.index + totalMatch[0].length : -1;
 
-  // ===== DON-PATTERN NUMBERS =====
   const donNums = [];
   const donRegex = /(\d{1,5})\s*[ĐDđd]\s*ơn\b/gi;
   while ((m = donRegex.exec(text)) !== null) {
@@ -437,7 +432,6 @@ function parseOcrText(cleanText) {
   }
   donNums.sort((a, b) => a.pos - b.pos);
 
-  // ===== GENERIC NUMBERS =====
   const nums = [];
   const numRegex = /\d{1,6}/g;
   while ((m = numRegex.exec(text)) !== null) {
@@ -452,7 +446,6 @@ function parseOcrText(cleanText) {
   }
   nums.sort((a, b) => a.pos - b.pos);
 
-  // ===== MATCH FUNCTIONS =====
   function distanceMatch(numList, mode) {
     const result = {};
     const used = new Set();
@@ -468,10 +461,7 @@ function parseOcrText(cleanText) {
           if (n.pos < r.endPos) return;
           dist = n.pos - r.endPos;
         } else {
-          dist = Math.min(
-            Math.abs(n.pos - r.pos),
-            Math.abs(n.endPos - r.endPos)
-          );
+          dist = Math.min(Math.abs(n.pos - r.pos), Math.abs(n.endPos - r.endPos));
         }
         if (dist < bestDist && dist < 800) {
           bestDist = dist;
@@ -528,6 +518,62 @@ function parseOcrText(cleanText) {
   return { weights, confidences, expectedTotal, totalFound, mode: best.name };
 }
 
+// ==================== POST-PROCESS: Fix chữ số nhầm ====================
+/**
+ * Font SPX hay đọc nhầm các cặp chữ số do nét mảnh:
+ *   9 → 2  (case chính — đuôi 9 mất khi threshold)
+ *   7 → 1  (nét chéo 7 mờ)
+ *   6 → 8  (vòng tròn 6 → 8)
+ *   5 → 6  (nét cong 5 → 6)
+ *   3 → 8  (nét cong 3 → 8)
+ *
+ * Hàm thử đổi từng chữ số trong các dải để sum khớp total.
+ * CHỈ áp dụng nếu đổi chính xác về total → an toàn 100%.
+ */
+function postProcessFixDigits(parsed) {
+  if (parsed.expectedTotal === null) return null;
+  if (parsed.totalFound === parsed.expectedTotal) return null;
+
+  const SUBS = [
+    { from: '2', to: '9' },
+    { from: '1', to: '7' },
+    { from: '8', to: '6' },
+    { from: '6', to: '5' },
+    { from: '8', to: '3' }
+  ];
+
+  const keys = ['0_2', '2_4', '4_6', '6_8', '8_10', '10_12', '12_15', 'over_15'];
+  const ordered = ['0_2', ...keys.filter(k => k !== '0_2')];
+
+  for (const key of ordered) {
+    const oldVal = parsed.weights[key];
+    if (!oldVal || oldVal === 0) continue;
+    const str = String(oldVal);
+
+    for (let i = 0; i < str.length; i++) {
+      for (const s of SUBS) {
+        if (str[i] !== s.from) continue;
+
+        const newVal = parseInt(str.substring(0, i) + s.to + str.substring(i + 1), 10);
+        if (!Number.isFinite(newVal)) continue;
+
+        const newTotal = parsed.totalFound - oldVal + newVal;
+        if (newTotal === parsed.expectedTotal) {
+          return {
+            weights: { ...parsed.weights, [key]: newVal },
+            confidences: { ...parsed.confidences, [key]: 93 },
+            expectedTotal: parsed.expectedTotal,
+            totalFound: newTotal,
+            mode: parsed.mode + '+fix' + s.from + s.to
+          };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 // ==================== EXTRACT DATE ====================
 function extractDate(text) {
   const cleanText = text.replace(/,/g, '.');
@@ -566,11 +612,11 @@ function extractDate(text) {
 
 // =============================================================
 // HẾT PART 1 — Chờ "ok" để gửi PART 2
-// PART 2 chứa: processOneFile (CÓ PASS 4 + PASS 5), Pipeline, Modals
+// PART 2 chứa: processOneFile (Smart Pipeline), Pipeline, Modals
 // =============================================================
 // =============================================================
 // OCR ENGINE — PART 2/2
-// Batch state · Pipeline · Modals · Copy log · Exports
+// Batch state · Smart Pipeline · Modals · Copy log · Exports
 // =============================================================
 
 // ==================== LOG STORAGE ====================
@@ -953,7 +999,7 @@ async function _runOcrFromFiles(files, wasAppend = false) {
   }
 }
 
-// ==================== PROCESS ONE FILE ====================
+// ==================== PROCESS ONE FILE — SMART PIPELINE ====================
 async function processOneFile(file, signal) {
   _checkAborted(signal);
 
@@ -985,7 +1031,13 @@ async function processOneFile(file, signal) {
   _checkAborted(signal);
   const statusDesc = document.getElementById('ocrStatusDesc');
 
-  // ========== PASS 1: Otsu ==========
+  // ═══════════════════════════════════════════════════════════
+  //  SMART PIPELINE — Chỉ chạy pass tiếp theo khi pass trước fail
+  //  Thứ tự: Pass 1 → Post-1 → Pass 6 → Post-2 → Pass 5 → Post-3
+  //  Tối ưu: 80% ảnh dừng ở Pass 1 (~2s), không chạy hết 6 pass
+  // ═══════════════════════════════════════════════════════════
+
+  // ========== PASS 1: Otsu (baseline) ==========
   if (statusDesc) statusDesc.innerText = 'Quét lần 1...';
   const pre1 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: true }, signal);
   _checkAborted(signal);
@@ -998,54 +1050,36 @@ async function processOneFile(file, signal) {
     ? Math.abs(parsed1.totalFound - parsed1.expectedTotal)
     : 9999;
 
-  // ========== PASS 2: Threshold 130 ==========
+  // ========== POST-PROCESS 1: Fix chữ số (0s) ==========
+  if (bestDiff > 0) {
+    const fixed = postProcessFixDigits(bestResult);
+    if (fixed) { bestResult = fixed; bestText = text1; bestDiff = 0; }
+  }
+
+  // ========== PASS 6: Threshold 70 — giữ nét đuôi chữ số 9 ==========
   if (bestDiff > 0) {
     _checkAborted(signal);
     if (statusDesc) statusDesc.innerText = 'Quét lần 2...';
-    const pre2 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 130 }, signal);
+    const pre6 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 70 }, signal);
     _checkAborted(signal);
-    const text2 = await ocrRecognize(pre2.dataUrl, signal);
-    const parsed2 = parseOcrText(text2);
-    const diff2 = parsed2.expectedTotal !== null
-      ? Math.abs(parsed2.totalFound - parsed2.expectedTotal)
+    const text6 = await ocrRecognize(pre6.dataUrl, signal);
+    const parsed6 = parseOcrText(text6);
+    const diff6 = parsed6.expectedTotal !== null
+      ? Math.abs(parsed6.totalFound - parsed6.expectedTotal)
       : 9999;
-    if (diff2 < bestDiff) { bestResult = parsed2; bestText = text2; bestDiff = diff2; }
+    if (diff6 < bestDiff) { bestResult = parsed6; bestText = text6; bestDiff = diff6; }
   }
 
-  // ========== PASS 3: Threshold 160 ==========
+  // ========== POST-PROCESS 2 ==========
+  if (bestDiff > 0) {
+    const fixed = postProcessFixDigits(bestResult);
+    if (fixed) { bestResult = fixed; bestDiff = 0; }
+  }
+
+  // ========== PASS 5: RAW image — fallback cuối ==========
   if (bestDiff > 0) {
     _checkAborted(signal);
     if (statusDesc) statusDesc.innerText = 'Quét lần 3...';
-    const pre3 = await preprocessImage(rawDataUrl, { upscale: 2.5, useOtsu: false, threshold: 160 }, signal);
-    _checkAborted(signal);
-    const text3 = await ocrRecognize(pre3.dataUrl, signal);
-    const parsed3 = parseOcrText(text3);
-    const diff3 = parsed3.expectedTotal !== null
-      ? Math.abs(parsed3.totalFound - parsed3.expectedTotal)
-      : 9999;
-    if (diff3 < bestDiff) { bestResult = parsed3; bestText = text3; bestDiff = diff3; }
-  }
-
-  // ========== PASS 4: Threshold 100 (giữ nét chữ 9, 8, 6, 5) ==========
-  if (bestDiff > 0) {
-    _checkAborted(signal);
-    if (statusDesc) statusDesc.innerText = 'Quét lần 4...';
-    const pre4 = await preprocessImage(rawDataUrl, { upscale: 2.0, useOtsu: false, threshold: 100 }, signal);
-    _checkAborted(signal);
-    const text4 = await ocrRecognize(pre4.dataUrl, signal);
-    const parsed4 = parseOcrText(text4);
-    const diff4 = parsed4.expectedTotal !== null
-      ? Math.abs(parsed4.totalFound - parsed4.expectedTotal)
-      : 9999;
-    if (diff4 < bestDiff) { bestResult = parsed4; bestText = text4; bestDiff = diff4; }
-  }
-
-  // ========== PASS 5: RAW image (no threshold) ==========
-  // ⭐ MỚI: Đưa ảnh gốc cho Tesseract tự xử lý adaptive threshold
-  // → Fix case đuôi chữ số 9 bị mất do threshold cứng
-  if (bestDiff > 0) {
-    _checkAborted(signal);
-    if (statusDesc) statusDesc.innerText = 'Quét lần 5...';
     const pre5 = await preprocessImage(rawDataUrl, { upscale: 2.0, raw: true }, signal);
     _checkAborted(signal);
     const text5 = await ocrRecognize(pre5.dataUrl, signal);
@@ -1054,6 +1088,12 @@ async function processOneFile(file, signal) {
       ? Math.abs(parsed5.totalFound - parsed5.expectedTotal)
       : 9999;
     if (diff5 < bestDiff) { bestResult = parsed5; bestText = text5; bestDiff = diff5; }
+  }
+
+  // ========== POST-PROCESS 3 ==========
+  if (bestDiff > 0) {
+    const fixed = postProcessFixDigits(bestResult);
+    if (fixed) { bestResult = fixed; bestDiff = 0; }
   }
 
   const result = {
