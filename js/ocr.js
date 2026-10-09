@@ -25,8 +25,8 @@ export { getOcrCacheStats, initOcrCache, refreshOcrCacheStats } from './ocr-cach
 // Sau khi lấy đủ log, ĐỔI LẠI:
 //   DISABLE_AUTO_SAVE = true
 //   DRY_RUN_OCR       = false
-const DISABLE_AUTO_SAVE = false;
-const DRY_RUN_OCR       = true;
+const DISABLE_AUTO_SAVE = true;
+const DRY_RUN_OCR       = false;
 const OCR_TIMEOUT_MS    = 60000;
 
 // ==================== ABORT CONTROLLER ====================
