@@ -2582,3 +2582,4 @@ a.menu-item:visited { color: var(--text-1); }
     animation: none !important;
   }
 }
+.undo-banner { display: none !important; }
