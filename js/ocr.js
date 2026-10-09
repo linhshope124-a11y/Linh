@@ -21,7 +21,12 @@ import {
 export { getOcrCacheStats, initOcrCache, refreshOcrCacheStats } from './ocr-cache.js';
 
 // ==================== CONFIG ====================
-const DISABLE_AUTO_SAVE = false;
+// ⚠️⚠️⚠️ DEBUG MODE — ĐANG BẬT ĐỂ LẤY LOG ⚠️⚠️⚠️
+// Sau khi lấy đủ log, ĐỔI LẠI:
+//   DISABLE_AUTO_SAVE = true
+//   DRY_RUN_OCR       = false
+const DISABLE_AUTO_SAVE = false;      // tắt cờ disable auto-save
+const DRY_RUN_OCR       = true;       // DRY RUN: không lưu thật, chỉ mở modal để lấy log
 const OCR_TIMEOUT_MS    = 60000;
 // Cache config giờ nằm ở ocr-cache.js
 
@@ -75,7 +80,6 @@ async function ensurePushUndo() {
 }
 
 // ==================== TESSERACT WORKER ====================
-// Tải thư viện Tesseract (~2MB) chỉ khi thật sự dùng OCR — trước đây chặn render ở <head>.
 let _tessLibPromise = null;
 function ensureTesseractLib() {
   if (window.Tesseract) return Promise.resolve();
@@ -634,6 +638,9 @@ async function tryAutoSave(r) {
   const dist = validateDistribution(r.weights);
   if (!dist.ok) return false;
 
+  // ⚠️ DRY RUN MODE: case sẽ tự-lưu → vẫn return false để pipeline mở modal cho bạn lấy log
+  if (DRY_RUN_OCR) return false;
+
   const weights = buildWeights(r);
   const newId = generateId();
 
@@ -674,7 +681,6 @@ async function tryAutoSaveForce(r) {
 }
 
 // ==================== XÓA CACHE OCR ====================
-// Uỷ quyền cho ocr-cache.js — giữ wrapper để export tên cũ
 export async function clearOcrCache() {
   return _clearOcrCacheImpl();
 }
@@ -908,7 +914,7 @@ async function processOneFile(file, signal) {
   _checkAborted(signal);
 
   const hash = await hashBlob(file);
-  const cached = await cacheGetAsync(hash);   // ⭐ PATCH #3: async — đọc cả L1 + IDB
+  const cached = await cacheGetAsync(hash);
 
   if (cached) {
     _checkAborted(signal);
@@ -1444,11 +1450,6 @@ function escapeHtml(s) {
 }
 
 // ==================== INTERNAL: showSummaryToast ====================
-/**
- * Hiện toast tổng kết sau khi OCR nhiều ảnh.
- * (Hàm này có trong bản gốc của bạn nhưng tôi chưa thấy phần thân — 
- *  nếu bạn đã có, giữ nguyên; nếu thiếu, đây là bản gợi ý.)
- */
 function showSummaryToast(saved, dup, need, delay = 0) {
   const parts = [];
   if (saved > 0) parts.push(`✅ ${saved} tự lưu`);
