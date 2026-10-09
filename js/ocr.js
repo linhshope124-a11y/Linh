@@ -263,7 +263,7 @@ function otsuThreshold(gray) {
 // ==================== PREPROCESSING ====================
 async function preprocessImage(rawDataUrl, options = {}, signal) {
   _checkAborted(signal);
-  const { upscale = 2.0, useOtsu = true, threshold = 145 } = options;
+  const { upscale = 2.0, useOtsu = true, threshold = 145, raw = false } = options;
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -281,16 +281,28 @@ async function preprocessImage(rawDataUrl, options = {}, signal) {
 
         const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imgData.data;
-        const gray = new Uint8Array(data.length / 4);
-        for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-          gray[j] = Math.round(data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
+
+        if (raw) {
+          // ⭐ PASS 5: Chỉ convert grayscale — để Tesseract tự adaptive threshold
+          for (let i = 0; i < data.length; i += 4) {
+            const g = Math.round(data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
+            data[i] = data[i+1] = data[i+2] = g;
+            // giữ alpha gốc (data[i+3])
+          }
+        } else {
+          // Thresholding như cũ
+          const gray = new Uint8Array(data.length / 4);
+          for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+            gray[j] = Math.round(data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
+          }
+          const th = useOtsu ? otsuThreshold(gray) : threshold;
+          for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+            const val = gray[j] > th ? 255 : 0;
+            data[i] = data[i+1] = data[i+2] = val;
+            data[i+3] = 255;
+          }
         }
-        const th = useOtsu ? otsuThreshold(gray) : threshold;
-        for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-          const val = gray[j] > th ? 255 : 0;
-          data[i] = data[i+1] = data[i+2] = val;
-          data[i+3] = 255;
-        }
+
         ctx.putImageData(imgData, 0, 0);
         resolve({ dataUrl: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height });
       } catch (e) { reject(e); }
@@ -554,7 +566,7 @@ function extractDate(text) {
 
 // =============================================================
 // HẾT PART 1 — Chờ "ok" để gửi PART 2
-// PART 2 chứa: processOneFile (CÓ PASS 4), Pipeline, Modals
+// PART 2 chứa: processOneFile (CÓ PASS 4 + PASS 5), Pipeline, Modals
 // =============================================================
 // =============================================================
 // OCR ENGINE — PART 2/2
@@ -1015,8 +1027,6 @@ async function processOneFile(file, signal) {
   }
 
   // ========== PASS 4: Threshold 100 (giữ nét chữ 9, 8, 6, 5) ==========
-  // ⭐ MỚI: Với screenshot chất lượng cao, threshold thấp giữ đuôi chữ số 9
-  // → Fix case OCR đọc "19" thành "12"
   if (bestDiff > 0) {
     _checkAborted(signal);
     if (statusDesc) statusDesc.innerText = 'Quét lần 4...';
@@ -1028,6 +1038,22 @@ async function processOneFile(file, signal) {
       ? Math.abs(parsed4.totalFound - parsed4.expectedTotal)
       : 9999;
     if (diff4 < bestDiff) { bestResult = parsed4; bestText = text4; bestDiff = diff4; }
+  }
+
+  // ========== PASS 5: RAW image (no threshold) ==========
+  // ⭐ MỚI: Đưa ảnh gốc cho Tesseract tự xử lý adaptive threshold
+  // → Fix case đuôi chữ số 9 bị mất do threshold cứng
+  if (bestDiff > 0) {
+    _checkAborted(signal);
+    if (statusDesc) statusDesc.innerText = 'Quét lần 5...';
+    const pre5 = await preprocessImage(rawDataUrl, { upscale: 2.0, raw: true }, signal);
+    _checkAborted(signal);
+    const text5 = await ocrRecognize(pre5.dataUrl, signal);
+    const parsed5 = parseOcrText(text5);
+    const diff5 = parsed5.expectedTotal !== null
+      ? Math.abs(parsed5.totalFound - parsed5.expectedTotal)
+      : 9999;
+    if (diff5 < bestDiff) { bestResult = parsed5; bestText = text5; bestDiff = diff5; }
   }
 
   const result = {
