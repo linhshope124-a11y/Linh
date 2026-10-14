@@ -249,7 +249,16 @@
         <section class="card" id="opportunityCard">
           <div class="card-head">
             <div>
-              <h2 class="card-title">Cơ hội tăng điểm</h2>
+              <h2 class="card-title">
+                Cơ hội tăng điểm
+                <button type="button" class="fee-info-btn" onclick="openFeeTableModal()" aria-label="Bảng phí dịch vụ">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                </button>
+              </h2>
               <p class="card-sub">Top 4 gần đạt mốc nhất</p>
             </div>
           </div>
@@ -386,6 +395,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     BOTTOM NAV
+============================================================ -->
 <aside class="bottom-nav">
   <button class="nav-btn active" data-tab="overview" onclick="switchMainTab('overview', this)" aria-label="Tổng quan">
     <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -441,6 +453,9 @@
 <input type="file" id="ocrFileInput" accept="image/*" multiple style="display:none;" onchange="handleOcrImage(event)">
 <input type="date" id="historyDatePickerInput" style="display:none" onchange="applyHistoryDateFilter(this.value)">
 
+<!-- ============================================================
+     MODAL: MENU
+============================================================ -->
 <div class="modal-shade" id="menuModal" onclick="if(event.target===this)closeMenuModal()">
   <div class="modal-box menu-modal-box">
     <div class="modal-box-head">
@@ -464,6 +479,20 @@
         <div class="menu-text">
           <div class="menu-title" id="menuThemeTitle">Chế độ tối</div>
           <div class="menu-sub" id="menuThemeSub">Chuyển sang giao diện tối</div>
+        </div>
+      </button>
+
+      <button class="menu-item" onclick="toggleAutoSaveOCRFromMenu()">
+        <span class="menu-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+        </span>
+        <div class="menu-text">
+          <div class="menu-title" id="menuAutoSaveTitle">Tự lưu OCR: BẬT</div>
+          <div class="menu-sub" id="menuAutoSaveSub">Tự động lưu khi OCR đọc đúng</div>
         </div>
       </button>
 
@@ -553,6 +582,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: NHẬP / SỬA SẢN LƯỢNG NGÀY
+============================================================ -->
 <div class="modal-shade" id="entryModal">
   <div class="modal-box">
     <div class="modal-box-head">
@@ -632,6 +664,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: KẾT QUẢ QUÉT BATCH
+============================================================ -->
 <div class="modal-shade" id="batchOcrModal">
   <div class="modal-box">
     <div class="modal-box-head">
@@ -656,6 +691,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: BACKUP & QUẢN LÝ (Settings)
+============================================================ -->
 <div class="modal-shade" id="settingsModal" onclick="if(event.target===this)closeSettingsModal()">
   <div class="modal-box">
     <div class="modal-box-head">
@@ -759,6 +797,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: DÁN JSON
+============================================================ -->
 <div class="modal-shade" id="pasteJsonModal" onclick="if(event.target===this)closePasteJsonModal()">
   <div class="modal-box coffee-modal-box">
     <div class="modal-box-head">
@@ -781,6 +822,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: ỦNG HỘ TÁC GIẢ
+============================================================ -->
 <div class="modal-shade" id="coffeeModal" onclick="if(event.target===this)closeCoffeeModal()">
   <div class="modal-box coffee-modal-box">
     <div class="modal-box-head">
@@ -814,6 +858,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: CHIA SẺ ẢNH
+============================================================ -->
 <div class="modal-shade" id="shareTargetModal" onclick="if(event.target===this)closeShareTargetModal()">
   <div class="modal-box">
     <div class="modal-box-head">
@@ -877,6 +924,9 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL: TẤT CẢ CƠ HỘI
+============================================================ -->
 <div class="modal-shade" id="allOpportunitiesModal" onclick="if(event.target===this)closeAllOpportunitiesModal()">
   <div class="modal-box">
     <div class="modal-box-head">
@@ -902,6 +952,117 @@
   </div>
 </div>
 
+<!-- ============================================================
+     MODAL MỚI: BẢNG PHÍ DỊCH VỤ
+     - 2 mode: Bảng đầy đủ / Tra cứu
+     - 3 type: Giao / Lấy / Hoàn
+     - Mode table: search + bảng 8 cột
+     - Mode calc: slider + 5 nút tinh chỉnh + kết quả 8 dải
+============================================================ -->
+<div class="modal-shade fee-table-modal" id="feeTableModal">
+  <div class="modal-box fee-table-modal-box">
+
+    <div class="modal-box-head fee-table-header">
+      <div class="fee-table-title-wrap">
+        <span class="fee-table-title-ico">💵</span>
+        <h3>Bảng phí dịch vụ</h3>
+      </div>
+      <button class="modal-close-btn" onclick="closeFeeTableModal()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mode switch -->
+    <div class="fee-mode-switch" role="tablist">
+      <button type="button" class="fee-mode-btn active" data-mode="table" onclick="setFeeMode('table')">📋 Bảng đầy đủ</button>
+      <button type="button" class="fee-mode-btn"        data-mode="calc"  onclick="setFeeMode('calc')">🔍 Tra cứu</button>
+    </div>
+
+    <!-- Type tabs -->
+    <div class="fee-type-tabs" role="tablist">
+      <button type="button" class="fee-type-btn del  active" data-type="del"  onclick="setFeeType('del')">Giao</button>
+      <button type="button" class="fee-type-btn pick"        data-type="pick" onclick="setFeeType('pick')">Lấy</button>
+      <button type="button" class="fee-type-btn ret"         data-type="ret"  onclick="setFeeType('ret')">Hoàn</button>
+    </div>
+
+    <!-- ============ MODE: BẢNG ĐẦY ĐỦ ============ -->
+    <div class="fee-panel fee-panel-table" id="feePanelTable">
+
+      <div class="fee-search-wrap">
+        <span class="fee-search-ico">🔎</span>
+        <input
+          type="text"
+          inputmode="numeric"
+          id="feeSearchInput"
+          class="fee-search-input"
+          placeholder="Nhập số đơn để tìm dòng…"
+          autocomplete="off"
+        />
+        <button type="button" class="fee-search-clear" id="feeSearchClear" onclick="clearFeeSearch()" hidden>✕</button>
+      </div>
+
+      <div class="fee-table-scroll" id="feeTableScroll">
+        <table class="fee-table" id="feeTable">
+          <thead id="feeTableHead"></thead>
+          <tbody id="feeTableBody"></tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- ============ MODE: TRA CỨU ============ -->
+    <div class="fee-panel fee-panel-calc" id="feePanelCalc" hidden>
+
+      <div class="fee-calc-display-wrap">
+        <label class="fee-calc-display-lbl" for="feeCalcDisplay">Số đơn</label>
+        <input
+          type="text"
+          inputmode="numeric"
+          id="feeCalcDisplay"
+          class="fee-calc-display-input"
+          value="0"
+          autocomplete="off"
+          aria-label="Số đơn"
+        />
+      </div>
+
+      <div class="fee-slider-wrap">
+        <input type="range" id="feeSlider" class="fee-slider" min="0" max="1000" step="1" value="0">
+        <div class="fee-slider-ticks" id="feeSliderTicks">
+          <span class="fee-tick">1</span>
+          <span class="fee-tick">100</span>
+          <span class="fee-tick">1k</span>
+          <span class="fee-tick">10k</span>
+          <span class="fee-tick" id="feeTickMax">50k</span>
+        </div>
+      </div>
+
+      <div class="fee-adjust-row">
+        <button type="button" class="fee-adj-btn fee-adj-big" data-delta="-10" title="−10">◄─10</button>
+        <button type="button" class="fee-adj-btn"             data-delta="-1"  title="−1">−1</button>
+        <input type="text" inputmode="numeric" class="fee-adj-input" id="feeAdjInput" value="0" autocomplete="off">
+        <button type="button" class="fee-adj-btn"             data-delta="1"   title="+1">+1</button>
+        <button type="button" class="fee-adj-btn fee-adj-big" data-delta="10"  title="+10">+10─►</button>
+      </div>
+
+      <div class="fee-result" id="feeResult"></div>
+
+      <div class="fee-empty" id="feeEmpty">
+        <div class="fee-empty-ico">🎚️</div>
+        <div class="fee-empty-txt">Chưa nhập số đơn<br>Kéo slider hoặc bấm +1 để bắt đầu</div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     OVERLAYS / BANNERS / TOASTS
+============================================================ -->
 <div id="undoBanner" class="undo-banner">
   <span id="undoMsg" style="flex:1">Đã thực hiện thay đổi</span>
   <button class="undo-btn" onclick="undoLast()">Hoàn tác</button>
@@ -926,6 +1087,9 @@
   <button class="update-banner-btn" onclick="applyUpdate()">Cập nhật</button>
 </div>
 
+<!-- ============================================================
+     DIALOG: XÁC NHẬN / THÔNG BÁO
+============================================================ -->
 <div class="modal-shade dialog-shade" id="dialogModal">
   <div class="dialog-box">
     <div class="dialog-icon-wrap">
