@@ -2583,3 +2583,558 @@ a.menu-item:visited { color: var(--text-1); }
   }
 }
 .undo-banner { display: none !important; }
+/* =============================================================
+   FEE TABLE MODAL — Bảng phí dịch vụ
+   Thêm vào cuối style.css
+   ============================================================= */
+
+/* ---------- Icon ⓘ cạnh title card "Cơ hội tăng điểm" ---------- */
+.fee-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 0;
+  margin-left: 6px;
+  border-radius: 50%;
+  transition: all 0.15s;
+  vertical-align: middle;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transform: translateY(-1px);
+}
+.fee-info-btn svg { width: 15px; height: 15px; }
+.fee-info-btn:hover { color: var(--accent); opacity: 1; background: var(--accent-soft); }
+.fee-info-btn:active { transform: translateY(-1px) scale(0.9); }
+
+/* ---------- Modal box ---------- */
+.fee-table-modal-box {
+  max-height: 92vh;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.fee-table-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.fee-table-title-wrap { display: flex; align-items: center; gap: 8px; }
+.fee-table-title-ico { font-size: 18px; line-height: 1; }
+.fee-table-title-wrap h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+/* ---------- Mode switch (Bảng đầy đủ / Tra cứu) ---------- */
+.fee-mode-switch {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.fee-mode-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.fee-mode-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(255, 87, 34, 0.25);
+}
+.fee-mode-btn:active { transform: scale(0.97); }
+
+/* ---------- Type tabs (Giao / Lấy / Hoàn) ---------- */
+.fee-type-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.fee-type-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.fee-type-btn.active.del  { background: var(--giao-soft); border-color: var(--giao-bd); color: var(--giao); font-weight: 700; }
+.fee-type-btn.active.pick { background: var(--lay-soft);  border-color: var(--lay-bd);  color: var(--lay);  font-weight: 700; }
+.fee-type-btn.active.ret  { background: var(--hoan-soft); border-color: var(--hoan-bd); color: var(--hoan); font-weight: 700; }
+.fee-type-btn:active { transform: scale(0.97); }
+
+/* ---------- Panels ---------- */
+.fee-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---------- Search box (mode Bảng đầy đủ) ---------- */
+.fee-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 20px 10px;
+  padding: 9px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.fee-search-ico { font-size: 14px; line-height: 1; }
+.fee-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+.fee-search-input::placeholder {
+  color: var(--text-3);
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+}
+.fee-search-clear {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: var(--border);
+  border-radius: 50%;
+  color: var(--text-2);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-family: inherit;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.fee-search-clear:hover { background: var(--accent); color: #fff; }
+
+/* ---------- Table scroll wrapper ---------- */
+.fee-table-scroll {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 58vh;
+  position: relative;
+}
+
+/* ---------- Table ---------- */
+.fee-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Header — sticky top + sticky left cho cột Số đơn */
+.fee-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--surface-2);
+  padding: 10px 8px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
+}
+.fee-table thead th:first-child {
+  left: 0;
+  z-index: 5;
+  text-align: left;
+  padding-left: 12px;
+  color: var(--accent);
+  border-right: 1px solid var(--border);
+  min-width: 84px;
+}
+
+/* Body — cột Số đơn sticky left */
+.fee-table tbody td {
+  padding: 9px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fee-table tbody td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--surface);
+  text-align: left;
+  padding-left: 12px;
+  font-weight: 800;
+  color: var(--accent);
+  border-right: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.fee-table tbody tr:last-child td { border-bottom: none; }
+
+/* Row highlight khi search match */
+.fee-table tbody tr.fee-row-match td {
+  background: var(--accent-soft) !important;
+  color: var(--accent);
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+.fee-table tbody tr.fee-row-match td:first-child {
+  background: var(--accent) !important;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+/* ---------- Calc: input số đơn 32px ---------- */
+.fee-calc-display-wrap {
+  padding: 20px 20px 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.fee-calc-display-lbl {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.fee-calc-display-input {
+  display: block;
+  width: 100%;
+  border: 2px solid var(--border);
+  background: var(--surface-2);
+  border-radius: 12px;
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-align: center;
+  outline: none;
+  cursor: text;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.fee-calc-display-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Slider ---------- */
+.fee-slider-wrap { padding: 0 20px 12px; flex-shrink: 0; }
+.fee-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent-hover) 60%,
+    var(--surface-2) 60%,
+    var(--surface-2) 100%
+  );
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  margin: 10px 0 8px;
+}
+.fee-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.fee-slider::-webkit-slider-thumb:active { transform: scale(1.15); }
+.fee-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--surface);
+  box-shadow: 0 2px 8px rgba(255, 87, 34, 0.3);
+  cursor: pointer;
+}
+.fee-slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-3);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0 4px;
+}
+.fee-tick { text-align: center; }
+
+/* ---------- Adjust row (5 nút tinh chỉnh) ---------- */
+.fee-adjust-row {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 1.2fr 0.8fr 1fr;
+  gap: 6px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+  align-items: stretch;
+  flex-shrink: 0;
+}
+.fee-adj-btn {
+  height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-1);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.1s, color 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fee-adj-btn:active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: scale(0.96);
+}
+.fee-adj-big { font-size: 11px; }
+.fee-adj-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
+  letter-spacing: -0.02em;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.fee-adj-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- Result (default ẩn, JS toggle .fee-result-show) ---------- */
+.fee-result {
+  display: none;
+  padding: 14px 20px 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.fee-result.fee-result-show { display: block; }
+
+.fee-result-head {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-3);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.fee-result-head b {
+  color: var(--accent);
+  font-weight: 800;
+}
+.fee-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 12.5px;
+}
+.fee-result-lbl {
+  color: var(--text-2);
+  font-weight: 600;
+}
+.fee-result-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 13px;
+  letter-spacing: -0.02em;
+}
+.fee-result-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 10px;
+}
+.fee-result-total-lbl {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.fee-result-total-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+}
+
+/* ---------- Empty state (default ẩn, JS toggle .fee-empty-show) ---------- */
+.fee-empty {
+  display: none;
+  padding: 40px 20px;
+  text-align: center;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.fee-empty.fee-empty-show { display: flex; }
+.fee-empty-ico {
+  font-size: 42px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+  line-height: 1;
+}
+.fee-empty-txt {
+  font-size: 13px;
+  color: var(--text-3);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ---------- Responsive mobile < 360px ---------- */
+@media (max-width: 360px) {
+  .fee-info-btn { width: 16px; height: 16px; margin-left: 5px; }
+  .fee-info-btn svg { width: 13px; height: 13px; }
+
+  .fee-table-header { padding: 14px 16px; }
+  .fee-table-title-ico { font-size: 16px; }
+  .fee-table-title-wrap h3 { font-size: 14px; }
+
+  .fee-mode-switch { padding: 10px 16px 8px; gap: 5px; }
+  .fee-mode-btn { padding: 8px 8px; font-size: 12px; }
+
+  .fee-type-tabs { padding: 10px 16px; gap: 5px; }
+  .fee-type-btn { padding: 8px 6px; font-size: 12px; }
+
+  .fee-search-wrap { margin: 10px 14px 8px; padding: 8px 10px; }
+  .fee-search-input { font-size: 13px; }
+
+  .fee-table-scroll { margin: 0 14px 14px; max-height: 52vh; }
+  .fee-table thead th { padding: 8px 5px; font-size: 9px; }
+  .fee-table thead th:first-child { padding-left: 10px; min-width: 70px; font-size: 9.5px; }
+  .fee-table tbody td { padding: 8px 5px; font-size: 11px; }
+  .fee-table tbody td:first-child { padding-left: 10px; font-size: 10.5px; }
+
+  .fee-calc-display-wrap { padding: 16px 14px 12px; }
+  .fee-calc-display-input { font-size: 28px; padding: 8px; border-radius: 10px; }
+
+  .fee-slider-wrap { padding: 0 14px 10px; }
+  .fee-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
+  .fee-slider::-moz-range-thumb { width: 22px; height: 22px; }
+  .fee-slider-ticks { font-size: 9px; }
+
+  .fee-adjust-row { padding: 12px 14px; gap: 5px; }
+  .fee-adj-btn { height: 40px; padding: 0 5px; font-size: 11px; min-width: 36px; }
+  .fee-adj-big { font-size: 10px; padding: 0 4px; }
+  .fee-adj-input { height: 40px; font-size: 12px; padding: 0 4px; }
+
+  .fee-result { padding: 12px 14px 16px; }
+  .fee-result-row { font-size: 12px; }
+  .fee-result-val { font-size: 12.5px; }
+  .fee-result-total-val { font-size: 15px; }
+  .fee-result-total-lbl { font-size: 12px; }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .fee-info-btn,
+  .fee-mode-btn,
+  .fee-type-btn,
+  .fee-adj-btn,
+  .fee-slider::-webkit-slider-thumb,
+  .fee-slider::-moz-range-thumb {
+    transition: none !important;
+  }
+}
