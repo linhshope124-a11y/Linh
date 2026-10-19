@@ -1,8 +1,9 @@
 {
   "name": "SPX Tracker",
   "short_name": "SPX Tracker",
+  "id": "./",
   "description": "Theo dõi sản lượng giao/lấy/hoàn và tính điểm phúc lợi SPX Express",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],
