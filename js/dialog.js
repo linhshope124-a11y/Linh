@@ -3,6 +3,7 @@
 // API:
 //   await showAlert(message, { title, okText })
 //   const ok = await showConfirm(message, { title, okText, cancelText, danger })
+//   const choice = await showChoice(message, { title, icon, buttons })
 // ======================================================
 
 let _currentResolve = null;
@@ -14,9 +15,6 @@ export function isDialogOpen() {
 
 /**
  * Hiện dialog thông báo (thay alert())
- * @param {string} message
- * @param {object} [options] { title, okText }
- * @returns {Promise<void>}
  */
 export function showAlert(message, options = {}) {
   return new Promise(resolve => {
@@ -34,9 +32,6 @@ export function showAlert(message, options = {}) {
 
 /**
  * Hiện dialog xác nhận (thay confirm())
- * @param {string} message
- * @param {object} [options] { title, okText, cancelText, danger }
- * @returns {Promise<boolean>}
  */
 export function showConfirm(message, options = {}) {
   return new Promise(resolve => {
@@ -53,9 +48,100 @@ export function showConfirm(message, options = {}) {
 }
 
 /**
- * Mở dialog nội bộ
+ * Dialog nhiều lựa chọn (2-4 nút dọc).
+ * @param {string} message
+ * @param {object} options
+ *   - title: string
+ *   - icon: string (emoji)
+ *   - buttons: [{ id, text, variant }]
+ *       variant: 'primary' | 'danger' | 'ghost'
+ * @returns {Promise<string>} id của button được bấm, hoặc 'cancel' nếu đóng dialog
  *
- * v50.11.5: Nếu đang có dialog mở → BLOCK dialog mới (không đóng dialog cũ).
+ * ⚠️ Tạo modal riêng (không dùng #dialogModal) → không đụng logic showAlert/showConfirm cũ.
+ */
+export function showChoice(message, options = {}) {
+  return new Promise(resolve => {
+    const buttons = options.buttons || [
+      { id: 'cancel', text: 'Hủy', variant: 'ghost' },
+      { id: 'ok',     text: 'OK',  variant: 'primary' }
+    ];
+
+    // Tạo modal mới hoàn toàn — tránh conflict với #dialogModal cũ
+    const shade = document.createElement('div');
+    shade.className = 'modal-shade dialog-shade active';
+    shade.style.zIndex = '500';
+
+    const box = document.createElement('div');
+    box.className = 'dialog-box';
+
+    const iconWrap = document.createElement('div');
+    iconWrap.className = 'dialog-icon-wrap';
+    const iconEl = document.createElement('span');
+    iconEl.className = 'dialog-icon';
+    iconEl.textContent = options.icon || '❓';
+    iconWrap.appendChild(iconEl);
+
+    const titleEl = document.createElement('h3');
+    titleEl.className = 'dialog-title';
+    titleEl.textContent = options.title || 'Chọn hành động';
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'dialog-message';
+    msgEl.textContent = String(message);
+
+    const actionsEl = document.createElement('div');
+    actionsEl.className = 'dialog-actions';
+    actionsEl.style.flexDirection = 'column';
+    actionsEl.style.gap = '8px';
+
+    let resolved = false;
+    const finish = (id) => {
+      if (resolved) return;
+      resolved = true;
+      document.removeEventListener('keydown', onKey);
+      shade.remove();
+      resolve(id);
+    };
+
+    buttons.forEach(btn => {
+      const el = document.createElement('button');
+      el.className = 'dialog-btn';
+      el.style.width = '100%';
+
+      if (btn.variant === 'primary') {
+        el.classList.add('dialog-btn-ok');
+      } else if (btn.variant === 'danger') {
+        el.classList.add('dialog-btn-ok', 'dialog-btn-danger');
+      } else {
+        el.classList.add('dialog-btn-cancel');
+      }
+
+      el.textContent = btn.text;
+      el.onclick = () => finish(btn.id);
+      actionsEl.appendChild(el);
+    });
+
+    box.appendChild(iconWrap);
+    box.appendChild(titleEl);
+    box.appendChild(msgEl);
+    box.appendChild(actionsEl);
+    shade.appendChild(box);
+
+    // Backdrop click = cancel
+    shade.onclick = e => { if (e.target === shade) finish('cancel'); };
+
+    // ESC = cancel
+    const onKey = e => { if (e.key === 'Escape') finish('cancel'); };
+    document.addEventListener('keydown', onKey);
+
+    document.body.appendChild(shade);
+  });
+}
+
+/**
+ * Mở dialog nội bộ (cho showAlert/showConfirm)
+ *
+ * Nếu đang có dialog mở → BLOCK dialog mới (không đóng dialog cũ).
  * Dialog mới tự resolve với giá trị mặc định:
  *   - confirm → false (coi như user Cancel)
  *   - alert   → undefined
@@ -140,7 +226,6 @@ export function closeDialog(result) {
 }
 
 // ==================== GLOBAL HANDLERS (cho onclick) ====================
-// Expose ra window để HTML gọi được
 if (typeof window !== 'undefined') {
   window.dialogOk = () => closeDialog(true);
   window.dialogCancel = () => closeDialog(false);

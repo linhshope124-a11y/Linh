@@ -1,11 +1,12 @@
 import { state } from './state.js';
 import { WEIGHT_KEYS, WEIGHT_SUFFIXES } from './config.js';
 import { sanitizeInt, generateId, getTodayIso, formatDateDisplay, deepClone, isValidIsoDate } from './utils.js';
-import { closeModal } from './ui.js';
+import { closeModal, showToast } from './ui.js';
 import { updateAllViews } from './render.js';
 import { hasBatchPending, backToBatch } from './ocr.js';
 import { pushUndo } from './undo.js';
-import { showAlert, showConfirm } from './dialog.js';
+import { showAlert, showConfirm, showChoice } from './dialog.js';
+import { downloadBackupFile } from './backup.js';
 
 function parseWeights(prefix) {
   const out = {};
@@ -162,21 +163,63 @@ export async function deleteRecord(type, id) {
   updateAllViews();
 }
 
+// ⭐ CẬP NHẬT: Xóa toàn bộ — chỉ HỎI, không bắt buộc backup
 export async function clearAllHistory() {
   const total = state.appData.delivery.length + state.appData.pickup.length + state.appData.return.length;
-  if (total === 0) return;
+  if (total === 0) {
+    await showAlert('Không có bản ghi nào để xóa.', { title: 'Không có dữ liệu', okText: 'Đóng' });
+    return;
+  }
 
-  const ok = await showConfirm(
-    `Bạn chắc chắn muốn xóa toàn bộ ${total} bản ghi?\n\nBản sao lưu tự động cũng sẽ bị xóa.\nKhông thể khôi phục!`,
+  // ═══════════════════════════════════════════════════════════
+  //  DIALOG 1: Hỏi có muốn lưu backup trước không? (3 lựa chọn)
+  // ═══════════════════════════════════════════════════════════
+  const choice = await showChoice(
+    `Bạn sắp xóa TOÀN BỘ ${total} bản ghi.\n\n` +
+    `Hành động này KHÔNG THỂ KHÔI PHỤC.\n\n` +
+    `Bạn muốn lưu file backup về máy trước khi xóa không?`,
     {
-      title: '⚠️ Xóa toàn bộ',
-      okText: 'Xóa hết',
-      cancelText: 'Hủy',
-      danger: true
+      title: '⚠️ Xóa toàn bộ nhật ký',
+      icon: '⚠️',
+      buttons: [
+        { id: 'cancel',             text: '← Hủy',                variant: 'ghost'   },
+        { id: 'backup_then_delete', text: '📥 Có, lưu backup',     variant: 'primary' },
+        { id: 'delete_now',         text: '🗑️ Không, xóa luôn',   variant: 'danger'  }
+      ]
     }
   );
-  if (!ok) return;
 
+  if (choice === 'cancel') return;
+
+  // ═══════════════════════════════════════════════════════════
+  //  Nếu chọn "Có lưu backup": lưu file + xác nhận đã lưu xong
+  // ═══════════════════════════════════════════════════════════
+  if (choice === 'backup_then_delete') {
+    // ⚠️ Trigger download NGAY trong stack này để browser cho phép (user gesture)
+    downloadBackupFile('SPX_BeforeDelete');
+
+    // Đợi browser bắt đầu tải
+    await new Promise(r => setTimeout(r, 800));
+
+    // DIALOG 2: Xác nhận đã lưu xong chưa
+    const confirmDelete = await showConfirm(
+      `📁 File backup đã lưu về thư mục Downloads chưa?\n\n` +
+      `Nếu đã thấy file → bấm ĐÃ LƯU, XÓA LUÔN.\n` +
+      `Nếu chưa thấy → bấm HỦY XÓA để kiểm tra lại.`,
+      {
+        title: '🚨 Xác nhận xóa',
+        okText: '🗑️ Đã lưu xong, xóa luôn',
+        cancelText: '← Chưa lưu, hủy xóa',
+        danger: true
+      }
+    );
+
+    if (!confirmDelete) return;   // user chưa thấy file → không xóa
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  Tiến hành xóa (có undo)
+  // ═══════════════════════════════════════════════════════════
   const backup = deepClone(state.appData);
   const vaultBackup = localStorage.getItem('spx_backup_vault');
 
@@ -192,4 +235,10 @@ export async function clearAllHistory() {
   localStorage.removeItem('spx_backup_vault');
   localStorage.removeItem('spx_dual_records');
   updateAllViews();
+
+  // Toast xác nhận
+  const finalMsg = choice === 'backup_then_delete'
+    ? `✅ Đã lưu backup và xóa ${total} bản ghi`
+    : `⚠️ Đã xóa ${total} bản ghi (không backup)`;
+  showToast(finalMsg, choice === 'backup_then_delete' ? 'success' : 'warning', 3000);
 }
